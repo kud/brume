@@ -156,7 +156,7 @@ class ListenActions(
 internal val gutter = Modifier.padding(horizontal = 20.dp)
 
 @Composable
-private fun Wordmark(modifier: Modifier = Modifier) {
+internal fun Wordmark(modifier: Modifier = Modifier) {
     Text(stringResource(R.string.brand_word), style = MaterialTheme.typography.displaySmall, modifier = modifier.semantics { heading() })
 }
 
@@ -296,7 +296,7 @@ internal fun LevelRow(name: String, character: String?, level: Float, onLevel: (
 internal fun quietSlider() = SliderDefaults.colors(activeTickColor = Color.Transparent, inactiveTickColor = Color.Transparent)
 
 @Composable
-private fun Dock(ui: PlayerUi, actions: ListenActions) {
+internal fun Dock(ui: PlayerUi, actions: ListenActions, @StringRes timerTitle: Int = R.string.listen_timer) {
     val context = LocalContext.current
     val sound = chosen(context, ui)
     val line = when {
@@ -313,7 +313,7 @@ private fun Dock(ui: PlayerUi, actions: ListenActions) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant, minLines = 2,
                 modifier = Modifier.fillMaxWidth().semantics { stateDescription = line })
             Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                TimerControl(ui, actions.timer, Modifier.weight(1f))
+                TimerControl(ui, actions.timer, timerTitle, Modifier.weight(1f))
                 Spacer(Modifier.width(16.dp))
                 PlayDisc(ui, actions.toggle)
                 Spacer(Modifier.width(16.dp))
@@ -357,7 +357,7 @@ private fun PlayDisc(ui: PlayerUi, onToggle: () -> Unit) {
 
 /** One tap steps Off, 20, 45, 90, Off: nothing to open at night. The value is always written. */
 @Composable
-private fun TimerControl(ui: PlayerUi, onTimer: (Int?) -> Unit, modifier: Modifier) {
+private fun TimerControl(ui: PlayerUi, onTimer: (Int?) -> Unit, @StringRes titleRes: Int, modifier: Modifier) {
     val options = listOf<Int?>(null) + LevelRules.SLEEP_MINUTES
     val next = options[(options.indexOf(ui.timerMinutes) + 1) % options.size]
     val value = when {
@@ -365,7 +365,7 @@ private fun TimerControl(ui: PlayerUi, onTimer: (Int?) -> Unit, modifier: Modifi
         ui.timerMinutes == null -> stringResource(R.string.timer_off)
         else -> stringResource(R.string.timer_minutes, ui.timerMinutes)
     }
-    val title = stringResource(R.string.listen_timer)
+    val title = stringResource(titleRes)
     Column(
         modifier.clip(MaterialTheme.shapes.large).background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable(role = Role.Button, onClickLabel = stringResource(R.string.timer_change)) { onTimer(next) }

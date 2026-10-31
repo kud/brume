@@ -107,4 +107,22 @@
     <string name="tones_balance_help">Égalisez les quatre tons pour qu\'aucun ne ressorte.</string>
     <string name="tones_trim">Ton %1$d · %2$,d Hz · %3$d %%</string>
     <string name="tones_trim_label">Équilibre du ton %1$d</string>
+    <string name="tab_tones">Tons</string>
+    <string name="ux_now_playing">En lecture</string>
+    <string name="ux_ready">Prêt à jouer</string>
+    <string name="ux_remove">Retirer</string>
+    <string name="ux_slot_empty_noise">Pas de bruit. Choisissez-en un plus bas, ou laissez vide.</string>
+    <string name="ux_slot_empty_nature">Pas de son de nature. Choisissez-en un plus bas, ou laissez vide.</string>
+    <string name="ux_noise_rule">Un seul à la fois : en choisir un autre le remplace.</string>
+    <string name="ux_nature_rule">Un seul à la fois, joué par-dessus le bruit.</string>
+    <string name="ux_comfort">Sons de confort</string>
+    <string name="ux_tones_apart">Une pratique à part, pas un son de confort : quatre tons réglés sur votre hauteur, joués seuls, par séances.</string>
+    <string name="ux_tones_switch">Passer au motif de tons</string>
+    <string name="ux_sounds_apart">Votre mélange de bruit et de nature attend ici pendant le motif de tons.</string>
+    <string name="ux_sounds_switch">Revenir aux sons de confort</string>
+    <string name="ux_tones_heading">Motif de tons</string>
+    <string name="ux_tones_session">ACRN · une pratique en séances minutées, seule, jamais par-dessus d\'autres sons.</string>
+    <string name="ux_session_timer">Séance</string>
+    <string name="ux_tone_kind">Motif de tons</string>
+    <string name="ux_level_short">%1$d/20</string>
 </resources>

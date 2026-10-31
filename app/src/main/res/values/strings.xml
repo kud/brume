@@ -108,4 +108,22 @@
     <string name="tones_balance_help">Even out the four tones so none stands out.</string>
     <string name="tones_trim">Tone %1$d · %2$,d Hz · %3$d%%</string>
     <string name="tones_trim_label">Tone %1$d balance</string>
+    <string name="tab_tones">Tones</string>
+    <string name="ux_now_playing">Now playing</string>
+    <string name="ux_ready">Ready to play</string>
+    <string name="ux_remove">Remove</string>
+    <string name="ux_slot_empty_noise">No noise. Pick one below, or leave it empty.</string>
+    <string name="ux_slot_empty_nature">No nature sound. Pick one below, or leave it empty.</string>
+    <string name="ux_noise_rule">One at a time: picking another swaps it.</string>
+    <string name="ux_nature_rule">One at a time, played over the noise.</string>
+    <string name="ux_comfort">Comfort sounds</string>
+    <string name="ux_tones_apart">A separate practice, not a comfort sound: four tones set to your pitch, played on their own, in sessions.</string>
+    <string name="ux_tones_switch">Use the tone pattern instead</string>
+    <string name="ux_sounds_apart">Your noise and nature mix waits here while the tone pattern is in use.</string>
+    <string name="ux_sounds_switch">Back to comfort sounds</string>
+    <string name="ux_tones_heading">Tone pattern</string>
+    <string name="ux_tones_session">ACRN · a practice in timed sessions, on its own, never over other sounds.</string>
+    <string name="ux_session_timer">Session</string>
+    <string name="ux_tone_kind">Tone pattern</string>
+    <string name="ux_level_short">%1$d/20</string>
 </resources>
