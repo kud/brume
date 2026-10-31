@@ -65,8 +65,11 @@ class Player(private val context: Context, private val journal: Journal, private
         engine.post(Command.NoiseLevel(ui.noiseLevel)); engine.post(Command.NatureLevel(ui.ambienceLevel))
     }
 
-    fun selectNoise(colour: NoiseColour?) { change { it.copy(noise = colour) }; engine.post(Command.Noise(colour)) }
-    fun selectAmbience(ambience: Ambience?) { change { it.copy(ambience = ambience) }; engine.post(Command.Nature(ambience)) }
+    fun selectNoise(colour: NoiseColour?) { change { it.copy(noise = colour) }; engine.post(Command.Noise(colour)); pauseIfSilent() }
+    fun selectAmbience(ambience: Ambience?) { change { it.copy(ambience = ambience) }; engine.post(Command.Nature(ambience)); pauseIfSilent() }
+
+    /** Unchoosing the last layer while playing ends the session, so the app never "plays" silence. */
+    private fun pauseIfSilent() { if (_ui.value.playing && !_ui.value.hasSound) pause(EndedBy.USER) }
     fun setNoiseLevel(level: Float) { change { it.copy(noiseLevel = LevelRules.clampLevel(level)) }; engine.post(Command.NoiseLevel(level)) }
     fun setAmbienceLevel(level: Float) { change { it.copy(ambienceLevel = LevelRules.clampLevel(level)) }; engine.post(Command.NatureLevel(level)) }
 
