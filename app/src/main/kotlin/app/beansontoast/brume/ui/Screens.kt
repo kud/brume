@@ -70,6 +70,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.beansontoast.brume.R
 import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.journal.NoteTags
@@ -120,7 +121,9 @@ fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), 
 /** The selected tab is told by its indicator and its weight, never by a hue. */
 @Composable
 private fun NavLabel(@StringRes text: Int, selected: Boolean) =
-    Text(stringResource(text), fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
+    // One line always: « Aujourd'hui » is the longest label and once broke in two at 360 dp.
+    Text(stringResource(text), fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, maxLines = 1, softWrap = false,
+        style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.sp, letterSpacing = 0.sp))
 
 @StringRes fun NoiseColour.label() = when (this) {
     NoiseColour.WHITE -> R.string.noise_white
