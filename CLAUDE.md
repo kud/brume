@@ -7,7 +7,7 @@ The name lives only in `gradle.properties` (`app.name`, `app.label`, `app.applic
 ## Modules
 
 - `:core`: pure Kotlin/JVM, no Android. Every number the app makes: `rng/` (own SplitMix64 + PCG32, golden vectors; never `kotlin.random`), `dsp/` (biquads), `sound/` (noise colours, generated ambiences, `SoundEngine`, `LevelRules`), `journal/`, `export/` (versioned JSON), `NightHours`. New sound behaviour comes with a test here.
-- `:design`: Gamme-shaped Material 3 (`app.beansontoast.design`): `GammeTheme`, `SelectChip`, `SwitchRow`, `SettingsGroup`, `EmptyState`. Replaced by Gamme's kit when it exists.
+- `:design`: Gamme-shaped Material 3 (`app.beansontoast.design`): `GammeTheme`, `SelectChip`, `SwitchRow`, `SettingsGroup`, `EmptyState`, `CentreSlider`. Replaced by Gamme's kit when it exists.
 - `:app`: Android. `playback/` (Player, foreground `PlaybackService` with AudioTrack and platform MediaSession), `data/` (Room), `ui/` (Compose). DI by hand in `AppGraph`.
 
 ## Working here

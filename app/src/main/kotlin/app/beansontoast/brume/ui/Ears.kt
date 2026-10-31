@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -17,13 +16,13 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.beansontoast.brume.R
 import app.beansontoast.brume.core.sound.Balance
 import app.beansontoast.brume.playback.Output
 import app.beansontoast.brume.playback.OutputKind
+import app.beansontoast.design.CentreSlider
 import app.beansontoast.design.tabular
 
 /** "Centre", "Left 30%", "Right 100%": the words the row shows and TalkBack reads. */
@@ -52,7 +51,9 @@ internal fun outputText(output: Output): String = output.name ?: stringResource(
 /**
  * The ears, at the foot of the "now playing" card, so one setting serves Listen and Tones alike:
  * where the sound plays, with the system's switcher one tap away, and the left/right balance.
- * The balance slider stops in tenths with one at the centre; its value is written, never a colour.
+ * The balance slider rests at the middle and fills from there towards the chosen ear, in tenths;
+ * its value is written, never a colour. It stays here, not on the playing view: it is set once per
+ * output and kept, and the playing view is for lying still (Iris, 2026-10-31).
  */
 @Composable
 internal fun EarsRows(balance: Float, output: Output?, onBalance: (Float) -> Unit, onOutput: () -> Unit) {
@@ -82,11 +83,8 @@ internal fun EarsRows(balance: Float, output: Output?, onBalance: (Float) -> Uni
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(stringResource(R.string.balance_l), style = MaterialTheme.typography.labelLarge, color = muted, modifier = Modifier.padding(end = 8.dp).clearAndSetSemantics {})
-        Slider(
-            value = Balance.snap(balance), onValueChange = { onBalance(Balance.snap(it)) },
-            valueRange = -1f..1f, steps = Balance.STOPS - 1,
-            modifier = Modifier.weight(1f).heightIn(min = 44.dp).semantics { contentDescription = title; stateDescription = words },
-        )
+        CentreSlider(Balance.snap(balance), { onBalance(Balance.snap(it)) }, label = title, valueText = words,
+            modifier = Modifier.weight(1f), stops = Balance.STOPS)
         Text(stringResource(R.string.balance_r), style = MaterialTheme.typography.labelLarge, color = muted, modifier = Modifier.padding(start = 8.dp).clearAndSetSemantics {})
     }
     Text(stringResource(R.string.balance_hint), style = MaterialTheme.typography.bodySmall, color = muted)
