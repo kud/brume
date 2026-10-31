@@ -249,7 +249,7 @@ private fun PlayDisc(ui: PlayerUi, onToggle: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         when {
-            !ui.hasSound -> Icon(painterResource(R.drawable.ic_horizon), null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(36.dp))
+            !ui.hasSound -> Icon(painterResource(R.drawable.ic_brume_mark), null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(36.dp))
             ui.playing -> Icon(painterResource(R.drawable.ic_pause), null, tint = scheme.inverseOnSurface, modifier = Modifier.size(36.dp))
             else -> Icon(painterResource(R.drawable.ic_play), null, tint = scheme.inverseOnSurface, modifier = Modifier.size(40.dp))
         }
