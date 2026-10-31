@@ -1,0 +1,203 @@
+name: Android
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to create on this commit and release (vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-dev.N); empty for a plain build"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+# A manual release run gets its own group: it no longer queues behind the push
+# build of the same merge (that wait doubled the time to an APK), and GitHub
+# never swaps it for a newer pending run of the other kind.
+concurrency:
+  group: android-${{ github.event_name == 'workflow_dispatch' && 'release' || 'ci' }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') && github.event_name != 'workflow_dispatch' }}
+
+jobs:
+  build:
+    name: Test, lint, debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v6.4.0
+
+      - name: Test, lint and assemble
+        run: ./gradlew --stacktrace :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+
+      - name: Lint has no errors
+        run: test "$(grep -c 'severity="Error"' app/build/reports/lint-results-debug.xml)" = 0
+
+      - name: Room schemas match the committed ones
+        run: |
+          git diff --exit-code app/schemas
+          test -z "$(git status --porcelain app/schemas)"
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports
+          path: |
+            core/build/reports/
+            app/build/reports/
+          if-no-files-found: ignore
+
+  release:
+    name: Release APK
+    # A pushed v* tag, or a manual run on main naming the tag to create: a tag made
+    # with the workflow token would not start another run, so this one releases it.
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.tag != '' && github.ref == 'refs/heads/main')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Derive version from the tag
+        run: |
+          if ! [[ "$TAG" == v* ]]; then
+            echo "::error::Tag $TAG must start with v"
+            exit 1
+          fi
+          version="${TAG#v}"
+          if ! [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-dev\.([0-9]+))?$ ]]; then
+            echo "::error::Tag $TAG is not vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-dev.N"
+            exit 1
+          fi
+          # A dev build sorts below its final release: 0.1.0-dev.3 < 0.1.0.
+          dev="${BASH_REMATCH[5]:-99}"
+          if [ "$dev" -gt 98 ] && [ -n "${BASH_REMATCH[4]}" ]; then
+            echo "::error::dev numbers stop at 98"
+            exit 1
+          fi
+          code=$(( (BASH_REMATCH[1] * 1000000 + BASH_REMATCH[2] * 1000 + BASH_REMATCH[3]) * 100 + dev ))
+          echo "BRUME_VERSION_NAME=$version" >> "$GITHUB_ENV"
+          echo "BRUME_VERSION_CODE=$code" >> "$GITHUB_ENV"
+          if [ -n "${BASH_REMATCH[4]}" ]; then echo "PRERELEASE=true" >> "$GITHUB_ENV"; else echo "PRERELEASE=false" >> "$GITHUB_ENV"; fi
+
+      # A final release needs all four secrets: never an unsigned APK, and never one signed
+      # with the public debug key, which anyone could use to ship an "update". A -dev tag
+      # without them still ships the debug build as a pre-release, for testing on Erwann's
+      # phones until the release key exists (Erwann, 2026-10-25).
+      - name: Choose signing
+        run: |
+          missing=()
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ "${#missing[@]}" -eq 0 ]; then
+            echo "SIGNED=true" >> "$GITHUB_ENV"
+          elif [ "$PRERELEASE" = "true" ]; then
+            echo "::warning::Missing repository secrets: ${missing[*]}. Publishing the debug APK as a dev pre-release."
+            echo "SIGNED=false" >> "$GITHUB_ENV"
+          else
+            echo "::error::Missing repository secrets: ${missing[*]}. A final release needs the release key."
+            exit 1
+          fi
+
+      - name: Restore the keystore
+        if: env.SIGNED == 'true'
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          echo "BRUME_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v6.4.0
+
+      - name: Assemble release
+        if: env.SIGNED == 'true'
+        run: ./gradlew --stacktrace :app:assembleRelease
+
+      - name: Verify the signature
+        if: env.SIGNED == 'true'
+        run: |
+          apk=app/build/outputs/apk/release/app-release.apk
+          if [ ! -f "$apk" ]; then
+            echo "::error::$apk not found (an unsigned build would be app-release-unsigned.apk)"
+            ls -la app/build/outputs/apk/release/ || true
+            exit 1
+          fi
+          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
+          "$apksigner" verify --print-certs "$apk"
+          name=$(grep '^app.name=' gradle.properties | cut -d= -f2)
+          cp "$apk" "$RUNNER_TEMP/$name-$BRUME_VERSION_NAME.apk"
+          echo "RELEASE_APK=$RUNNER_TEMP/$name-$BRUME_VERSION_NAME.apk" >> "$GITHUB_ENV"
+
+      # R8's mapping, to read the release's stack traces; it names no secret, only our classes.
+      - name: Keep the R8 mapping
+        if: env.SIGNED == 'true'
+        run: |
+          mapping=app/build/outputs/mapping/release/mapping.txt
+          [ -f "$mapping" ] || { echo "::error::$mapping not found"; exit 1; }
+          name=$(grep '^app.name=' gradle.properties | cut -d= -f2)
+          cp "$mapping" "$RUNNER_TEMP/$name-$BRUME_VERSION_NAME-mapping.txt"
+          echo "RELEASE_MAPPING=$RUNNER_TEMP/$name-$BRUME_VERSION_NAME-mapping.txt" >> "$GITHUB_ENV"
+
+      - name: Assemble debug
+        if: env.SIGNED != 'true'
+        run: |
+          ./gradlew --stacktrace :app:assembleDebug
+          apk=app/build/outputs/apk/debug/app-debug.apk
+          [ -f "$apk" ] || { echo "::error::$apk not found"; ls -la app/build/outputs/apk/debug/ || true; exit 1; }
+          name=$(grep '^app.name=' gradle.properties | cut -d= -f2)
+          cp "$apk" "$RUNNER_TEMP/$name-$BRUME_VERSION_NAME-debug.apk"
+          echo "RELEASE_APK=$RUNNER_TEMP/$name-$BRUME_VERSION_NAME-debug.apk" >> "$GITHUB_ENV"
+
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          if [ "$PRERELEASE" = "true" ]; then flags+=(--prerelease); fi
+          # A pushed tag must already exist; a manual run creates it on the commit it built.
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" >/dev/null 2>&1; then
+              echo "::error::Tag $TAG already exists"
+              exit 1
+            fi
+            flags+=(--target "$GITHUB_SHA")
+          else
+            flags+=(--verify-tag)
+          fi
+          files=("$RELEASE_APK")
+          if [ -n "${RELEASE_MAPPING:-}" ]; then files+=("$RELEASE_MAPPING"); fi
+          gh release create "$TAG" "${files[@]}" --generate-notes --title "$TAG" "${flags[@]}"
+
+      - name: Remove the keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
