@@ -1,6 +1,6 @@
-# ADR 0003: Switchable modules, and Breathe as the first
+# ADR 0003: Switchable modules, Breathe, and Calm
 
-- Status: accepted (Iris, 2026-10-31)
+- Status: accepted (Iris, 2026-10-31); Calm and Meditation added the same day, after Erwann asked « There is no meditation? »
 - Context: company.md, 2026-10-31: Brume has four pillars (meditation, breathing, tinnitus work, sleep) plus Learn, each a module the person can turn on or off, and the home shows only what is chosen. Erwann: « On lance le module respiration après la langue ». Inspiration: Breathly's approach (a dark full screen, a shape opening and closing, one word, a timer, a ✕), not its look.
 
 ## Decision
@@ -16,7 +16,24 @@
 
 - **Every top-level screen is titled by its tab's label** (Listen, Breathe, Tones, Journal, About), in the serif headline, with an optional quiet line under it (`ScreenTitle`). Erwann, on dev.7: brume everywhere with the page name under it, or never. Never: a module's title has to match its tab once tabs come and go, and the brand lives in the launcher icon, the splash, the introduction and the foot of About, where the wordmark signs the version. Tones keeps "Tone pattern · ACRN" as its subtitle.
 
+## Calm, and Meditation (Iris, 2026-10-31)
+
+- **Breathe's tab becomes Calm (« Calme ») and holds two practices**, Breathe (« Souffle ») and Meditation (EN "Meditate", « Méditation »). The bar stays at five: Listen, Calm, Tones, Journal, About. With both on, two chips at the top of Calm choose the practice (check glyph and weight), remembered per phone (`calm_practice`). With one off, Calm shows the other and no chips. The tab keeps Breathe's icon: the rising mist is what both practices draw.
+- **Two switches in About, not one.** Breathe and Meditate each keep their own switch under Activities; Calm goes away only when both are off. Kept apart because someone who uses paced breathing may not want guided text, and the other way round. `Settings.modules` gains `meditation` (pref `module_meditation`, default on), and the synced map gains `MEDITATION`. **Carry-over:** dev.9's `module_breath` is read as it was, so a Breathe someone turned off stays off, and Meditation arrives on for everyone. A sync file from an older version has no `MEDITATION`, which reads as on: an older file never switches anything off. `CalmModulesTest` covers both.
+- **Guided by text, not voice.** No audio files, both languages, offline. One short line at a time, centred in the serif, cross-fading (1.2 s, none in reduced motion) to the next, "3 of 7" written under it, time left and ✕ End at the top as in Breathe. The mist stays settled low under the words, never through them.
+- **Three short sessions and a timer.** Timing is `:core` `calm/Calm.kt` and tested (`CalmTest`); the words live in strings, one per step (`Guided.lines()`, count checked).
+  - Body scan, 9 steps, 375 s: feet, legs, belly and back, hands and arms, shoulders and neck, face, the whole body.
+  - Sounds as they are, 7 steps, 300 s: the sounds around; a sound in the ears or head as one sound among the others, noticed for a moment, then attention moves on, with "if that's uncomfortable, rest on your breath instead"; letting sounds come and go; widening when attention catches; resting on the breath or the feet. The step that names the inner sound is the shortest (30 s, tested): never a long, close focus on tinnitus.
+  - Back to the breath, 6 steps, 240 s.
+  - Timer, 5, 10, 15 or 20 min, exact: 20 s settling ("Settle in."), the quiet middle, 20 s return ("Slowly come back."). The mist rises over the first 20 s and settles over the last 20 s.
+  - Every session's first line says it can stop at any time and where End is; the setup screen says it again, and that there is no wrong way to do this. Every step lasts at least 30 s: time to read, then rest.
+- **Wording.** Plain, warm, no promise, nothing about what it does to tinnitus. Based on the attention-and-acceptance exercises in the mindfulness programmes evidence.md §10 cites (an RCT against relaxation; clinic gains tracked acceptance); the app names no programme and never calls it a therapy.
+- **Taps, no chime.** With vibration on: a light tap at each new line (guided) or at the start and the end (timer). No chime: the timer's end is already soft, a tone after silence can startle someone listening for their tinnitus, and the tap reaches closed eyes. Revisit only if asked, synthesised in `:core` like the other sounds.
+- **Sound underneath** works exactly as in Breathe and shares its code: through the player, so fade-in, levels and Too loud hold; only offered when a sound is chosen; ended with the session only if the session started it.
+- Last meditation choices (session, timer length, vibration, sound) stay per phone, like Breathe's.
+
 ## Consequences
 
 - Unverified on a phone: haptic strength on a real vibrator, how the band reads at the lowest brightness, and whether a 10-minute 4-7-8 is too long for most people (a candidate for capping it at 2 or 5).
-- The home screen is still Listen; a home that lists the chosen modules comes with the second module.
+- Unverified on a phone: whether a line is long enough to read and short enough to rest after, the cross-fade at night, and whether a 30 s step reads as hurried.
+- The home screen is still Listen; a home that lists the chosen modules comes with the second module (still to do after Calm).

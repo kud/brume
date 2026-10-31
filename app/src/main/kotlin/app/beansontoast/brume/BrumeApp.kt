@@ -51,6 +51,8 @@ class Settings(context: Context) {
     private val _modules = MutableStateFlow(Modules(
         tones = prefs.getBoolean(MODULE_TONES, true),
         breath = prefs.getBoolean(MODULE_BREATH, true),
+        // New with Calm: on for everyone, including those who had turned Breathe off (they keep that).
+        meditation = prefs.getBoolean(MODULE_MEDITATION, true),
     ))
     /** Which modules are on. Listen is always on; it is not a module. */
     val modules: StateFlow<Modules> = _modules
@@ -62,7 +64,7 @@ class Settings(context: Context) {
 
     /** Sets the switches with the time they were chosen, here or on another phone. */
     fun applyModules(modules: Modules, at: Long) {
-        prefs.edit().putBoolean(MODULE_TONES, modules.tones).putBoolean(MODULE_BREATH, modules.breath).putLong(MODULES_AT, at).apply()
+        prefs.edit().putBoolean(MODULE_TONES, modules.tones).putBoolean(MODULE_BREATH, modules.breath).putBoolean(MODULE_MEDITATION, modules.meditation).putLong(MODULES_AT, at).apply()
         _modules.value = modules
     }
 
@@ -80,9 +82,32 @@ class Settings(context: Context) {
         get() = prefs.getBoolean(BREATH_SOUND, false)
         set(v) = prefs.edit().putBoolean(BREATH_SOUND, v).apply()
 
-    private companion object {
+    /** Which practice Calm opens on, and the last meditation choices: this phone only, like Breathe's. */
+    var calmPractice: String?
+        get() = prefs.getString(CALM_PRACTICE, null)
+        set(v) = prefs.edit().putString(CALM_PRACTICE, v).apply()
+    var meditationChoice: String?
+        get() = prefs.getString(MEDITATION_CHOICE, null)
+        set(v) = prefs.edit().putString(MEDITATION_CHOICE, v).apply()
+    var meditationMinutes: Int
+        get() = prefs.getInt(MEDITATION_MINUTES, 10)
+        set(v) = prefs.edit().putInt(MEDITATION_MINUTES, v).apply()
+    var meditationHaptics: Boolean
+        get() = prefs.getBoolean(MEDITATION_HAPTICS, true)
+        set(v) = prefs.edit().putBoolean(MEDITATION_HAPTICS, v).apply()
+    var meditationSound: Boolean
+        get() = prefs.getBoolean(MEDITATION_SOUND, false)
+        set(v) = prefs.edit().putBoolean(MEDITATION_SOUND, v).apply()
+
+    internal companion object {
         const val MODULE_TONES = "module_tones"
         const val MODULE_BREATH = "module_breath"
+        const val MODULE_MEDITATION = "module_meditation"
+        const val CALM_PRACTICE = "calm_practice"
+        const val MEDITATION_CHOICE = "meditation_choice"
+        const val MEDITATION_MINUTES = "meditation_minutes"
+        const val MEDITATION_HAPTICS = "meditation_haptics"
+        const val MEDITATION_SOUND = "meditation_sound"
         const val MODULES_AT = "modules_at"
         const val BREATH_PATTERN = "breath_pattern"
         const val BREATH_MINUTES = "breath_minutes"
@@ -98,12 +123,18 @@ class Settings(context: Context) {
  * The switchable modules (ADR 0003). Each is a pillar the person can turn off; the home and the
  * tabs show only what is on. Defaults are on: existing users already have Tones.
  */
-data class Modules(val tones: Boolean = true, val breath: Boolean = true) {
-    fun toWire(): Map<String, Boolean> = mapOf(TONES to tones, BREATH to breath)
+data class Modules(val tones: Boolean = true, val breath: Boolean = true, val meditation: Boolean = true) {
+    /** Calm holds Breathe and Meditation: its tab shows while either is on. */
+    val calm: Boolean get() = breath || meditation
+
+    fun toWire(): Map<String, Boolean> = mapOf(TONES to tones, BREATH to breath, MEDITATION to meditation)
 
     companion object {
         const val TONES = "TONES"
         const val BREATH = "BREATH"
-        fun fromWire(map: Map<String, Boolean>) = Modules(tones = map[TONES] ?: true, breath = map[BREATH] ?: true)
+        const val MEDITATION = "MEDITATION"
+        /** A name missing from the file (an older version wrote it) stays on: an older file never switches anything off. */
+        fun fromWire(map: Map<String, Boolean>) =
+            Modules(tones = map[TONES] ?: true, breath = map[BREATH] ?: true, meditation = map[MEDITATION] ?: true)
     }
 }

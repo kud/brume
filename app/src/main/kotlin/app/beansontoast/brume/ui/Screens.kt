@@ -87,10 +87,10 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
-enum class Tab { LISTEN, BREATH, TONES, JOURNAL, ABOUT }
+enum class Tab { LISTEN, CALM, TONES, JOURNAL, ABOUT }
 
-/** Listen, Journal and About are always there; the others follow their module switch (ADR 0003). */
-fun Modules.shows(tab: Tab) = when (tab) { Tab.TONES -> tones; Tab.BREATH -> breath; else -> true }
+/** Listen, Journal and About are always there; the others follow their module switch, Calm while Breathe or Meditation is on (ADR 0003). */
+fun Modules.shows(tab: Tab) = when (tab) { Tab.TONES -> tones; Tab.CALM -> calm; else -> true }
 
 @Composable
 fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), content: @Composable () -> Unit) {
@@ -101,7 +101,7 @@ fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), 
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
                 NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
                     NavigationBarItem(tab == Tab.LISTEN, { onTab(Tab.LISTEN) }, { Icon(painterResource(R.drawable.ic_horizon), null) }, label = { NavLabel(R.string.tab_listen, tab == Tab.LISTEN) })
-                    if (modules.breath) NavigationBarItem(tab == Tab.BREATH, { onTab(Tab.BREATH) }, { Icon(painterResource(R.drawable.ic_breath), null) }, label = { NavLabel(R.string.tab_breath, tab == Tab.BREATH) })
+                    if (modules.calm) NavigationBarItem(tab == Tab.CALM, { onTab(Tab.CALM) }, { Icon(painterResource(R.drawable.ic_breath), null) }, label = { NavLabel(R.string.tab_calm, tab == Tab.CALM) })
                     if (modules.tones) NavigationBarItem(tab == Tab.TONES, { onTab(Tab.TONES) }, { Icon(painterResource(R.drawable.ic_tones), null) }, label = { NavLabel(R.string.tab_tones, tab == Tab.TONES) })
                     NavigationBarItem(tab == Tab.JOURNAL, { onTab(Tab.JOURNAL) }, { Icon(painterResource(R.drawable.ic_journal), null) }, label = { NavLabel(R.string.tab_journal, tab == Tab.JOURNAL) })
                     NavigationBarItem(tab == Tab.ABOUT, { onTab(Tab.ABOUT) }, { Icon(painterResource(R.drawable.ic_info), null) }, label = { NavLabel(R.string.tab_about, tab == Tab.ABOUT) })
@@ -535,7 +535,9 @@ fun ModuleSettings(modules: Modules, onModules: (Modules) -> Unit) {
                 Text(stringResource(R.string.module_listen_summary), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+        // Calm holds two practices, each with its own switch: turning both off takes the Calm tab away.
         SwitchRow(stringResource(R.string.tab_breath), stringResource(R.string.module_breath_summary), modules.breath) { onModules(modules.copy(breath = it)) }
+        SwitchRow(stringResource(R.string.practice_meditation), stringResource(R.string.module_meditation_summary), modules.meditation) { onModules(modules.copy(meditation = it)) }
         SwitchRow(stringResource(R.string.tab_tones), stringResource(R.string.module_tones_summary), modules.tones) { onModules(modules.copy(tones = it)) }
     }
 }

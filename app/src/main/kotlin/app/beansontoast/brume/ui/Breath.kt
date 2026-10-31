@@ -80,40 +80,37 @@ private fun Pattern.label() = when (this) { Pattern.LONG_OUT -> "4-6"; Pattern.E
 @StringRes private fun Phase.word() = when (this) { Phase.IN -> R.string.breath_in; Phase.HOLD -> R.string.breath_hold; Phase.OUT -> R.string.breath_out }
 
 /**
- * The Souffle tab: rhythm, length, and two options, then Start. [soundName] is the sound chosen in
- * Listen, or null when there is none to play underneath.
+ * Breathe inside Calm: rhythm, length, and two options, then Start. [soundName] is the sound chosen
+ * in Listen, or null when there is none to play underneath.
  */
 @Composable
-fun BreathScreen(setup: BreathSetup, soundName: String?, onChange: (BreathSetup) -> Unit, onStart: () -> Unit) {
-    val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll)) {
-        Column(gutter) {
-            ScreenTitle(R.string.tab_breath, stringResource(R.string.breath_intro))
-            SectionTitle(stringResource(R.string.breath_rhythm), Modifier.padding(top = 16.dp))
-            Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Pattern.entries.forEach { SelectChip(it.label(), setup.pattern == it, { onChange(setup.copy(pattern = it)) }) }
-            }
-            Text(stringResource(setup.pattern.hint()), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-            if (setup.pattern == Pattern.FOUR_SEVEN_EIGHT) Text(stringResource(R.string.breath_478_note), style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+fun BreathPanel(setup: BreathSetup, soundName: String?, onChange: (BreathSetup) -> Unit, onStart: () -> Unit) {
+    Column {
+        Text(stringResource(R.string.breath_intro), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
+        SectionTitle(stringResource(R.string.breath_rhythm), Modifier.padding(top = 4.dp))
+        Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Pattern.entries.forEach { SelectChip(it.label(), setup.pattern == it, { onChange(setup.copy(pattern = it)) }) }
+        }
+        Text(stringResource(setup.pattern.hint()), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+        if (setup.pattern == Pattern.FOUR_SEVEN_EIGHT) Text(stringResource(R.string.breath_478_note), style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
 
-            SectionTitle(stringResource(R.string.breath_length), Modifier.padding(top = 20.dp))
-            Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SESSION_MINUTES.forEach { m -> SelectChip(stringResource(R.string.breath_minutes, m), setup.minutes == m, { onChange(setup.copy(minutes = m)) }) }
-            }
+        SectionTitle(stringResource(R.string.breath_length), Modifier.padding(top = 20.dp))
+        Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SESSION_MINUTES.forEach { m -> SelectChip(stringResource(R.string.breath_minutes, m), setup.minutes == m, { onChange(setup.copy(minutes = m)) }) }
+        }
 
-            SettingsGroup(stringResource(R.string.breath_options), Modifier.padding(top = 12.dp)) {
-                SwitchRow(stringResource(R.string.breath_haptics), stringResource(R.string.breath_haptics_summary), setup.haptics) { onChange(setup.copy(haptics = it)) }
-                if (soundName != null) SwitchRow(stringResource(R.string.breath_sound), stringResource(R.string.breath_sound_summary, soundName), setup.sound) {
-                    onChange(setup.copy(sound = it))
-                } else Column(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = 8.dp)) {
-                    Text(stringResource(R.string.breath_sound), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.breath_sound_none), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+        SettingsGroup(stringResource(R.string.breath_options), Modifier.padding(top = 12.dp)) {
+            SwitchRow(stringResource(R.string.breath_haptics), stringResource(R.string.breath_haptics_summary), setup.haptics) { onChange(setup.copy(haptics = it)) }
+            if (soundName != null) SwitchRow(stringResource(R.string.breath_sound), stringResource(R.string.breath_sound_summary, soundName), setup.sound) {
+                onChange(setup.copy(sound = it))
+            } else Column(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = 8.dp)) {
+                Text(stringResource(R.string.breath_sound), style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.breath_sound_none), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            FilledTonalButton(onStart, Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp).heightIn(min = 56.dp)) {
-                Text(stringResource(R.string.breath_start), style = MaterialTheme.typography.titleMedium)
-            }
+        }
+        FilledTonalButton(onStart, Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp).heightIn(min = 56.dp)) {
+            Text(stringResource(R.string.breath_start), style = MaterialTheme.typography.titleMedium)
         }
     }
 }
@@ -186,7 +183,7 @@ fun BreathSession(plan: BreathPlan, startedAt: Long, night: Boolean, haptics: Bo
  * The mist band: five thin horizon lines around a centre that rises from low (empty) to high (full),
  * spreading a little as it fills. Alpha stays low and lower again at night; nothing is filled.
  */
-private fun DrawScope.mistBand(fullness: Float, ink: Color, fade: Float) {
+internal fun DrawScope.mistBand(fullness: Float, ink: Color, fade: Float) {
     val w = size.width; val h = size.height
     val centre = h * (0.78f - 0.5f * fullness)
     val spread = h * (0.035f + 0.03f * fullness)
@@ -202,7 +199,7 @@ private fun DrawScope.mistBand(fullness: Float, ink: Color, fade: Float) {
 }
 
 /** One soft tap, or nothing when the phone has no vibrator. */
-private class Tapper(context: Context) {
+internal class Tapper(context: Context) {
     private val vibrator: Vibrator? = (
         if (Build.VERSION.SDK_INT >= 31) context.getSystemService(VibratorManager::class.java)?.defaultVibrator
         else @Suppress("DEPRECATION") context.getSystemService(Vibrator::class.java)
