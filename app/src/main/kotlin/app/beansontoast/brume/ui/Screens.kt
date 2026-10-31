@@ -267,15 +267,19 @@ private fun TimerControl(ui: PlayerUi, onTimer: (Int?) -> Unit, @StringRes title
         else -> stringResource(R.string.timer_minutes, ui.timerMinutes)
     }
     val title = stringResource(titleRes)
-    Column(
+    // The hourglass marks the control; the title and the value stay written beside it.
+    Row(
         modifier.clip(MaterialTheme.shapes.large).background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable(role = Role.Button, onClickLabel = stringResource(R.string.timer_change)) { onTimer(next) }
             .semantics(mergeDescendants = true) { stateDescription = value }
             .heightIn(min = 56.dp).padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-        Text(value, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        Icon(painterResource(R.drawable.ic_timer), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        Column(Modifier.padding(start = 10.dp), verticalArrangement = Arrangement.Center) {
+            Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            Text(value, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        }
     }
 }
 
