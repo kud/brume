@@ -1,6 +1,7 @@
 package app.beansontoast.brume.ui
 
 import app.beansontoast.brume.playback.openOutputSwitcher
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -157,7 +158,8 @@ private fun BrumeRoot(graph: AppGraph) {
                     onExport = { export.launch("brume-export-${LocalDate.now()}.json") },
                 )
                 Tab.ABOUT -> AboutScreen(nightHours = nightHours, onNightHours = graph.settings::setNightHours, version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true },
-                    sync = syncState, syncMessage = syncMessage, syncActions = syncActions)
+                    sync = syncState, syncMessage = syncMessage, syncActions = syncActions,
+                    language = if (Build.VERSION.SDK_INT >= 33) remember { LanguageChoice(currentLanguage(context)) { applyLanguage(context, it) } } else null)
             }
         }
     }

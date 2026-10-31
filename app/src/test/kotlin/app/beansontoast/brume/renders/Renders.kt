@@ -23,6 +23,8 @@ import app.beansontoast.brume.sync.SyncState
 import app.beansontoast.brume.ui.SyncActions
 import app.beansontoast.brume.ui.SyncSettings
 import app.beansontoast.brume.ui.AboutScreen
+import app.beansontoast.brume.ui.LanguageChoice
+import app.beansontoast.brume.ui.LanguageSettings
 import app.beansontoast.brume.ui.BrumeScaffold
 import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.JournalScreen
@@ -86,9 +88,12 @@ class Renders(private val shot: String) {
         "journal-day" -> shoot(dark = false, night = false, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-night" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-empty-dark" -> shoot(dark = true, night = false, Tab.JOURNAL) { JournalScreen(emptyList(), 0, today, null, { _, _, _ -> }, {}) }
-        "about-night" -> shoot(dark = true, night = true, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0") }
+        "about-night" -> shoot(dark = true, night = true, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0", language = LanguageChoice("") {}) }
         "listen-playing-open-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
-        "about-day" -> shoot(dark = false, night = false, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0") }
+        "about-day" -> shoot(dark = false, night = false, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0", language = LanguageChoice("fr") {}) }
+        "about-language-night" -> shoot(dark = true, night = true, Tab.ABOUT) { Column(Modifier.padding(horizontal = 20.dp)) { LanguageSettings(LanguageChoice("en") {}) } }
+        "about-language-day" -> shoot(dark = false, night = false, Tab.ABOUT) { Column(Modifier.padding(horizontal = 20.dp)) { LanguageSettings(LanguageChoice("") {}) } }
+        "balance-centre-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(playing.copy(balance = 0f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
         "sync-night" -> shoot(dark = true, night = true, Tab.ABOUT) { syncShot() }
         "sync-day" -> shoot(dark = false, night = false, Tab.ABOUT) { syncShot() }
         "sync-off-day" -> shoot(dark = false, night = false, Tab.ABOUT) { Column(Modifier.padding(horizontal = 20.dp)) { SyncSettings(SyncState(), null, SyncActions()) } }
@@ -120,6 +125,7 @@ class Renders(private val shot: String) {
             "journal-day", "journal-night", "journal-empty-dark", "about-night", "about-day", "listen-playing-open-day",
             "sync-night", "sync-day", "sync-off-day", "sync-problem-night",
             "balance-listen-night", "balance-listen-day", "balance-tones-night", "balance-tones-day",
+            "about-language-night", "about-language-day", "balance-centre-night",
         ).map { arrayOf<Any>(it) }
     }
 }

@@ -437,6 +437,7 @@ fun AboutScreen(
     sync: SyncState = SyncState(),
     syncMessage: String? = null,
     syncActions: SyncActions = SyncActions(),
+    language: LanguageChoice? = null,
 ) {
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll)) {
@@ -465,6 +466,9 @@ fun AboutScreen(
             SettingsGroup(stringResource(R.string.settings_title), Modifier.padding(top = 8.dp)) {
                 SwitchRow(stringResource(R.string.settings_night), stringResource(R.string.settings_night_summary), nightHours, onNightHours)
             }
+
+            // Below Android 13 there is no per-app locale and no cached appcompat to stand in: no row.
+            if (language != null) LanguageSettings(language)
 
             SyncSettings(sync, syncMessage, syncActions)
 

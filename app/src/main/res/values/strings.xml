@@ -195,4 +195,8 @@
     <string name="output_other">another output</string>
     <string name="balance_l">L</string>
     <string name="balance_r">R</string>
+    <string name="language_title">Language</string>
+    <string name="language_system">System default</string>
+    <string name="language_en">English</string>
+    <string name="language_fr">Français</string>
 </resources>

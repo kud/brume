@@ -194,4 +194,8 @@
     <string name="output_other">autre sortie</string>
     <string name="balance_l">G</string>
     <string name="balance_r">D</string>
+    <string name="language_title">Langue</string>
+    <string name="language_system">Langue du système</string>
+    <string name="language_en">English</string>
+    <string name="language_fr">Français</string>
 </resources>
