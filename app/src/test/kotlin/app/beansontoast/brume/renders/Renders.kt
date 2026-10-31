@@ -10,6 +10,8 @@ import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.NoiseColour
 import app.beansontoast.brume.core.sound.SoundEngine
 import app.beansontoast.brume.core.sound.ToneSettings
+import app.beansontoast.brume.playback.Output
+import app.beansontoast.brume.playback.OutputKind
 import app.beansontoast.brume.playback.PlayerUi
 import app.beansontoast.brume.playback.Status
 import androidx.compose.foundation.layout.Column
@@ -77,6 +79,10 @@ class Renders(private val shot: String) {
         "listen-stopped-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenComfort(idle.copy(status = Status.TOO_LOUD), ListenActions()) }
         "listen-tones-night" -> shoot(dark = true, night = true, Tab.TONES) { TonesScreen(tones.copy(playing = true), ListenActions()) }
         "listen-tones-day" -> shoot(dark = false, night = false, Tab.TONES) { TonesScreen(tones, ListenActions()) }
+        "balance-listen-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(playing.copy(balance = -0.3f, output = Output(OutputKind.BLUETOOTH, "WH-1000XM4")), ListenActions()) }
+        "balance-listen-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(idle.copy(balance = 1f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
+        "balance-tones-night" -> shoot(dark = true, night = true, Tab.TONES) { TonesScreen(tones.copy(playing = true, balance = 0.6f, output = Output(OutputKind.BLUETOOTH, "Sleep Buds")), ListenActions()) }
+        "balance-tones-day" -> shoot(dark = false, night = false, Tab.TONES) { TonesScreen(tones.copy(output = Output(OutputKind.SPEAKER, null)), ListenActions()) }
         "journal-day" -> shoot(dark = false, night = false, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-night" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-empty-dark" -> shoot(dark = true, night = false, Tab.JOURNAL) { JournalScreen(emptyList(), 0, today, null, { _, _, _ -> }, {}) }
@@ -113,6 +119,7 @@ class Renders(private val shot: String) {
             "listen-idle-night", "listen-playing-night", "listen-idle-day", "listen-playing-day", "listen-empty-dark", "listen-stopped-dark", "listen-tones-night", "listen-tones-day",
             "journal-day", "journal-night", "journal-empty-dark", "about-night", "about-day", "listen-playing-open-day",
             "sync-night", "sync-day", "sync-off-day", "sync-problem-night",
+            "balance-listen-night", "balance-listen-day", "balance-tones-night", "balance-tones-day",
         ).map { arrayOf<Any>(it) }
     }
 }

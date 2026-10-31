@@ -1,5 +1,6 @@
 package app.beansontoast.brume
 
+import app.beansontoast.brume.playback.watchOutputs
 import android.app.Application
 import android.content.Context
 import app.beansontoast.brume.data.BrumeDatabase
@@ -22,7 +23,7 @@ class AppGraph(app: Application) {
     val database = BrumeDatabase.open(app)
     val journal = Journal(database.journal())
     val settings = Settings(app)
-    val player = Player(app, journal, scope)
+    val player = Player(app, journal, scope).also { p -> watchOutputs(app, p::onOutput) }
     val sync = Sync(app, database, journal, settings, player, scope).also { it.start() }
 }
 
