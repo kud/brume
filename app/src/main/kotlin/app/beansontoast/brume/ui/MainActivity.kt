@@ -276,7 +276,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                             onStartBreath = ::startBreath,
                             onStartMeditation = ::startMeditation,
                         )
-                        Tab.TONES -> TonesScreen(player, actions)
+                        Tab.TONES -> TonesScreen(player, actions, step = tonesStep, onStep = { tonesStep = it; graph.settings.tonesStep = it }, night = night)
                         Tab.JOURNAL -> JournalScreen(
                             checkIns = checkIns,
                             weekSeconds = weekSeconds,

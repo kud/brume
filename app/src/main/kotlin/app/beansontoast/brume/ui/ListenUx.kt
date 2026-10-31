@@ -49,6 +49,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.beansontoast.brume.R
+import app.beansontoast.brume.core.learn.Evidence
+import androidx.compose.foundation.clickable
 import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.NoiseColour
 import app.beansontoast.brume.core.sound.SoundEngine.Mode
@@ -107,21 +109,102 @@ fun ListenComfort(all: PlayerUi, allActions: ListenActions, onBack: (() -> Unit)
     }
 }
 
-/** The Tones tab: a practice in sessions, its own heading, its own dock with a session timer. */
+/**
+ * The Tones tab as a path (Iris, 2026-10-31): understand, find your pitch, the right volume, then a
+ * session. The current step opens under its row; a done step shows its value and reopens on a tap.
+ * The dock stays, so a session can start at any step. At night the pitch step says it can wait.
+ */
 @Composable
-fun TonesScreen(all: PlayerUi, allActions: ListenActions) {
+fun TonesScreen(all: PlayerUi, allActions: ListenActions, step: Int = 1, onStep: (Int) -> Unit = {}, night: Boolean = false) {
     val (ui, actions) = forMode(all, allActions, Mode.TONES)
     Column(Modifier.fillMaxSize()) {
         val scroll = rememberScrollState()
         Column(Modifier.weight(1f).scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
-            ScreenTitle(R.string.tab_tones, stringResource(R.string.ux_tones_heading) + " · " + stringResource(R.string.ux_tones_session))
-            NowPlaying(ui, actions, Modifier.padding(top = 16.dp))
-            TonesPanel(ui, actions.tones)
+            ScreenTitle(R.string.tab_tones, stringResource(R.string.tones_path_subtitle))
+            Spacer(Modifier.height(12.dp))
+            val details = listOf(
+                stringResource(R.string.tones_step_1_detail),
+                stringResource(R.string.tones_pitch_value, ui.tones.pitch),
+                if (step > 3) stringResource(R.string.ux_level_short, (ui.toneLevel * 20).roundToInt()) else stringResource(R.string.tones_step_3_detail),
+                stringResource(R.string.tones_step_4_detail),
+            )
+            val titles = listOf(R.string.tones_step_1, R.string.tones_step_2, R.string.tones_step_3, R.string.tones_step_4)
+            titles.forEachIndexed { i, title ->
+                val n = i + 1
+                if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                PathStep(n, stringResource(title), details[i], done = n < step, now = n == step, onClick = { onStep(n) })
+                if (n == step) Column(Modifier.padding(start = 40.dp, bottom = 12.dp)) {
+                    when (n) {
+                        1 -> {
+                            Text(stringResource(R.string.tones_note), style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.ux_tones_session), style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+                            EvidenceMark(Evidence.LITTLE, Modifier.padding(top = 10.dp))
+                            Text(stringResource(R.string.tones_evidence_note), style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                            NextStep(R.string.tones_next_1) { onStep(2) }
+                        }
+                        2 -> {
+                            if (night) Text(stringResource(R.string.tones_step_2_night), style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp))
+                            PitchCard(ui, actions.tones)
+                            NextStep(R.string.tones_next_2) { onStep(3) }
+                        }
+                        3 -> {
+                            Text(stringResource(R.string.tones_step_3_hint), style = MaterialTheme.typography.bodyMedium)
+                            ToneLevel(ui, actions.tones)
+                            TrimsCard(ui, actions.tones)
+                            NextStep(R.string.tones_next_3) { onStep(4) }
+                        }
+                        else -> {
+                            Text(stringResource(R.string.tones_step_4_ready), style = MaterialTheme.typography.bodyMedium)
+                            NowPlaying(ui, actions, Modifier.padding(top = 10.dp))
+                        }
+                    }
+                }
+            }
             Spacer(Modifier.height(24.dp))
         }
         Dock(ui, actions, timerTitle = R.string.ux_session_timer)
     }
 }
+
+/** A step: its number or a check, its title and detail, and its state in a word, never a hue alone. */
+@Composable
+private fun PathStep(n: Int, title: String, detail: String, done: Boolean, now: Boolean, onClick: () -> Unit) {
+    val s = MaterialTheme.colorScheme
+    val state = stringResource(if (done) R.string.tones_done else R.string.tones_now)
+    val label = stringResource(R.string.tones_step_label, n, title)
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(role = Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) { contentDescription = label; if (done || now) stateDescription = state }
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Box(
+            Modifier.size(28.dp).clip(CircleShape).then(
+                when {
+                    now -> Modifier.background(s.inverseSurface)
+                    done -> Modifier.background(s.surfaceContainerHighest)
+                    else -> Modifier.border(1.5.dp, s.outline, CircleShape)
+                },
+            ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(if (done) "✓" else "$n", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold,
+                color = if (now) s.inverseOnSurface else s.onSurface)
+        }
+        Column(Modifier.weight(1f).padding(start = 12.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = if (now) FontWeight.SemiBold else FontWeight.Medium)
+            Text(detail, style = MaterialTheme.typography.bodySmall, color = s.onSurfaceVariant)
+        }
+        if (done || now) Text(state, style = MaterialTheme.typography.labelMedium, color = s.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun NextStep(@StringRes text: Int, onClick: () -> Unit) =
+    OutlinedButton(onClick, Modifier.padding(top = 12.dp).heightIn(min = 48.dp)) { Text(stringResource(text) + "  ›") }
 
 /**
  * What is on, or ready: the two layers as slots, each with its kind, its level and a Remove.

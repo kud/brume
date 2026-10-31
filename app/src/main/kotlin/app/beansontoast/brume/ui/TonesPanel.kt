@@ -50,64 +50,64 @@ internal fun pitchAt(position: Float): Int =
 
 internal fun positionOf(pitch: Int): Float = ((ln(pitch.toDouble()) - logMin) / (logMax - logMin)).toFloat()
 
-/**
- * The tone pattern's controls in night mist (Iris, 2026-10-31): what it is, then the pitch on its
- * own card with the value written large, the match tone, the level like any layer's, and the
- * four balance trims on one card. Values are always written; nothing rests on colour.
+/*
+ * The tone pattern's controls (Iris, 2026-10-31), in pieces the Tones path places one step at a
+ * time: the pitch on its own card with the value written large and the match tone, the level like
+ * any layer's, and the four balance trims on one card. Values are always written; nothing rests on colour.
  */
+
 @Composable
-fun TonesPanel(ui: PlayerUi, actions: ToneActions) {
+internal fun PitchCard(ui: PlayerUi, actions: ToneActions) {
     val tones = ui.tones
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
-    Column {
-        Text(stringResource(R.string.tones_note), style = MaterialTheme.typography.bodyMedium, color = muted,
-            modifier = Modifier.padding(top = 16.dp))
+    Card {
+        val pitchText = stringResource(R.string.tones_pitch_value, tones.pitch)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // ±1 %, about a sixth of a semitone: fine enough to settle a match the slider overshoots.
+            Nudge(R.drawable.ic_minus, stringResource(R.string.tones_pitch_down)) { actions.pitch((tones.pitch * 0.99).roundToInt()) }
+            Text(pitchText, style = MaterialTheme.typography.headlineSmall.tabular(), textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f))
+            Nudge(R.drawable.ic_plus, stringResource(R.string.tones_pitch_up)) { actions.pitch((tones.pitch * 1.01).roundToInt()) }
+        }
+        val pitchLabel = stringResource(R.string.tones_pitch)
+        Slider(
+            value = positionOf(tones.pitch),
+            onValueChange = { actions.pitch(pitchAt(it)) },
+            colors = quietSlider(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).semantics {
+                contentDescription = pitchLabel; stateDescription = pitchText
+            },
+        )
+        Text(stringResource(R.string.tones_pitch_help), style = MaterialTheme.typography.bodySmall, color = muted)
+        SwitchRow(stringResource(R.string.tones_match), stringResource(R.string.tones_match_summary), tones.match, actions.match)
+    }
+}
 
-        SectionTitle(stringResource(R.string.tones_pitch))
-        Card {
-            val pitchText = stringResource(R.string.tones_pitch_value, tones.pitch)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // ±1 %, about a sixth of a semitone: fine enough to settle a match the slider overshoots.
-                Nudge(R.drawable.ic_minus, stringResource(R.string.tones_pitch_down)) { actions.pitch((tones.pitch * 0.99).roundToInt()) }
-                Text(pitchText, style = MaterialTheme.typography.headlineSmall.tabular(), textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f))
-                Nudge(R.drawable.ic_plus, stringResource(R.string.tones_pitch_up)) { actions.pitch((tones.pitch * 1.01).roundToInt()) }
-            }
-            val pitchLabel = stringResource(R.string.tones_pitch)
+@Composable
+internal fun ToneLevel(ui: PlayerUi, actions: ToneActions) =
+    LevelRow(stringResource(R.string.tones_level_label), null, ui.toneLevel, actions.level)
+
+@Composable
+internal fun TrimsCard(ui: PlayerUi, actions: ToneActions) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    SectionTitle(stringResource(R.string.tones_balance))
+    Card {
+        Text(stringResource(R.string.tones_balance_help), style = MaterialTheme.typography.bodySmall, color = muted)
+        val hz = TonePattern.frequencies(ui.tones.pitch)
+        ui.tones.trims.forEachIndexed { i, trim ->
+            val percent = (trim * 100).roundToInt()
+            val trimText = stringResource(R.string.tones_trim, i + 1, hz[i], percent)
+            val trimLabel = stringResource(R.string.tones_trim_label, i + 1)
+            Text(trimText, style = MaterialTheme.typography.bodyMedium.tabular(), modifier = Modifier.padding(top = 8.dp))
             Slider(
-                value = positionOf(tones.pitch),
-                onValueChange = { actions.pitch(pitchAt(it)) },
+                value = trim,
+                onValueChange = { actions.trim(i, it) },
+                steps = 19,
                 colors = quietSlider(),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).semantics {
-                    contentDescription = pitchLabel; stateDescription = pitchText
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics {
+                    contentDescription = trimLabel; stateDescription = trimText
                 },
             )
-            Text(stringResource(R.string.tones_pitch_help), style = MaterialTheme.typography.bodySmall, color = muted)
-            SwitchRow(stringResource(R.string.tones_match), stringResource(R.string.tones_match_summary), tones.match, actions.match)
-        }
-
-        SectionTitle(stringResource(R.string.listen_levels))
-        LevelRow(stringResource(R.string.tones_level_label), null, ui.toneLevel, actions.level)
-
-        SectionTitle(stringResource(R.string.tones_balance))
-        Card {
-            Text(stringResource(R.string.tones_balance_help), style = MaterialTheme.typography.bodySmall, color = muted)
-            val hz = TonePattern.frequencies(tones.pitch)
-            tones.trims.forEachIndexed { i, trim ->
-                val percent = (trim * 100).roundToInt()
-                val trimText = stringResource(R.string.tones_trim, i + 1, hz[i], percent)
-                val trimLabel = stringResource(R.string.tones_trim_label, i + 1)
-                Text(trimText, style = MaterialTheme.typography.bodyMedium.tabular(), modifier = Modifier.padding(top = 8.dp))
-                Slider(
-                    value = trim,
-                    onValueChange = { actions.trim(i, it) },
-                    steps = 19,
-                    colors = quietSlider(),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics {
-                        contentDescription = trimLabel; stateDescription = trimText
-                    },
-                )
-            }
         }
     }
 }
