@@ -126,4 +126,11 @@
     <string name="ux_session_timer">Session</string>
     <string name="ux_tone_kind">Tone pattern</string>
     <string name="ux_level_short">%1$d/20</string>
+    <!-- The playing view (prototype) -->
+    <string name="play_back">Back to Listen</string>
+    <string name="play_with">with %1$s</string>
+    <string name="play_no_timer">No sleep timer</string>
+    <string name="play_state_playing">Playing</string>
+    <string name="play_state_paused">Paused</string>
+    <string name="play_resume">Resume</string>
 </resources>

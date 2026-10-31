@@ -3,5 +3,8 @@
     <!-- Brume's night: the launcher ground and the light window, matching the in-app scheme (ui/Theme.kt). -->
     <color name="launcher_ground">#FF10141A</color>
     <color name="launcher_mist">#FFDCE3EB</color>
+    <color name="launcher_horizon">#FF19222E</color>
+    <!-- Splash: the mark in ink by day; at night a dim mist (values-night), never a bright mass. -->
+    <color name="splash_mark">#FF3F5870</color>
     <color name="dawn_ground">#FFF5F6F8</color>
 </resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Platform splash (API 31+): the Horizon mark on the same ground as Listen's first frame, so the hand-off doesn't flash.
+         No branding image, no animated icon beyond the system's own exit. Below 31 the windowBackground alone stands in. -->
+    <style name="Theme.Brume" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowSplashScreenBackground">@android:color/black</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_mark</item>
+    </style>
+</resources>

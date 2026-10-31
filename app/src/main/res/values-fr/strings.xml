@@ -125,4 +125,11 @@
     <string name="ux_session_timer">Séance</string>
     <string name="ux_tone_kind">Motif de tons</string>
     <string name="ux_level_short">%1$d/20</string>
+    <!-- The playing view (prototype) -->
+    <string name="play_back">Revenir à Écouter</string>
+    <string name="play_with">avec %1$s</string>
+    <string name="play_no_timer">Sans minuterie</string>
+    <string name="play_state_playing">En lecture</string>
+    <string name="play_state_paused">En pause</string>
+    <string name="play_resume">Reprendre</string>
 </resources>
