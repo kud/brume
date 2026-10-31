@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Horizon at icon size (the Listen tab, the introduction): the splash mark's three lines, cropped
+     to their band, drawn 2.2 times taller and more opaque so the lines hold at 24dp under any tint. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="72" android:viewportHeight="72">
+    <group android:pivotX="54" android:pivotY="58" android:scaleY="2.2" android:translateX="-18" android:translateY="-22">
+        <path android:fillColor="#FFFFFFFF"
+            android:pathData="M22,52.1 C30,51.2 38,49.6 46,49.4 C56,49.2 64,50.4 72,49.6 C78,49.4 82,49.2 86,49 C82,49.5 78,50.4 72,51.2 C64,52.2 56,53.4 46,54 C38,54.4 30,53.4 22,52.1 Z" />
+        <path android:fillColor="#FFFFFFFF" android:fillAlpha="0.7"
+            android:pathData="M30,59.6 C38,58.6 46,58 54,58.2 C60,58.4 65,59 70,59.6 C64,60.2 60,60.6 54,60.8 C46,61 38,60.6 30,59.6 Z" />
+        <path android:fillColor="#FFFFFFFF" android:fillAlpha="0.45"
+            android:pathData="M40,66.4 C46,65.8 52,65.6 58,65.9 C61,66.1 63,66.3 65,66.6 C61,67 58,67.3 53,67.4 C48,67.4 44,67 40,66.4 Z" />
+    </group>
+</vector>

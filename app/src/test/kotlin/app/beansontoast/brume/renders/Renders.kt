@@ -73,6 +73,7 @@ class Renders(private val shot: String) {
         "journal-night" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-empty-dark" -> shoot(dark = true, night = false, Tab.JOURNAL) { JournalScreen(emptyList(), 0, today, null, { _, _, _ -> }, {}) }
         "about-night" -> shoot(dark = true, night = true, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0") }
+        "listen-playing-open-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
         "about-day" -> shoot(dark = false, night = false, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0") }
         else -> error(shot)
     }
@@ -92,7 +93,7 @@ class Renders(private val shot: String) {
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun shots() = listOf(
             "listen-idle-night", "listen-playing-night", "listen-idle-day", "listen-playing-day", "listen-empty-dark", "listen-stopped-dark", "listen-tones-night", "listen-tones-day",
-            "journal-day", "journal-night", "journal-empty-dark", "about-night", "about-day",
+            "journal-day", "journal-night", "journal-empty-dark", "about-night", "about-day", "listen-playing-open-day",
         ).map { arrayOf<Any>(it) }
     }
 }

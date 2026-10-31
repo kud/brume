@@ -94,7 +94,7 @@ fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, content: @Composable () -> Uni
             Column {
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
                 NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
-                    NavigationBarItem(tab == Tab.LISTEN, { onTab(Tab.LISTEN) }, { Icon(painterResource(R.drawable.ic_brume_mark), null) }, label = { NavLabel(R.string.tab_listen, tab == Tab.LISTEN) })
+                    NavigationBarItem(tab == Tab.LISTEN, { onTab(Tab.LISTEN) }, { Icon(painterResource(R.drawable.ic_horizon), null) }, label = { NavLabel(R.string.tab_listen, tab == Tab.LISTEN) })
                     NavigationBarItem(tab == Tab.TONES, { onTab(Tab.TONES) }, { Icon(painterResource(R.drawable.ic_tones), null) }, label = { NavLabel(R.string.tab_tones, tab == Tab.TONES) })
                     NavigationBarItem(tab == Tab.JOURNAL, { onTab(Tab.JOURNAL) }, { Icon(Icons.Filled.Edit, null) }, label = { NavLabel(R.string.tab_journal, tab == Tab.JOURNAL) })
                     NavigationBarItem(tab == Tab.ABOUT, { onTab(Tab.ABOUT) }, { Icon(Icons.Filled.Info, null) }, label = { NavLabel(R.string.tab_about, tab == Tab.ABOUT) })
@@ -152,6 +152,8 @@ class ListenActions(
     val tooLoud: () -> Unit = {},
     val mode: (Mode) -> Unit = {},
     val tones: ToneActions = ToneActions(),
+    /** Reopens the playing view from the "now playing" card. */
+    val open: () -> Unit = {},
 )
 
 internal val gutter = Modifier.padding(horizontal = 20.dp)
@@ -419,7 +421,7 @@ private fun duration(seconds: Long): String {
 }
 
 @Composable
-fun AboutScreen(nightHours: Boolean, onNightHours: (Boolean) -> Unit, version: String) {
+fun AboutScreen(nightHours: Boolean, onNightHours: (Boolean) -> Unit, version: String, onIntro: () -> Unit = {}) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Box(Modifier.fillMaxWidth().height(148.dp)) {
             Mist(Modifier.fillMaxSize(), strength = 0.6f)
@@ -457,6 +459,9 @@ fun AboutScreen(nightHours: Boolean, onNightHours: (Boolean) -> Unit, version: S
                 }
                 HorizontalDivider(Modifier.padding(vertical = 10.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 Text(stringResource(R.string.support_line), style = MaterialTheme.typography.bodyMedium)
+            }
+            OutlinedButton(onIntro, Modifier.fillMaxWidth().padding(top = 12.dp).heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.about_intro))
             }
             Text(stringResource(R.string.about_version, version), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 16.dp))

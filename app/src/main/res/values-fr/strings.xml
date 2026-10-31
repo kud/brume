@@ -128,4 +128,26 @@
     <string name="play_state_playing">En lecture</string>
     <string name="play_state_paused">En pause</string>
     <string name="play_resume">Reprendre</string>
+
+    <!-- L'introduction (Iris, 2026-10-31) -->
+    <string name="intro_skip">Passer</string>
+    <string name="intro_next">Suivant</string>
+    <string name="intro_back">Retour</string>
+    <string name="intro_step">%1$d sur %2$d</string>
+    <string name="intro_safe_title">Écouter sans risque</string>
+    <string name="intro_safe_level">Gardez le niveau juste sous vos acouphènes, jamais au-dessus. Ils doivent se fondre dans le son, encore un peu là.</string>
+    <string name="intro_safe_fade">Chaque lecture démarre en douceur, depuis le silence.</string>
+    <string name="intro_safe_too_loud">Au moindre doute, « Trop fort » coupe tout d\'un coup, et la lecture suivante démarre plus bas.</string>
+    <string name="intro_safe_volume">Brume ne change jamais le volume du téléphone. C\'est vous qui le réglez.</string>
+    <string name="intro_doctor_intro">Brume ne peut pas dire ce qui se cache derrière vos acouphènes. Un médecin, si. Consultez si l\'un de ces points vous concerne :</string>
+    <string name="intro_hearing_title">D\'abord, un bilan auditif</string>
+    <string name="intro_hearing">Si vous n\'en avez pas fait, un bilan auditif est la meilleure première étape. Votre médecin, un ORL ou un audioprothésiste peut le faire.</string>
+    <string name="intro_pitch_title">Votre hauteur</string>
+    <string name="intro_pitch_body">Le motif de tons joue autour de la hauteur de vos acouphènes. Réglez-la maintenant, avec un ton de comparaison, ou plus tard dans Tons.</string>
+    <string name="intro_pitch_optional">C\'est facultatif : les sons de confort n\'en ont pas besoin.</string>
+    <string name="intro_pitch_now">La régler</string>
+    <string name="intro_pitch_later">Plus tard</string>
+    <string name="about_intro">Revoir l\'introduction</string>
+    <string name="ux_open_playing">Ouvrir</string>
+    <string name="ux_open_playing_label">Ouvrir la vue de lecture</string>
 </resources>

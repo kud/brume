@@ -129,4 +129,26 @@
     <string name="play_state_playing">Playing</string>
     <string name="play_state_paused">Paused</string>
     <string name="play_resume">Resume</string>
+
+    <!-- The introduction (Iris, 2026-10-31): shown once, skippable, replayed from About. -->
+    <string name="intro_skip">Skip</string>
+    <string name="intro_next">Next</string>
+    <string name="intro_back">Back</string>
+    <string name="intro_step">%1$d of %2$d</string>
+    <string name="intro_safe_title">Listening safely</string>
+    <string name="intro_safe_level">Keep the level just under your tinnitus, never louder than it. It should blend in, still just there.</string>
+    <string name="intro_safe_fade">Every start fades in from silence.</string>
+    <string name="intro_safe_too_loud">If it\'s ever too much, “Too loud” stops everything at once, and the next start is quieter.</string>
+    <string name="intro_safe_volume">Brume never changes your phone\'s volume. Only you do.</string>
+    <string name="intro_doctor_intro">Brume can\'t tell what\'s behind your tinnitus. A doctor can. See one if any of this is true for you:</string>
+    <string name="intro_hearing_title">A hearing check first</string>
+    <string name="intro_hearing">If you haven\'t had one, a hearing check is the best first step. Your doctor, an ENT or an audiologist can do it.</string>
+    <string name="intro_pitch_title">Your pitch</string>
+    <string name="intro_pitch_body">The tone pattern plays around the pitch of your tinnitus. You can set it now, with a match tone to compare, or any time later in Tones.</string>
+    <string name="intro_pitch_optional">It\'s optional: the comfort sounds don\'t need it.</string>
+    <string name="intro_pitch_now">Set it now</string>
+    <string name="intro_pitch_later">Later</string>
+    <string name="about_intro">See the introduction again</string>
+    <string name="ux_open_playing">Open</string>
+    <string name="ux_open_playing_label">Open the playing view</string>
 </resources>

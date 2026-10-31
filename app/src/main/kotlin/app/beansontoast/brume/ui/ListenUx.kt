@@ -79,7 +79,7 @@ internal fun forMode(ui: PlayerUi, actions: ListenActions, mode: Mode): Pair<Pla
         ambience = { claim(); actions.ambience(it) },
         noiseLevel = actions.noiseLevel, ambienceLevel = actions.ambienceLevel, timer = actions.timer,
         toggle = { if (mine) actions.toggle() else { actions.mode(mode); if (!ui.playing) actions.toggle() } },
-        tooLoud = actions.tooLoud, mode = actions.mode,
+        tooLoud = actions.tooLoud, mode = actions.mode, open = actions.open,
         tones = ToneActions(
             pitch = { claim(); actions.tones.pitch(it) }, level = actions.tones.level,
             trim = { i, v -> claim(); actions.tones.trim(i, v) }, match = { claim(); actions.tones.match(it) },
@@ -130,9 +130,19 @@ fun TonesScreen(all: PlayerUi, allActions: ListenActions) {
 @Composable
 internal fun NowPlaying(ui: PlayerUi, actions: ListenActions, modifier: Modifier = Modifier) {
     Card(modifier) {
-        Text(stringResource(if (ui.playing) R.string.ux_now_playing else R.string.ux_ready),
-            style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.semantics { heading() })
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(if (ui.playing) R.string.ux_now_playing else R.string.ux_ready),
+                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f).semantics { heading() })
+            // Back to the playing view while this tab's sound plays: a named button, not a tap on the
+            // whole card, which holds sliders and Remove.
+            if (ui.playing) {
+                val label = stringResource(R.string.ux_open_playing_label)
+                TextButton(actions.open, Modifier.heightIn(min = 48.dp).semantics { contentDescription = label }) {
+                    Text(stringResource(R.string.ux_open_playing))
+                }
+            }
+        }
         if (ui.mode == Mode.TONES) {
             Slot(stringResource(R.string.ux_tone_kind), stringResource(R.string.tones_pitch_value, ui.tones.pitch), ui.toneLevel, null, null)
         } else {

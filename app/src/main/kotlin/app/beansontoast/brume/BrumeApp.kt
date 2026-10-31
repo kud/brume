@@ -34,5 +34,13 @@ class Settings(context: Context) {
         _nightHours.value = on
     }
 
-    private companion object { const val NIGHT_HOURS = "night_hours" }
+    /** Whether the introduction has been seen, finished or skipped. Read once at launch; About can replay it. */
+    val introSeen: Boolean get() = prefs.getBoolean(INTRO_SEEN, false)
+
+    fun setIntroSeen() = prefs.edit().putBoolean(INTRO_SEEN, true).apply()
+
+    private companion object {
+        const val NIGHT_HOURS = "night_hours"
+        const val INTRO_SEEN = "intro_seen"
+    }
 }
