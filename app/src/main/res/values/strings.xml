@@ -91,4 +91,21 @@
     <string name="journal_of_ten">of 10</string>
     <string name="journal_export_title">Your data</string>
     <string name="about_privacy_title">On this phone only</string>
+
+    <!-- Tone pattern (Maya, acrn) -->
+    <string name="mode_sounds">Sounds</string>
+    <string name="mode_tones">Tone pattern (ACRN)</string>
+    <string name="tones_note">Four soft tones around the pitch you set, in a shifting order: three beats on, two off. Keep it just audible, on its own.</string>
+    <string name="tones_pitch">Pitch</string>
+    <string name="tones_pitch_value">%1$,d Hz</string>
+    <string name="tones_pitch_help">Set it to the pitch you hear. The match tone helps you compare.</string>
+    <string name="tones_pitch_down">Lower the pitch a little</string>
+    <string name="tones_pitch_up">Raise the pitch a little</string>
+    <string name="tones_match">Match tone</string>
+    <string name="tones_match_summary">A steady tone at the pitch instead of the pattern</string>
+    <string name="tones_level_label">Tone level</string>
+    <string name="tones_balance">Balance</string>
+    <string name="tones_balance_help">Even out the four tones so none stands out.</string>
+    <string name="tones_trim">Tone %1$d · %2$,d Hz · %3$d%%</string>
+    <string name="tones_trim_label">Tone %1$d balance</string>
 </resources>

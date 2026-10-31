@@ -38,6 +38,9 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -70,6 +73,7 @@ import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.LevelRules
 import app.beansontoast.brume.core.sound.NoiseColour
+import app.beansontoast.brume.core.sound.SoundEngine.Mode
 import app.beansontoast.brume.playback.PlayerUi
 import app.beansontoast.brume.playback.Status
 import app.beansontoast.design.EmptyState
@@ -133,7 +137,7 @@ private fun NavLabel(@StringRes text: Int, selected: Boolean) =
 }
 
 private fun chosen(context: Context, ui: PlayerUi): String =
-    listOfNotNull(ui.noise?.label(), ui.ambience?.label()).joinToString(" + ") { context.getString(it) }
+    if (ui.mode == Mode.TONES) context.getString(R.string.mode_tones) else listOfNotNull(ui.noise?.label(), ui.ambience?.label()).joinToString(" + ") { context.getString(it) }
 
 fun soundLabel(context: Context, ui: PlayerUi): String = chosen(context, ui).ifEmpty { context.getString(R.string.app_name) }
 
@@ -145,9 +149,11 @@ class ListenActions(
     val timer: (Int?) -> Unit = {},
     val toggle: () -> Unit = {},
     val tooLoud: () -> Unit = {},
+    val mode: (Mode) -> Unit = {},
+    val tones: ToneActions = ToneActions(),
 )
 
-private val gutter = Modifier.padding(horizontal = 20.dp)
+internal val gutter = Modifier.padding(horizontal = 20.dp)
 
 @Composable
 private fun Wordmark(modifier: Modifier = Modifier) {
@@ -155,7 +161,7 @@ private fun Wordmark(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
+internal fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     Text(text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(top = 20.dp, bottom = 8.dp).semantics { heading() })
 }
@@ -172,39 +178,65 @@ fun ListenScreen(ui: PlayerUi, actions: ListenActions) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).then(gutter)) {
             Wordmark(Modifier.padding(top = 20.dp))
 
-            SectionTitle(stringResource(R.string.listen_noise))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                NoiseColour.entries.forEach { colour ->
-                    SoundCard(stringResource(colour.label()), ui.noise == colour,
-                        { actions.noise(if (ui.noise == colour) null else colour) }, Modifier.weight(1f)) { texture(colour, null, it) }
-                }
-            }
-
-            SectionTitle(stringResource(R.string.listen_nature))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Ambience.entries.forEach { a ->
-                    SoundCard(stringResource(a.label()), ui.ambience == a,
-                        { actions.ambience(if (ui.ambience == a) null else a) }, Modifier.weight(1f)) { texture(null, a, it) }
-                }
-                Spacer(Modifier.weight(1f)) // keeps nature's cards the size of noise's: one grid, no stretched row
-            }
-
-            // Levels appear only for the layers that are chosen (hidden, not disabled), with the
-            // sound's character and the one piece of advice that matters while setting them.
-            if (ui.hasSound) SectionTitle(stringResource(R.string.listen_levels))
-            ui.noise?.let { LevelRow(stringResource(it.label()), stringResource(it.hint()), ui.noiseLevel, actions.noiseLevel) }
-            if (ui.noise == NoiseColour.BROWN) {
-                Text(stringResource(R.string.noise_brown_note), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            ui.ambience?.let { LevelRow(stringResource(it.label()), stringResource(it.hint()), ui.ambienceLevel, actions.ambienceLevel) }
-            if (ui.hasSound) {
-                Text(stringResource(R.string.listen_guide), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
-            }
+            ModeSwitch(ui.mode, actions.mode)
+            if (ui.mode == Mode.TONES) TonesPanel(ui, actions.tones) else SoundLayers(ui, actions)
             Spacer(Modifier.height(12.dp))
         }
         Dock(ui, actions)
+    }
+}
+
+/** Sounds or the tone pattern: two segments, the chosen one marked ✓ and a step lighter. */
+@Composable
+private fun ModeSwitch(mode: Mode, onMode: (Mode) -> Unit) {
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        listOf(Mode.SOUNDS to R.string.mode_sounds, Mode.TONES to R.string.mode_tones).forEachIndexed { i, (m, label) ->
+            SegmentedButton(
+                selected = mode == m,
+                onClick = { onMode(m) },
+                shape = SegmentedButtonDefaults.itemShape(i, 2),
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) {
+                Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    fontWeight = if (mode == m) FontWeight.SemiBold else FontWeight.Normal)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SoundLayers(ui: PlayerUi, actions: ListenActions) {
+    Column {
+        SectionTitle(stringResource(R.string.listen_noise))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            NoiseColour.entries.forEach { colour ->
+                SoundCard(stringResource(colour.label()), ui.noise == colour,
+                    { actions.noise(if (ui.noise == colour) null else colour) }, Modifier.weight(1f)) { texture(colour, null, it) }
+            }
+        }
+
+        SectionTitle(stringResource(R.string.listen_nature))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Ambience.entries.forEach { a ->
+                SoundCard(stringResource(a.label()), ui.ambience == a,
+                    { actions.ambience(if (ui.ambience == a) null else a) }, Modifier.weight(1f)) { texture(null, a, it) }
+            }
+            Spacer(Modifier.weight(1f)) // keeps nature's cards the size of noise's: one grid, no stretched row
+        }
+
+        // Levels appear only for the layers that are chosen (hidden, not disabled), with the
+        // sound's character and the one piece of advice that matters while setting them.
+        if (ui.hasSound) SectionTitle(stringResource(R.string.listen_levels))
+        ui.noise?.let { LevelRow(stringResource(it.label()), stringResource(it.hint()), ui.noiseLevel, actions.noiseLevel) }
+        if (ui.noise == NoiseColour.BROWN) {
+            Text(stringResource(R.string.noise_brown_note), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        ui.ambience?.let { LevelRow(stringResource(it.label()), stringResource(it.hint()), ui.ambienceLevel, actions.ambienceLevel) }
+        if (ui.hasSound) {
+            Text(stringResource(R.string.listen_guide), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+        }
     }
 }
 
@@ -238,13 +270,13 @@ private fun SoundCard(
 }
 
 @Composable
-private fun LevelRow(name: String, character: String, level: Float, onLevel: (Float) -> Unit) {
+internal fun LevelRow(name: String, character: String?, level: Float, onLevel: (Float) -> Unit) {
     val steps = (level * 20).roundToInt()
     val levelText = stringResource(R.string.listen_level, steps)
     val sliderLabel = stringResource(R.string.listen_level_label, name)
     Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(name, style = MaterialTheme.typography.bodyLarge)
-        Text(" · $character", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Text(character?.let { " · $it" } ?: "", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         Text(levelText, style = MaterialTheme.typography.bodyMedium.tabular(), color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
@@ -261,7 +293,7 @@ private fun LevelRow(name: String, character: String, level: Float, onLevel: (Fl
 
 /** No tick dots: the value is written beside the slider, and twenty dots read as noise. */
 @Composable
-private fun quietSlider() = SliderDefaults.colors(activeTickColor = Color.Transparent, inactiveTickColor = Color.Transparent)
+internal fun quietSlider() = SliderDefaults.colors(activeTickColor = Color.Transparent, inactiveTickColor = Color.Transparent)
 
 @Composable
 private fun Dock(ui: PlayerUi, actions: ListenActions) {
@@ -271,6 +303,7 @@ private fun Dock(ui: PlayerUi, actions: ListenActions) {
         ui.playing -> stringResource(R.string.listen_state_playing, sound)
         ui.status != null -> stringResource(ui.status.message())
         !ui.hasSound -> stringResource(R.string.listen_state_empty)
+        ui.mode == Mode.TONES && ui.tones.match -> stringResource(R.string.listen_state_ready, stringResource(R.string.tones_match))
         else -> stringResource(R.string.listen_state_ready, sound)
     }
     Box(Modifier.fillMaxWidth()) {
@@ -353,7 +386,7 @@ private fun TimerControl(ui: PlayerUi, onTimer: (Int?) -> Unit, modifier: Modifi
 }
 
 @Composable
-private fun Card(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+internal fun Card(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(
         modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(MaterialTheme.colorScheme.surfaceContainer).padding(16.dp),
     ) { content() }

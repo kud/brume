@@ -90,4 +90,21 @@
     <string name="journal_of_ten">sur 10</string>
     <string name="journal_export_title">Vos données</string>
     <string name="about_privacy_title">Sur ce téléphone uniquement</string>
+
+    <!-- Tone pattern (Maya, acrn) -->
+    <string name="mode_sounds">Sons</string>
+    <string name="mode_tones">Motif de tons (ACRN)</string>
+    <string name="tones_note">Quatre tons doux autour de la hauteur réglée, dans un ordre qui change : trois temps joués, deux en pause. À garder tout juste audible, seul.</string>
+    <string name="tones_pitch">Hauteur</string>
+    <string name="tones_pitch_value">%1$,d Hz</string>
+    <string name="tones_pitch_help">Réglez-la sur la hauteur que vous entendez. Le ton de repère aide à comparer.</string>
+    <string name="tones_pitch_down">Baisser un peu la hauteur</string>
+    <string name="tones_pitch_up">Monter un peu la hauteur</string>
+    <string name="tones_match">Ton de repère</string>
+    <string name="tones_match_summary">Un ton continu à la hauteur réglée, au lieu du motif</string>
+    <string name="tones_level_label">Niveau des tons</string>
+    <string name="tones_balance">Équilibre</string>
+    <string name="tones_balance_help">Égalisez les quatre tons pour qu\'aucun ne ressorte.</string>
+    <string name="tones_trim">Ton %1$d · %2$,d Hz · %3$d %%</string>
+    <string name="tones_trim_label">Équilibre du ton %1$d</string>
 </resources>

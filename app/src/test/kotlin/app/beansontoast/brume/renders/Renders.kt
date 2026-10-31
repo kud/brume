@@ -8,6 +8,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.NoiseColour
+import app.beansontoast.brume.core.sound.SoundEngine
+import app.beansontoast.brume.core.sound.ToneSettings
 import app.beansontoast.brume.playback.PlayerUi
 import app.beansontoast.brume.playback.Status
 import app.beansontoast.brume.ui.AboutScreen
@@ -55,6 +57,8 @@ class Renders(private val shot: String) {
     private val idle = PlayerUi(NoiseColour.PINK, Ambience.RAIN, 0.3f, 0.45f)
     private val playing = PlayerUi(NoiseColour.BROWN, Ambience.RAIN, 0.35f, 0.25f, playing = true, timerMinutes = 45, timerRemainingMinutes = 38)
 
+    private val tones = PlayerUi(mode = SoundEngine.Mode.TONES, tones = ToneSettings(pitch = 6200, trims = listOf(1f, 0.85f, 0.7f, 0.6f)), toneLevel = 0.2f)
+
     @Test fun render() = when (shot) {
         "listen-idle-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenScreen(idle, ListenActions()) }
         "listen-playing-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenScreen(playing, ListenActions()) }
@@ -62,6 +66,8 @@ class Renders(private val shot: String) {
         "listen-playing-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenScreen(playing, ListenActions()) }
         "listen-empty-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenScreen(PlayerUi(noise = null, ambience = null), ListenActions()) }
         "listen-stopped-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenScreen(idle.copy(status = Status.TOO_LOUD), ListenActions()) }
+        "listen-tones-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenScreen(tones.copy(playing = true), ListenActions()) }
+        "listen-tones-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenScreen(tones, ListenActions()) }
         "journal-day" -> shoot(dark = false, night = false, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-night" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-empty-dark" -> shoot(dark = true, night = false, Tab.JOURNAL) { JournalScreen(emptyList(), 0, today, null, { _, _, _ -> }, {}) }
@@ -84,7 +90,7 @@ class Renders(private val shot: String) {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun shots() = listOf(
-            "listen-idle-night", "listen-playing-night", "listen-idle-day", "listen-playing-day", "listen-empty-dark", "listen-stopped-dark",
+            "listen-idle-night", "listen-playing-night", "listen-idle-day", "listen-playing-day", "listen-empty-dark", "listen-stopped-dark", "listen-tones-night", "listen-tones-day",
             "journal-day", "journal-night", "journal-empty-dark", "about-night", "about-day",
         ).map { arrayOf<Any>(it) }
     }

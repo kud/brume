@@ -21,6 +21,10 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
         data class Nature(val ambience: Ambience?) : Command
         data class NoiseLevel(val level: Float) : Command
         data class NatureLevel(val level: Float) : Command
+        /** Sounds (noise and ambience) or the tone pattern: the other group ramps to silence. */
+        data class Play(val mode: Mode) : Command
+        data class Tones(val settings: ToneSettings) : Command
+        data class ToneLevel(val level: Float) : Command
         /** Starts (or restarts) the sleep timer from now; null turns it off. */
         data class Timer(val minutes: Int?) : Command
         data object Start : Command
@@ -28,6 +32,8 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
         data object TooLoud : Command
     }
 
+    /** The tone pattern plays alone: noise under it would cover the very tones it is made of. */
+    enum class Mode { SOUNDS, TONES }
     enum class State { STOPPED, PLAYING, FADING_OUT }
     enum class StopReason { PAUSED, TIMER, TOO_LOUD }
 
@@ -39,6 +45,8 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
     @Volatile var playedFrames = 0L; private set
     @Volatile var timerRemainingFrames: Long? = null; private set
 
+    internal val tonesGainNow get() = tonesGain
+
     private var layerCount = 0L
     private var noise: Source? = null
     private var nature: Source? = null
@@ -46,6 +54,10 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
     private var natureTarget = 0f; private var natureGain = 0f
     private var noiseLevel = LevelRules.DEFAULT_LEVEL
     private var natureLevel = LevelRules.DEFAULT_LEVEL
+    private var mode = Mode.SOUNDS
+    private var tones: ToneSource? = null
+    private var tonesTarget = 0f; private var tonesGain = 0f
+    private var tonesLevel = TonePattern.DEFAULT_LEVEL
 
     private val rampStep = (1.0 / (rate * LevelRules.GAIN_RAMP_SECONDS)).toFloat()
     private val fadeInFrames = (rate * LevelRules.FADE_IN_SECONDS).toLong()
@@ -66,6 +78,13 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
             is Command.Nature -> { nature = command.ambience?.let { ambienceSource(it, rate, seed + ++layerCount) }; natureGain = 0f; aim() }
             is Command.NoiseLevel -> { noiseLevel = LevelRules.clampLevel(command.level); aim() }
             is Command.NatureLevel -> { natureLevel = LevelRules.clampLevel(command.level); aim() }
+            is Command.Play -> { mode = command.mode; aim() }
+            is Command.Tones -> {
+                val source = tones
+                if (source == null) tones = ToneSource(rate, seed + ++layerCount, command.settings) else source.configure(command.settings)
+                aim()
+            }
+            is Command.ToneLevel -> { tonesLevel = LevelRules.clampLevel(command.level); aim() }
             is Command.Timer -> {
                 val minutes = command.minutes
                 if (minutes == null) { timerTotal = 0; timerRemainingFrames = null } else {
@@ -87,8 +106,10 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
     }
 
     private fun aim() {
-        noiseTarget = if (noise == null) 0f else LevelRules.gainFor(noiseLevel)
-        natureTarget = if (nature == null) 0f else LevelRules.gainFor(natureLevel)
+        val sounds = mode == Mode.SOUNDS
+        noiseTarget = if (noise == null || !sounds) 0f else LevelRules.gainFor(noiseLevel)
+        natureTarget = if (nature == null || !sounds) 0f else LevelRules.gainFor(natureLevel)
+        tonesTarget = if (tones == null || sounds) 0f else LevelRules.gainFor(tonesLevel)
     }
 
     private fun fadeOut(seconds: Double, reason: StopReason) {
@@ -124,9 +145,12 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
 
             noiseGain = toward(noiseGain, noiseTarget)
             natureGain = toward(natureGain, natureTarget)
+            tonesGain = toward(tonesGain, tonesTarget)
             val n = noise?.next() ?: 0f
             val a = nature?.next() ?: 0f
-            val y = if (state == State.STOPPED) 0f else limit(n * noiseGain + a * natureGain) * master * timerGain
+            // The tone layer advances only while it can be heard; it resumes under the 20 ms gain ramp.
+            val t = if (tonesGain > 0f) tones?.next() ?: 0f else 0f
+            val y = if (state == State.STOPPED) 0f else limit(n * noiseGain + a * natureGain + t * tonesGain) * master * timerGain
             out[2 * i] = y; out[2 * i + 1] = y
             if (state != State.STOPPED) playedFrames++
             if (timerDone) { timerTotal = 0; timerRemainingFrames = null; stop(StopReason.TIMER) }
@@ -146,7 +170,7 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
             val remaining = timerTotal - timerElapsed
             if (remaining < timerFade) ((1 - cos(PI * remaining / timerFade)) / 2).toFloat() else 1f
         } else 1f
-        return if (state == State.STOPPED) 0f else master * timer * (noiseGain + natureGain)
+        return if (state == State.STOPPED) 0f else master * timer * (noiseGain + natureGain + tonesGain)
     }
 
     companion object {
