@@ -17,6 +17,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.beansontoast.brume.AppGraph
 import app.beansontoast.brume.BrumeApp
@@ -24,6 +26,8 @@ import app.beansontoast.brume.BuildConfig
 import app.beansontoast.brume.R
 import app.beansontoast.brume.core.NightHours
 import app.beansontoast.brume.core.journal.CheckIn
+import app.beansontoast.brume.sync.ImportResult
+import app.beansontoast.brume.sync.SyncProblem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,6 +39,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         val graph = (application as BrumeApp).graph
+        // Sync pulls the other phone's changes on the way in and pushes this one's on the way out.
+        lifecycle.addObserver(LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) graph.sync.request()
+            if (event == Lifecycle.Event.ON_STOP) graph.sync.flush()
+        })
         setContent { BrumeRoot(graph) }
     }
 }
@@ -63,6 +72,31 @@ private fun BrumeRoot(graph: AppGraph) {
             journalMessage = context.getString(if (ok) R.string.journal_exported else R.string.journal_export_failed)
         }
     }
+
+    val syncState by graph.sync.state.collectAsStateWithLifecycle()
+    var syncMessage by remember { mutableStateOf<String?>(null) }
+    val chooseFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
+        if (tree != null) scope.launch {
+            syncMessage = context.getString(if (graph.sync.chooseFolder(tree)) R.string.sync_done else R.string.sync_folder_failed)
+        }
+    }
+    val importFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) scope.launch {
+            syncMessage = when (val result = graph.sync.import(uri)) {
+                is ImportResult.Done ->
+                    if (result.days == 0 && result.sessions == 0) context.getString(R.string.import_nothing)
+                    else context.getString(R.string.import_done, result.days, result.sessions)
+                is ImportResult.Failed ->
+                    context.getString(if (result.problem == SyncProblem.NEWER) R.string.import_newer else R.string.import_failed)
+            }
+        }
+    }
+    val syncActions = SyncActions(
+        chooseFolder = { chooseFolder.launch(null) },
+        auto = graph.sync::setAuto,
+        syncNow = { scope.launch { syncMessage = context.getString(if (graph.sync.syncNow()) R.string.sync_done else R.string.sync_failed) } },
+        import = { importFile.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
+    )
 
     var showPlaying by rememberSaveable { mutableStateOf(false) }
     // The introduction shows once, on first launch, and again from About. Finishing or skipping marks it seen.
@@ -119,7 +153,8 @@ private fun BrumeRoot(graph: AppGraph) {
                     },
                     onExport = { export.launch("brume-export-${LocalDate.now()}.json") },
                 )
-                Tab.ABOUT -> AboutScreen(nightHours = nightHours, onNightHours = graph.settings::setNightHours, version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true })
+                Tab.ABOUT -> AboutScreen(nightHours = nightHours, onNightHours = graph.settings::setNightHours, version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true },
+                    sync = syncState, syncMessage = syncMessage, syncActions = syncActions)
             }
         }
     }

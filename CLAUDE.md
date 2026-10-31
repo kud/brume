@@ -17,6 +17,7 @@ The name lives only in `gradle.properties` (`app.name`, `app.label`, `app.applic
 - **Playback** uses the platform `MediaSession` and `Notification.MediaStyle`, not Media3: Media3 is not in the offline cache. Swap when a build can resolve it.
 - Room schemas are exported to `app/schemas` and committed; CI fails if they drift. Any schema change bumps the version and adds a migration test (`DatabaseTest`): stored data survives upgrades.
 - Renders: `BRUME_RENDERS=<dir> ./gradlew --offline :app:testDebugUnitTest --tests '*Renders*'` writes PNGs of each screen on invented data.
+- **Sync** (ADR `docs/adr/0001-folder-sync.md`): a user-chosen SAF folder holding `brume-sync.json`, merged by `:core` `sync/SyncMerge` (per-day later save wins, sessions union, settings per group). Levels never sync. The storage app uploads; Brume stays network-free.
 - Strings in English `values/` and French `values-fr/`, always both (`GuardsTest` checks).
 
 ## Never

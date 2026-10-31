@@ -12,6 +12,14 @@ import app.beansontoast.brume.core.sound.SoundEngine
 import app.beansontoast.brume.core.sound.ToneSettings
 import app.beansontoast.brume.playback.PlayerUi
 import app.beansontoast.brume.playback.Status
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import app.beansontoast.brume.sync.SyncProblem
+import app.beansontoast.brume.sync.SyncState
+import app.beansontoast.brume.ui.SyncActions
+import app.beansontoast.brume.ui.SyncSettings
 import app.beansontoast.brume.ui.AboutScreen
 import app.beansontoast.brume.ui.BrumeScaffold
 import app.beansontoast.brume.ui.BrumeTheme
@@ -75,7 +83,17 @@ class Renders(private val shot: String) {
         "about-night" -> shoot(dark = true, night = true, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0") }
         "listen-playing-open-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
         "about-day" -> shoot(dark = false, night = false, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0") }
+        "sync-night" -> shoot(dark = true, night = true, Tab.ABOUT) { syncShot() }
+        "sync-day" -> shoot(dark = false, night = false, Tab.ABOUT) { syncShot() }
+        "sync-off-day" -> shoot(dark = false, night = false, Tab.ABOUT) { Column(Modifier.padding(horizontal = 20.dp)) { SyncSettings(SyncState(), null, SyncActions()) } }
+        "sync-problem-night" -> shoot(dark = true, night = true, Tab.ABOUT) {
+            Column(Modifier.padding(horizontal = 20.dp)) { SyncSettings(SyncState("Brume", true, true, null, SyncProblem.UNREACHABLE), null, SyncActions()) }
+        }
         else -> error(shot)
+    }
+
+    @Composable private fun syncShot() = Column(Modifier.padding(horizontal = 20.dp)) {
+        SyncSettings(SyncState("Brume", hasFolder = true, auto = true, lastSyncedAt = 1_768_941_600_000), "Imported. Days added or updated: 4. Listening sessions added: 9.", SyncActions(), java.time.ZoneOffset.UTC)
     }
 
     private fun shoot(dark: Boolean, night: Boolean, tab: Tab, content: @Composable () -> Unit) {
@@ -94,6 +112,7 @@ class Renders(private val shot: String) {
         fun shots() = listOf(
             "listen-idle-night", "listen-playing-night", "listen-idle-day", "listen-playing-day", "listen-empty-dark", "listen-stopped-dark", "listen-tones-night", "listen-tones-day",
             "journal-day", "journal-night", "journal-empty-dark", "about-night", "about-day", "listen-playing-open-day",
+            "sync-night", "sync-day", "sync-off-day", "sync-problem-night",
         ).map { arrayOf<Any>(it) }
     }
 }

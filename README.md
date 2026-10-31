@@ -8,13 +8,14 @@ Sounds for comfort and sleep, and a short daily journal, for people living with 
 
 - **Listen.** Generated sound, two layers at once: one noise (white, pink, brown, grey) and one ambience (rain, surf, wind), each with its own level. Every start fades in from silence over about three seconds; the app never raises the system volume; **Too loud** cuts to silence and makes the next start quieter. A sleep timer (20, 45 or 90 minutes) fades out over its last five minutes. Plays with the screen off from a media notification, and pauses when the headphones or speaker change, or another app takes the audio.
 - **Journal.** One check-in a day: loudness and bother, 0 to 10, and an optional note. Listening time is logged on its own. **Export** writes everything to one versioned JSON file, wherever you choose.
+- **Back up and sync.** Choose a folder, in Google Drive or on the phone: Brume keeps `brume-sync.json` there and merges with it after every change, so two phones that choose the same folder keep the same journal, tone settings and night hours. Import adds a file's check-ins without removing anything (About › Back up and sync).
 - **Night.** From 22:00 to 06:00 the app is dark and dim on true black, whatever the system theme (can be switched off in About).
 
 Everything is synthesised: there are no sound files. Birds and other recorded sounds come later, from CC0 recordings with a licence manifest.
 
 ## Privacy
 
-Nothing leaves the phone. Brume has no internet permission (the build fails if one appears), no account, no analytics and no cloud backup of the journal. Your data leaves only in an export you save yourself.
+Nothing leaves the phone. Brume has no internet permission (the build fails if one appears), no account, no analytics and no cloud backup of the journal. Your data leaves only in an export you save yourself, or in the sync folder you choose; the storage app (Google Drive, say) does any uploading, never Brume.
 
 ## Build
 

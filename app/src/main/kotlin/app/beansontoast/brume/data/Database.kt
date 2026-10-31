@@ -48,6 +48,9 @@ interface JournalDao {
     @Insert
     suspend fun insert(session: SessionEntity)
 
+    @Insert
+    suspend fun insertAll(sessions: List<SessionEntity>)
+
     @Query("SELECT COALESCE(SUM(seconds), 0) FROM sessions WHERE startedAt >= :since")
     fun secondsSince(since: Long): Flow<Long>
 

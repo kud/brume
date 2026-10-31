@@ -79,8 +79,27 @@ class Player(private val context: Context, private val journal: Journal, private
     fun setMatch(match: Boolean) = tones { it.copy(match = match) }
 
     private fun tones(transform: (ToneSettings) -> ToneSettings) {
+        val before = _ui.value.tones
         change { it.copy(tones = transform(it.tones)) }
+        val after = _ui.value.tones
+        if (after.pitch != before.pitch || after.trims != before.trims) prefs.edit().putLong(TONES_AT, System.currentTimeMillis()).apply()
         engine.post(Command.Tones(_ui.value.tones))
+    }
+
+    /** When pitch or trims last changed here, epoch ms; 0 if never. The later change wins in sync. */
+    val tonesAt: Long get() = prefs.getLong(TONES_AT, 0L)
+
+    /**
+     * Takes pitch and trims chosen on another phone. Never while playing: a trim is a level, and a
+     * level never changes without a user action here. Returns false when skipped; the next sync after
+     * the sound stops brings them in.
+     */
+    fun applySyncedTones(pitch: Int, trims: List<Float>, at: Long): Boolean {
+        if (_ui.value.playing || trims.size != TonePattern.TONES) return false
+        change { it.copy(tones = it.tones.copy(pitch = TonePattern.clampPitch(pitch), trims = trims.map { t -> t.coerceIn(0f, 1f) })) }
+        prefs.edit().putLong(TONES_AT, at).apply()
+        engine.post(Command.Tones(_ui.value.tones))
+        return true
     }
 
     fun selectNoise(colour: NoiseColour?) { change { it.copy(noise = colour) }; engine.post(Command.Noise(colour)); pauseIfSilent() }
@@ -212,7 +231,7 @@ class Player(private val context: Context, private val journal: Journal, private
         const val NOISE = "noise"; const val AMBIENCE = "ambience"
         const val NOISE_LEVEL = "noise_level"; const val AMBIENCE_LEVEL = "ambience_level"
         const val TIMER = "timer"
-        const val MODE = "mode"; const val TONE_LEVEL = "tone_level"; const val PITCH = "tone_pitch"; const val TRIMS = "tone_trims"
+        const val MODE = "mode"; const val TONE_LEVEL = "tone_level"; const val PITCH = "tone_pitch"; const val TRIMS = "tone_trims"; const val TONES_AT = "tones_at"
         const val TONE_PATTERN = "TONE_PATTERN"
     }
 }
