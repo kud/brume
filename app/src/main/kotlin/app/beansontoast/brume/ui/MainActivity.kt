@@ -295,7 +295,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                             onExport = { export.launch("brume-export-${LocalDate.now()}.json") },
                             onCard = { push("card:$it") },
                         )
-                        Tab.LEARN -> LearnScreen(onTopic = { push("topic:$it") }, onSettings = { push("settings") }, onAbout = { push("about") })
+                        Tab.LEARN -> LearnScreen(onTopic = { push("topic:$it") }, onSettings = { push("settings") }, onAbout = { push("about") }, onCard = { push("card:$it") })
                         }
                     }
                 }

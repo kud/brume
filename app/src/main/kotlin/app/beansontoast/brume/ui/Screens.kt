@@ -549,19 +549,27 @@ private fun duration(seconds: Long): String {
 }
 
 /**
- * The Learn tab (Erwann, 2026-10-31: « Comprendre à la place d'À propos »): the seven topics first,
- * when to see a doctor, then two rows, Settings and About Brume.
+ * The Learn tab (Erwann, 2026-10-31: « Comprendre à la place d'À propos »): the decibel dial and the
+ * « Vrai ou idée reçue ? » deck first, so play is the first thing seen (Iris, 2026-10-31); then the
+ * library's seven topics, when to see a doctor, and two rows, Settings and About Brume.
  */
 @Composable
 fun LearnScreen(
     onTopic: (Int) -> Unit = {},
     onSettings: () -> Unit = {},
     onAbout: () -> Unit = {},
+    onCard: (String) -> Unit = {},
+    still: Boolean? = null,
 ) {
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
         ScreenTitle(R.string.tab_learn, stringResource(R.string.learn_intro))
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
+        DecibelExplorer(still = still, onCard = onCard)
+        HorizontalDivider(Modifier.padding(vertical = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
+        QuizDeck(onCard = onCard, still = still)
+        HorizontalDivider(Modifier.padding(top = 24.dp, bottom = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
+        Text(stringResource(R.string.learn_library), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
         LearnTopics(onTopic)
 
         SettingsGroup(stringResource(R.string.doctor_title)) {
