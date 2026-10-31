@@ -1,6 +1,6 @@
 # brume
 
-Native Android app: sounds for comfort and sleep, and a daily journal, for Erwann's tinnitus. v1 is for him alone; data stays on the phone. Wellness app, not a medical device. Framing lives in atelier's `knowledge/projects/tinnitus-app/` (scope, experience, architecture, evidence).
+Native Android app: sounds for comfort and sleep, and a daily journal, for living with tinnitus. v1 is for its maintainer's own use; data stays on the phone. Wellness app, not a medical device. Framing lives in atelier's `knowledge/projects/tinnitus-app/` (scope, experience, architecture, evidence).
 
 The name lives only in `gradle.properties` (`app.name`, `app.label`, `app.applicationId` = `app.beansontoast.brume`). Kotlin packages are `app.beansontoast.brume.*`.
 
@@ -21,7 +21,7 @@ The name lives only in `gradle.properties` (`app.name`, `app.label`, `app.applic
 
 ## Never
 
-- Put health data in the repo, fixtures, tests or screenshots: Erwann's readings live only on his phone and in his exports. Fixtures are invented.
+- Put health data in the repo, fixtures, tests or screenshots: a user's readings live only on their phone and in their exports. Fixtures are invented.
 - Make a claim: no treats, cures, relieves, therapy, "reduces tinnitus", "clinically proven", in any string, the README or a commit. Use comfort, calm, sleep, cover, blend, track. `GuardsTest` scans the strings.
 - Add network access in v0.1: no `INTERNET` or other network permission (`checkNoNetwork*` fails the build), no `java.net`/HTTP client in sources (`GuardsTest`). The updater comes later in its own flavour, pastille's way.
 - Raise the system volume or a level without a user action. Every start fades in; "Too loud" cuts to silence.
