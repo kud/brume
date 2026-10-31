@@ -71,6 +71,7 @@ import app.beansontoast.brume.core.sound.NoiseColour
 import app.beansontoast.brume.core.sound.SoundEngine.Mode
 import app.beansontoast.brume.playback.PlayerUi
 import app.beansontoast.brume.playback.Status
+import app.beansontoast.brume.sync.SyncState
 import app.beansontoast.design.EmptyState
 import app.beansontoast.design.SettingsGroup
 import app.beansontoast.design.SwitchRow
@@ -420,7 +421,15 @@ private fun duration(seconds: Long): String {
 }
 
 @Composable
-fun AboutScreen(nightHours: Boolean, onNightHours: (Boolean) -> Unit, version: String, onIntro: () -> Unit = {}) {
+fun AboutScreen(
+    nightHours: Boolean,
+    onNightHours: (Boolean) -> Unit,
+    version: String,
+    onIntro: () -> Unit = {},
+    sync: SyncState = SyncState(),
+    syncMessage: String? = null,
+    syncActions: SyncActions = SyncActions(),
+) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Box(Modifier.fillMaxWidth().height(148.dp)) {
             Mist(Modifier.fillMaxSize(), strength = 0.6f)
@@ -447,6 +456,8 @@ fun AboutScreen(nightHours: Boolean, onNightHours: (Boolean) -> Unit, version: S
             SettingsGroup(stringResource(R.string.settings_title), Modifier.padding(top = 8.dp)) {
                 SwitchRow(stringResource(R.string.settings_night), stringResource(R.string.settings_night_summary), nightHours, onNightHours)
             }
+
+            SyncSettings(sync, syncMessage, syncActions)
 
             SettingsGroup(stringResource(R.string.doctor_title)) {
                 Text(stringResource(R.string.doctor_intro), style = MaterialTheme.typography.bodyMedium)

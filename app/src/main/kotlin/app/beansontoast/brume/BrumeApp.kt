@@ -5,6 +5,7 @@ import android.content.Context
 import app.beansontoast.brume.data.BrumeDatabase
 import app.beansontoast.brume.data.Journal
 import app.beansontoast.brume.playback.Player
+import app.beansontoast.brume.sync.Sync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,6 +23,7 @@ class AppGraph(app: Application) {
     val journal = Journal(database.journal())
     val settings = Settings(app)
     val player = Player(app, journal, scope)
+    val sync = Sync(app, database, journal, settings, player, scope).also { it.start() }
 }
 
 class Settings(context: Context) {
@@ -29,8 +31,14 @@ class Settings(context: Context) {
     private val _nightHours = MutableStateFlow(prefs.getBoolean(NIGHT_HOURS, true))
     val nightHours: StateFlow<Boolean> = _nightHours
 
-    fun setNightHours(on: Boolean) {
-        prefs.edit().putBoolean(NIGHT_HOURS, on).apply()
+    fun setNightHours(on: Boolean) = applyNightHours(on, System.currentTimeMillis())
+
+    /** When night hours last changed, epoch ms; 0 if never. The later change wins in sync. */
+    val nightHoursAt: Long get() = prefs.getLong(NIGHT_HOURS_AT, 0L)
+
+    /** Sets night hours with the time it was chosen, here or on another phone. */
+    fun applyNightHours(on: Boolean, at: Long) {
+        prefs.edit().putBoolean(NIGHT_HOURS, on).putLong(NIGHT_HOURS_AT, at).apply()
         _nightHours.value = on
     }
 
@@ -41,6 +49,7 @@ class Settings(context: Context) {
 
     private companion object {
         const val NIGHT_HOURS = "night_hours"
+        const val NIGHT_HOURS_AT = "night_hours_at"
         const val INTRO_SEEN = "intro_seen"
     }
 }

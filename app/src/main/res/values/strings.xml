@@ -46,13 +46,13 @@
     <string name="duration_hours_minutes">%1$d h %2$d min</string>
     <string name="duration_minutes">%1$d min</string>
     <string name="journal_export">Export to a file</string>
-    <string name="journal_export_body">Everything, as one JSON file, wherever you choose. It\'s the only way your data leaves the phone.</string>
+    <string name="journal_export_body">Everything, as one JSON file, wherever you choose. With a synced folder, it\'s the only way your data leaves the phone.</string>
     <string name="journal_exported">Exported</string>
     <string name="journal_export_failed">The export couldn\'t be written.</string>
 
     <string name="about_what">Sounds for comfort and sleep. A journal to see how things go over time.</string>
     <string name="about_disclaimer">It\'s not a treatment, and it doesn\'t replace a doctor. Brume is not a medical device.</string>
-    <string name="about_privacy">Everything stays on this phone. Brume has no internet access, no account and no cloud backup. Data leaves only in an export you save yourself.</string>
+    <string name="about_privacy">Everything stays on this phone. Brume has no internet access, no account and no cloud backup. Data leaves only in a file you save yourself, or in the folder you choose to sync with.</string>
     <string name="settings_title">Settings</string>
     <string name="settings_night">Night hours, 22:00–06:00</string>
     <string name="settings_night_summary">Dark and dim at night, whatever the system theme, and opens on Listen.</string>
@@ -151,4 +151,30 @@
     <string name="about_intro">See the introduction again</string>
     <string name="ux_open_playing">Open</string>
     <string name="ux_open_playing_label">Open the playing view</string>
+    <!-- Back up and sync (Settings). The file name brume-sync.json is never translated. -->
+    <string name="sync_title">Back up and sync</string>
+    <string name="sync_off_body">Choose a folder, in Google Drive or on this phone. Brume keeps one file there, brume-sync.json, and updates it after every change. Another phone that chooses the same folder keeps the same journal. The storage app does the uploading: Brume itself still has no internet access.</string>
+    <string name="sync_on">Syncing with %1$s.</string>
+    <string name="sync_paused">Sync is off. %1$s stays chosen for when you turn it back on.</string>
+    <string name="sync_folder_unnamed">the folder you chose</string>
+    <string name="sync_last">Last synced %1$s.</string>
+    <string name="sync_never">Not synced yet.</string>
+    <string name="sync_problem_unreachable">The last sync didn\'t work: the folder can\'t be reached. If it moved, choose it again.</string>
+    <string name="sync_problem_newer">The last sync didn\'t work: the file comes from a newer Brume. Update Brume on this phone.</string>
+    <string name="sync_problem_not_brume">The last sync didn\'t work: brume-sync.json in that folder isn\'t a file Brume can read.</string>
+    <string name="sync_auto">Sync automatically</string>
+    <string name="sync_auto_summary">After every change, and when Brume opens or closes.</string>
+    <string name="sync_choose">Choose a folder</string>
+    <string name="sync_choose_other">Choose another folder</string>
+    <string name="sync_now">Sync now</string>
+    <string name="sync_done">Synced</string>
+    <string name="sync_failed">The sync didn\'t work. Nothing on this phone changed.</string>
+    <string name="sync_folder_failed">That folder couldn\'t be opened. Nothing changed.</string>
+    <string name="import_title">Import a file</string>
+    <string name="import_body">Adds the check-ins, listening and tone settings from a Brume export or sync file. Nothing on this phone is removed; for a day in both, the later check-in stays.</string>
+    <string name="import_action">Import a file</string>
+    <string name="import_done">Imported. Days added or updated: %1$d. Listening sessions added: %2$d.</string>
+    <string name="import_nothing">Nothing new in that file.</string>
+    <string name="import_failed">That file couldn\'t be read. Nothing changed.</string>
+    <string name="import_newer">That file comes from a newer Brume. Nothing changed.</string>
 </resources>

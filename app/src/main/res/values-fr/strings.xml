@@ -45,13 +45,13 @@
     <string name="duration_hours_minutes">%1$d h %2$d min</string>
     <string name="duration_minutes">%1$d min</string>
     <string name="journal_export">Exporter dans un fichier</string>
-    <string name="journal_export_body">Tout, dans un fichier JSON, là où vous le choisissez. C\'est la seule façon dont vos données quittent le téléphone.</string>
+    <string name="journal_export_body">Tout, dans un fichier JSON, là où vous le choisissez. Avec un dossier synchronisé, c\'est la seule façon dont vos données quittent le téléphone.</string>
     <string name="journal_exported">Exporté</string>
     <string name="journal_export_failed">L\'export n\'a pas pu être écrit.</string>
 
     <string name="about_what">Des sons pour le confort et le sommeil. Un journal pour voir comment les choses évoluent.</string>
     <string name="about_disclaimer">Ce n\'est pas un traitement, et cela ne remplace pas un médecin. Brume n\'est pas un dispositif médical.</string>
-    <string name="about_privacy">Tout reste sur ce téléphone. Brume n\'a ni accès à internet, ni compte, ni sauvegarde dans le cloud. Les données ne sortent que par un export que vous enregistrez vous-même.</string>
+    <string name="about_privacy">Tout reste sur ce téléphone. Brume n\'a ni accès à internet, ni compte, ni sauvegarde dans le cloud. Les données ne sortent que dans un fichier que vous enregistrez vous-même, ou dans le dossier que vous choisissez de synchroniser.</string>
     <string name="settings_title">Réglages</string>
     <string name="settings_night">Heures de nuit, 22:00–06:00</string>
     <string name="settings_night_summary">Sombre et atténué la nuit, quel que soit le thème du système, et ouverture sur Écouter.</string>
@@ -150,4 +150,30 @@
     <string name="about_intro">Revoir l\'introduction</string>
     <string name="ux_open_playing">Ouvrir</string>
     <string name="ux_open_playing_label">Ouvrir la vue de lecture</string>
+    <!-- Sauvegarde et synchronisation (Réglages). Le nom brume-sync.json ne se traduit pas. -->
+    <string name="sync_title">Sauvegarde et synchronisation</string>
+    <string name="sync_off_body">Choisissez un dossier, dans Google Drive ou sur ce téléphone. Brume y garde un fichier, brume-sync.json, et le met à jour après chaque changement. Un autre téléphone qui choisit le même dossier garde le même journal. L\'app de stockage s\'occupe de l\'envoi : Brume n\'a toujours pas accès à internet.</string>
+    <string name="sync_on">Synchronisé avec %1$s.</string>
+    <string name="sync_paused">La synchronisation est coupée. %1$s reste choisi pour la reprendre.</string>
+    <string name="sync_folder_unnamed">le dossier choisi</string>
+    <string name="sync_last">Dernière synchronisation : %1$s.</string>
+    <string name="sync_never">Pas encore synchronisé.</string>
+    <string name="sync_problem_unreachable">La dernière synchronisation n\'a pas abouti : le dossier est inaccessible. S\'il a changé de place, choisissez-le à nouveau.</string>
+    <string name="sync_problem_newer">La dernière synchronisation n\'a pas abouti : le fichier vient d\'une version plus récente de Brume. Mettez Brume à jour sur ce téléphone.</string>
+    <string name="sync_problem_not_brume">La dernière synchronisation n\'a pas abouti : Brume ne sait pas lire le fichier brume-sync.json de ce dossier.</string>
+    <string name="sync_auto">Synchroniser automatiquement</string>
+    <string name="sync_auto_summary">Après chaque changement, et à l\'ouverture et à la fermeture de Brume.</string>
+    <string name="sync_choose">Choisir un dossier</string>
+    <string name="sync_choose_other">Choisir un autre dossier</string>
+    <string name="sync_now">Synchroniser</string>
+    <string name="sync_done">Synchronisé</string>
+    <string name="sync_failed">La synchronisation n\'a pas abouti. Rien n\'a changé sur ce téléphone.</string>
+    <string name="sync_folder_failed">Ce dossier n\'a pas pu être ouvert. Rien n\'a changé.</string>
+    <string name="import_title">Importer un fichier</string>
+    <string name="import_body">Ajoute les saisies, les écoutes et les réglages de tons d\'un export ou d\'un fichier de synchronisation Brume. Rien n\'est retiré de ce téléphone ; pour un jour présent des deux côtés, la saisie la plus récente est gardée.</string>
+    <string name="import_action">Importer un fichier</string>
+    <string name="import_done">Importé. Jours ajoutés ou mis à jour : %1$d. Écoutes ajoutées : %2$d.</string>
+    <string name="import_nothing">Rien de nouveau dans ce fichier.</string>
+    <string name="import_failed">Ce fichier n\'a pas pu être lu. Rien n\'a changé.</string>
+    <string name="import_newer">Ce fichier vient d\'une version plus récente de Brume. Rien n\'a changé.</string>
 </resources>
