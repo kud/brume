@@ -289,6 +289,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                                 }
                             },
                             onExport = { export.launch("brume-export-${LocalDate.now()}.json") },
+                            onCard = { push("card:$it") },
                         )
                         Tab.ABOUT -> AboutScreen(version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true },
                             onTopic = { push("topic:$it") }, onSettings = { push("settings") })

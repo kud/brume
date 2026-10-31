@@ -72,6 +72,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.beansontoast.brume.R
 import app.beansontoast.brume.core.journal.CheckIn
+import app.beansontoast.brume.core.journal.NoteTags
+import app.beansontoast.brume.core.learn.Learn
+import app.beansontoast.brume.core.learn.Tag
 import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.LevelRules
 import app.beansontoast.brume.core.sound.NoiseColour
@@ -328,6 +331,11 @@ internal fun Card(modifier: Modifier = Modifier, content: @Composable () -> Unit
     ) { content() }
 }
 
+/**
+ * The Journal asks one question at a time (Iris, 2026-10-31): how much room the sound took (bother),
+ * how loud it was (loudness), then anything to note, with tags. Tags ride in the note (NoteTags), so
+ * nothing in storage changes. A tag leads to its Learn card as an invitation, never as an insight.
+ */
 @Composable
 fun JournalScreen(
     checkIns: List<CheckIn>,
@@ -336,12 +344,19 @@ fun JournalScreen(
     message: String?,
     onSave: (Int, Int, String) -> Unit,
     onExport: () -> Unit,
+    onCard: (String) -> Unit = {},
+    startEditing: Boolean = false,
+    startQuestion: Int = 1,
 ) {
     val todays = checkIns.firstOrNull { it.day == today.toString() }
     val start = todays ?: checkIns.firstOrNull()
+    val todaysParts = remember(todays) { NoteTags.parse(todays?.note ?: "") }
     var loudness by remember(todays) { mutableIntStateOf(start?.loudness ?: 5) }
     var bother by remember(todays) { mutableIntStateOf(start?.bother ?: 5) }
-    var note by remember(todays) { mutableStateOf(todays?.note ?: "") }
+    var note by remember(todays) { mutableStateOf(todaysParts.text) }
+    var tags by remember(todays) { mutableStateOf(todaysParts.tags) }
+    var editing by remember(todays) { mutableStateOf(todays == null || startEditing) }
+    var question by remember(todays) { mutableIntStateOf(startQuestion) }
     val dayFormat = remember { DateTimeFormatter.ofPattern("EEEE d MMMM") }
     val shortFormat = remember { DateTimeFormatter.ofPattern("EEE d MMM") }
 
@@ -350,24 +365,71 @@ fun JournalScreen(
         ScreenTitle(R.string.tab_journal, stringResource(R.string.journal_listened, duration(weekSeconds)))
 
         SectionTitle(stringResource(R.string.journal_today) + " · " + today.format(dayFormat))
-        Card {
-            Rating(stringResource(R.string.journal_loudness), null, loudness) { loudness = it }
-            Rating(stringResource(R.string.journal_bother), stringResource(R.string.journal_bother_hint), bother) { bother = it }
-            OutlinedTextField(
-                value = note,
-                onValueChange = { note = it.take(CheckIn.NOTE_MAX) },
-                label = { Text(stringResource(R.string.journal_note)) },
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-            )
-            // The screen's one ink action.
-            Button(
-                onClick = { onSave(loudness, bother, note) },
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp).height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.inverseSurface, contentColor = MaterialTheme.colorScheme.inverseOnSurface),
-            ) { Text(stringResource(if (todays == null) R.string.journal_save else R.string.journal_update), style = MaterialTheme.typography.labelLarge) }
-            if (message != null) {
-                Text(message, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+        if (editing) Card {
+            Text(stringResource(R.string.journal_question, question, 3), style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            when (question) {
+                1 -> Question(stringResource(R.string.journal_q_place), stringResource(R.string.journal_bother), bother,
+                    stringResource(R.string.journal_q_place_low), stringResource(R.string.journal_q_place_high)) { bother = it }
+                2 -> Question(stringResource(R.string.journal_q_loud), stringResource(R.string.journal_loudness), loudness,
+                    stringResource(R.string.journal_q_loud_low), stringResource(R.string.journal_q_loud_high)) { loudness = it }
+                else -> {
+                    Text(stringResource(R.string.journal_q_note), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
+                    Text(stringResource(R.string.journal_q_note_hint), style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                    TagChips(tags) { tag -> tags = if (tag in tags) tags - tag else tags + tag }
+                    OutlinedTextField(
+                        value = note,
+                        onValueChange = { note = it.take(CheckIn.NOTE_MAX - 60) },
+                        label = { Text(stringResource(R.string.journal_note)) },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    )
+                }
+            }
+            Row(Modifier.fillMaxWidth().padding(top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (question > 1) OutlinedButton({ question-- }, Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.journal_back)) }
+                Spacer(Modifier.weight(1f))
+                // The screen's one ink action: Next, then Save on the last question.
+                Button(
+                    onClick = { if (question < 3) question++ else { onSave(loudness, bother, NoteTags.compose(note, tags)); editing = false; question = 1 } },
+                    modifier = Modifier.heightIn(min = 52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.inverseSurface, contentColor = MaterialTheme.colorScheme.inverseOnSurface),
+                ) {
+                    Text(stringResource(when {
+                        question < 3 -> R.string.journal_next
+                        todays == null -> R.string.journal_save
+                        else -> R.string.journal_update
+                    }), style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        } else if (todays != null) Card {
+            Text(stringResource(R.string.journal_done_title), style = MaterialTheme.typography.titleMedium)
+            Scale(stringResource(R.string.journal_bother), todays.bother)
+            Scale(stringResource(R.string.journal_loudness), todays.loudness)
+            val words = tagWords(todaysParts.tags)
+            if (words.isNotEmpty()) Text(words, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
+            if (todaysParts.text.isNotBlank()) Text(todaysParts.text, style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+            OutlinedButton({ editing = true; question = 1 }, Modifier.padding(top = 12.dp).heightIn(min = 48.dp)) { Text(stringResource(R.string.journal_edit)) }
+        }
+        if (message != null) {
+            Text(message, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+        }
+
+        // An invitation from the latest day with a tag, today or yesterday: one card, never a finding.
+        val invite = checkIns.filter { it.day == today.toString() || it.day == today.minusDays(1).toString() }
+            .firstNotNullOfOrNull { NoteTags.parse(it.note).tags.firstOrNull() }
+        if (invite != null && !editing) {
+            val card = Learn.card(invite.card)
+            if (card != null) Column(
+                Modifier.padding(top = 14.dp).fillMaxWidth().clip(MaterialTheme.shapes.large)
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow).padding(16.dp),
+            ) {
+                Text(stringResource(R.string.journal_invite_title, stringResource(invite.word())), style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.journal_invite_body), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
+                NavRow(cardTitle(card)) { onCard(card.id) }
             }
         }
 
@@ -384,8 +446,11 @@ fun JournalScreen(
                         Text(LocalDate.parse(c.day).format(shortFormat), style = MaterialTheme.typography.bodyLarge)
                         Scale(stringResource(R.string.journal_loudness), c.loudness)
                         Scale(stringResource(R.string.journal_bother), c.bother)
-                        if (c.note.isNotBlank()) {
-                            Text(c.note, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        val parts = NoteTags.parse(c.note)
+                        val words = tagWords(parts.tags)
+                        if (words.isNotEmpty()) Text(words, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+                        if (parts.text.isNotBlank()) {
+                            Text(parts.text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 4.dp))
                         }
                     }
@@ -426,27 +491,63 @@ private fun Scale(name: String, value: Int) {
     }
 }
 
-/** A 0–10 rating: the number is always written out, never shown by colour or position alone. */
+/** One question: the words large, the number written, ten steps, and what each end means. */
 @Composable
-private fun Rating(name: String, hint: String?, value: Int, onChange: (Int) -> Unit) {
+private fun Question(question: String, name: String, value: Int, low: String, high: String, onChange: (Int) -> Unit) {
     val text = stringResource(R.string.journal_rating, name, value)
-    Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.Bottom) {
-        Column(Modifier.weight(1f)) {
-            Text(name, style = MaterialTheme.typography.bodyLarge)
-            if (hint != null) Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Text("$value", style = MaterialTheme.typography.headlineSmall.tabular())
+    Text(question, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
+    Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.Bottom) {
+        Text("$value", style = MaterialTheme.typography.displaySmall.tabular())
         Text(stringResource(R.string.journal_of_ten), style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 6.dp, bottom = 6.dp))
     }
     Slider(
-        value = value.toFloat(),
-        onValueChange = { onChange(it.roundToInt()) },
-        valueRange = 0f..10f,
-        steps = 9,
-        colors = quietSlider(),
-        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).semantics { contentDescription = name; stateDescription = text },
+        value = value.toFloat(), onValueChange = { onChange(it.roundToInt()) }, valueRange = 0f..10f, steps = 9, colors = quietSlider(),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).semantics { contentDescription = question; stateDescription = text },
     )
+    Row(Modifier.fillMaxWidth()) {
+        Text(low, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+        Text(high, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@StringRes internal fun Tag.word() = when (this) {
+    Tag.CAFFEINE -> R.string.tag_caffeine
+    Tag.ALCOHOL -> R.string.tag_alcohol
+    Tag.STRESS -> R.string.tag_stress
+    Tag.POOR_SLEEP -> R.string.tag_poor_sleep
+}
+
+@Composable
+private fun tagWords(tags: Set<Tag>): String = Tag.entries.filter { it in tags }.map { stringResource(it.word()) }.joinToString(" · ")
+
+/** Tags to notice, each a toggle told by a check glyph and weight, never by colour alone. */
+@Composable
+private fun TagChips(tags: Set<Tag>, onToggle: (Tag) -> Unit) {
+    val s = MaterialTheme.colorScheme
+    Column(Modifier.padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Tag.entries.chunked(2).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { tag ->
+                    val on = tag in tags
+                    val word = stringResource(tag.word())
+                    Row(
+                        Modifier.weight(1f).clip(MaterialTheme.shapes.medium)
+                            .then(if (on) Modifier.background(s.secondaryContainer) else Modifier.border(1.dp, s.outlineVariant, MaterialTheme.shapes.medium))
+                            .toggleable(value = on, role = Role.Checkbox) { onToggle(tag) }
+                            .heightIn(min = 48.dp).padding(horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (on) Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = s.onSecondaryContainer,
+                            modifier = Modifier.padding(end = 6.dp).size(16.dp))
+                        Text(word, style = MaterialTheme.typography.labelLarge, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (on) s.onSecondaryContainer else s.onSurface)
+                    }
+                }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
 }
 
 @Composable
