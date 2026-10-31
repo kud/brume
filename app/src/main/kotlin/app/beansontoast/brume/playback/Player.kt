@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat
 import app.beansontoast.brume.core.journal.EndedBy
 import app.beansontoast.brume.core.journal.ListeningSession
 import app.beansontoast.brume.core.sound.Ambience
+import app.beansontoast.brume.core.sound.Balance
 import app.beansontoast.brume.core.sound.LevelRules
 import app.beansontoast.brume.core.sound.NoiseColour
 import app.beansontoast.brume.core.sound.SoundEngine
@@ -40,6 +41,10 @@ data class PlayerUi(
     val mode: Mode = Mode.SOUNDS,
     val tones: ToneSettings = ToneSettings(),
     val toneLevel: Float = TonePattern.DEFAULT_LEVEL,
+    /** -1 left only .. 0 centre .. +1 right only; see [Balance]. Per output device, never synced. */
+    val balance: Float = Balance.CENTRE,
+    /** Where the sound plays now; null until the first read. */
+    val output: Output? = null,
 ) {
     val hasSound get() = mode == Mode.TONES || noise != null || ambience != null
 }
@@ -50,6 +55,10 @@ data class PlayerUi(
  */
 class Player(private val context: Context, private val journal: Journal, private val scope: CoroutineScope) {
     private val prefs = context.getSharedPreferences("player", Context.MODE_PRIVATE)
+    /** Balance and levels per output device (ADR 0002). On this phone only: levels never sync. */
+    private val outputs = context.getSharedPreferences("outputs", Context.MODE_PRIVATE)
+    /** A device that arrived while sound played: its settings wait for the stop. */
+    private var pendingOutput: Output? = null
 
     val engine = SoundEngine(
         rate = context.getSystemService(AudioManager::class.java)
@@ -70,6 +79,50 @@ class Player(private val context: Context, private val journal: Journal, private
         engine.post(Command.Noise(ui.noise)); engine.post(Command.Nature(ui.ambience))
         engine.post(Command.NoiseLevel(ui.noiseLevel)); engine.post(Command.NatureLevel(ui.ambienceLevel))
         engine.post(Command.Tones(ui.tones)); engine.post(Command.ToneLevel(ui.toneLevel)); engine.post(Command.Play(ui.mode))
+        engine.post(Command.Balance(ui.balance))
+    }
+
+    fun setBalance(balance: Float) {
+        change { it.copy(balance = Balance.snap(balance)) }
+        engine.post(Command.Balance(_ui.value.balance))
+    }
+
+    /**
+     * The output changed. Its own balance and levels come back, or, for a device never seen, the
+     * current balance with each level at most the soft default. Never while sound plays: a level only
+     * changes on a user action, so they wait for the stop (the service pauses on any device change).
+     */
+    fun onOutput(output: Output) {
+        val was = _ui.value.output
+        if (was?.key == output.key) return
+        if (was == null) { _ui.update { it.copy(output = output) }; save(output); return }
+        if (_ui.value.playing) { pendingOutput = output; return }
+        useOutput(output)
+    }
+
+    private fun useOutput(output: Output) {
+        val key = output.key
+        val known = outputs.contains("$key|balance")
+        fun level(name: String, current: Float) =
+            if (known) LevelRules.clampLevel(outputs.getFloat("$key|$name", current)) else minOf(current, LevelRules.DEFAULT_LEVEL)
+        change {
+            it.copy(
+                output = output,
+                noiseLevel = level("noise", it.noiseLevel), ambienceLevel = level("ambience", it.ambienceLevel),
+                toneLevel = level("tone", it.toneLevel),
+                balance = if (known) Balance.snap(outputs.getFloat("$key|balance", it.balance)) else it.balance,
+            )
+        }
+        val ui = _ui.value
+        engine.post(Command.NoiseLevel(ui.noiseLevel)); engine.post(Command.NatureLevel(ui.ambienceLevel))
+        engine.post(Command.ToneLevel(ui.toneLevel)); engine.post(Command.Balance(ui.balance))
+    }
+
+    private fun save(output: Output?) {
+        val key = output?.key ?: return
+        val ui = _ui.value
+        outputs.edit().putFloat("$key|noise", ui.noiseLevel).putFloat("$key|ambience", ui.ambienceLevel)
+            .putFloat("$key|tone", ui.toneLevel).putFloat("$key|balance", ui.balance).apply()
     }
 
     fun selectMode(mode: Mode) { change { it.copy(mode = mode) }; engine.post(Command.Play(mode)) }
@@ -180,6 +233,7 @@ class Player(private val context: Context, private val journal: Journal, private
         }
         _ui.update { it.copy(playing = false, timerRemainingMinutes = null, status = status) }
         ticker?.cancel()
+        pendingOutput?.let { pendingOutput = null; useOutput(it) }
     }
 
     private fun startTicker() {
@@ -202,7 +256,10 @@ class Player(private val context: Context, private val journal: Journal, private
             .putInt(TIMER, ui.timerMinutes ?: 0)
             .putString(MODE, ui.mode.name).putFloat(TONE_LEVEL, ui.toneLevel).putInt(PITCH, ui.tones.pitch)
             .putString(TRIMS, ui.tones.trims.joinToString(","))
+            .putFloat(BALANCE, ui.balance)
             .apply()
+        // While a new device waits for the stop, what is shown still belongs to the old one.
+        if (pendingOutput == null) save(ui.output)
     }
 
     private fun load(): PlayerUi {
@@ -217,6 +274,7 @@ class Player(private val context: Context, private val journal: Journal, private
             timerMinutes = prefs.getInt(TIMER, 0).takeIf { it > 0 },
             mode = Mode.entries.firstOrNull { it.name == prefs.getString(MODE, null) } ?: defaults.mode,
             toneLevel = prefs.getFloat(TONE_LEVEL, defaults.toneLevel),
+            balance = Balance.snap(prefs.getFloat(BALANCE, defaults.balance)),
             // The match tone is never restored: a start always plays the pattern the screen shows.
             tones = ToneSettings(
                 pitch = TonePattern.clampPitch(prefs.getInt(PITCH, TonePattern.DEFAULT_PITCH)),
@@ -232,6 +290,7 @@ class Player(private val context: Context, private val journal: Journal, private
         const val NOISE_LEVEL = "noise_level"; const val AMBIENCE_LEVEL = "ambience_level"
         const val TIMER = "timer"
         const val MODE = "mode"; const val TONE_LEVEL = "tone_level"; const val PITCH = "tone_pitch"; const val TRIMS = "tone_trims"; const val TONES_AT = "tones_at"
+        const val BALANCE = "balance"
         const val TONE_PATTERN = "TONE_PATTERN"
     }
 }

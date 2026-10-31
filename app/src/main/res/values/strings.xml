@@ -177,4 +177,22 @@
     <string name="import_nothing">Nothing new in that file.</string>
     <string name="import_failed">That file couldn\'t be read. Nothing changed.</string>
     <string name="import_newer">That file comes from a newer Brume. Nothing changed.</string>
+    <string name="balance_title">Balance</string>
+    <string name="balance_centre">Centre</string>
+    <string name="balance_left">Left %1$d%%</string>
+    <string name="balance_right">Right %1$d%%</string>
+    <string name="balance_reset">Centre</string>
+    <string name="balance_reset_label">Set the balance back to centre</string>
+    <string name="balance_hint">Turns the other side down, never this one up. Kept for each output.</string>
+    <string name="output_on">On: %1$s</string>
+    <string name="output_change">Change</string>
+    <string name="output_change_label">Choose where the sound plays</string>
+    <string name="output_speaker">phone speaker</string>
+    <string name="output_wired">wired headphones</string>
+    <string name="output_bluetooth">Bluetooth headphones</string>
+    <string name="output_hearing_aid">hearing aids</string>
+    <string name="output_usb">USB headphones</string>
+    <string name="output_other">another output</string>
+    <string name="balance_l">L</string>
+    <string name="balance_r">R</string>
 </resources>

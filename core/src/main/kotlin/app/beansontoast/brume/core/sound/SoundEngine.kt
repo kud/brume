@@ -9,7 +9,7 @@ import kotlin.math.tanh
 
 /**
  * The whole sound, as samples: two layers (one noise, one ambience), their levels, the fade-in, the
- * pause and "Too loud" fades and the sleep timer. The app only pumps [render] into an AudioTrack.
+ * pause and "Too loud" fades, the sleep timer and the left/right [Balance]. The app only pumps [render] into an AudioTrack.
  *
  * Threading: the UI [post]s commands from any thread; the render thread applies them at the start of
  * each block. The sleep timer counts rendered frames, so Doze can never make it late.
@@ -25,6 +25,8 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
         data class Play(val mode: Mode) : Command
         data class Tones(val settings: ToneSettings) : Command
         data class ToneLevel(val level: Float) : Command
+        /** Left/right balance for every layer, sounds and tones alike; see [Balance]. */
+        data class Balance(val balance: Float) : Command
         /** Starts (or restarts) the sleep timer from now; null turns it off. */
         data class Timer(val minutes: Int?) : Command
         data object Start : Command
@@ -46,6 +48,8 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
     @Volatile var timerRemainingFrames: Long? = null; private set
 
     internal val tonesGainNow get() = tonesGain
+    internal val leftGainNow get() = leftGain
+    internal val rightGainNow get() = rightGain
 
     private var layerCount = 0L
     private var noise: Source? = null
@@ -58,6 +62,9 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
     private var tones: ToneSource? = null
     private var tonesTarget = 0f; private var tonesGain = 0f
     private var tonesLevel = TonePattern.DEFAULT_LEVEL
+    // Per-channel balance gains, each in 0..1, ramped like the layer gains so a change never clicks.
+    private var leftTarget = 1f; private var leftGain = 1f
+    private var rightTarget = 1f; private var rightGain = 1f
 
     private val rampStep = (1.0 / (rate * LevelRules.GAIN_RAMP_SECONDS)).toFloat()
     private val fadeInFrames = (rate * LevelRules.FADE_IN_SECONDS).toLong()
@@ -85,6 +92,7 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
                 aim()
             }
             is Command.ToneLevel -> { tonesLevel = LevelRules.clampLevel(command.level); aim() }
+            is Command.Balance -> { leftTarget = Balance.left(command.balance); rightTarget = Balance.right(command.balance) }
             is Command.Timer -> {
                 val minutes = command.minutes
                 if (minutes == null) { timerTotal = 0; timerRemainingFrames = null } else {
@@ -146,12 +154,15 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
             noiseGain = toward(noiseGain, noiseTarget)
             natureGain = toward(natureGain, natureTarget)
             tonesGain = toward(tonesGain, tonesTarget)
+            leftGain = toward(leftGain, leftTarget)
+            rightGain = toward(rightGain, rightTarget)
             val n = noise?.next() ?: 0f
             val a = nature?.next() ?: 0f
             // The tone layer advances only while it can be heard; it resumes under the 20 ms gain ramp.
             val t = if (tonesGain > 0f) tones?.next() ?: 0f else 0f
             val y = if (state == State.STOPPED) 0f else limit(n * noiseGain + a * natureGain + t * tonesGain) * master * timerGain
-            out[2 * i] = y; out[2 * i + 1] = y
+            // Every source is mono: one signal, then the balance stage splits it to the two channels.
+            out[2 * i] = y * leftGain; out[2 * i + 1] = y * rightGain
             if (state != State.STOPPED) playedFrames++
             if (timerDone) { timerTotal = 0; timerRemainingFrames = null; stop(StopReason.TIMER) }
         }

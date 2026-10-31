@@ -77,7 +77,7 @@ internal fun forMode(ui: PlayerUi, actions: ListenActions, mode: Mode): Pair<Pla
         ambience = { claim(); actions.ambience(it) },
         noiseLevel = actions.noiseLevel, ambienceLevel = actions.ambienceLevel, timer = actions.timer,
         toggle = { if (mine) actions.toggle() else { actions.mode(mode); if (!ui.playing) actions.toggle() } },
-        tooLoud = actions.tooLoud, mode = actions.mode, open = actions.open,
+        tooLoud = actions.tooLoud, mode = actions.mode, open = actions.open, balance = actions.balance, output = actions.output,
         tones = ToneActions(
             pitch = { claim(); actions.tones.pitch(it) }, level = actions.tones.level,
             trim = { i, v -> claim(); actions.tones.trim(i, v) }, match = { claim(); actions.tones.match(it) },
@@ -156,6 +156,7 @@ internal fun NowPlaying(ui: PlayerUi, actions: ListenActions, modifier: Modifier
             Slot(stringResource(R.string.listen_nature), ambience, ui.ambienceLevel, actions.ambienceLevel, { actions.ambience(null) })
             if (ambience == null) Empty(R.string.ux_slot_empty_nature)
         }
+        EarsRows(ui.balance, ui.output, actions.balance, actions.output)
     }
 }
 

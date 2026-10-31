@@ -1,5 +1,6 @@
 package app.beansontoast.brume.ui
 
+import app.beansontoast.brume.playback.openOutputSwitcher
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -112,6 +113,8 @@ private fun BrumeRoot(graph: AppGraph) {
         tooLoud = graph.player::tooLoud,
         mode = graph.player::selectMode,
         open = { showPlaying = true },
+        balance = graph.player::setBalance,
+        output = { openOutputSwitcher(context) },
         tones = ToneActions(
             pitch = graph.player::setPitch,
             level = graph.player::setToneLevel,

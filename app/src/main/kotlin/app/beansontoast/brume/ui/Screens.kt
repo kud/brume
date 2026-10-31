@@ -150,6 +150,9 @@ class ListenActions(
     val tones: ToneActions = ToneActions(),
     /** Reopens the playing view from the "now playing" card. */
     val open: () -> Unit = {},
+    val balance: (Float) -> Unit = {},
+    /** Opens the system's output switcher. */
+    val output: () -> Unit = {},
 )
 
 internal val gutter = Modifier.padding(horizontal = 20.dp)

@@ -176,4 +176,22 @@
     <string name="import_nothing">Rien de nouveau dans ce fichier.</string>
     <string name="import_failed">Ce fichier n\'a pas pu être lu. Rien n\'a changé.</string>
     <string name="import_newer">Ce fichier vient d\'une version plus récente de Brume. Rien n\'a changé.</string>
+    <string name="balance_title">Balance</string>
+    <string name="balance_centre">Centre</string>
+    <string name="balance_left">Gauche %1$d\u00a0%%</string>
+    <string name="balance_right">Droite %1$d\u00a0%%</string>
+    <string name="balance_reset">Centrer</string>
+    <string name="balance_reset_label">Remettre la balance au centre</string>
+    <string name="balance_hint">Baisse l\'autre côté, sans jamais monter celui-ci. Gardée pour chaque sortie.</string>
+    <string name="output_on">Sur\u00a0: %1$s</string>
+    <string name="output_change">Changer</string>
+    <string name="output_change_label">Choisir où le son est joué</string>
+    <string name="output_speaker">haut-parleur du téléphone</string>
+    <string name="output_wired">casque filaire</string>
+    <string name="output_bluetooth">casque Bluetooth</string>
+    <string name="output_hearing_aid">aides auditives</string>
+    <string name="output_usb">casque USB</string>
+    <string name="output_other">autre sortie</string>
+    <string name="balance_l">G</string>
+    <string name="balance_r">D</string>
 </resources>
