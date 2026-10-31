@@ -15,6 +15,8 @@ import app.beansontoast.brume.ui.BrumeScaffold
 import app.beansontoast.brume.ui.JournalScreen
 import app.beansontoast.brume.ui.ListenActions
 import app.beansontoast.brume.ui.ListenScreen
+import app.beansontoast.brume.core.sound.SoundEngine
+import app.beansontoast.brume.core.sound.ToneSettings
 import app.beansontoast.brume.ui.Tab
 import app.beansontoast.design.GammeTheme
 import org.junit.Assume.assumeTrue
@@ -53,6 +55,9 @@ class Renders(private val shot: String) {
     )
 
     @Test fun render() = when (shot) {
+        "listen-tones-dark" -> shoot(dark = true, night = false, Tab.LISTEN) {
+            ListenScreen(PlayerUi(mode = SoundEngine.Mode.TONES, tones = ToneSettings(pitch = 6200, trims = listOf(1f, 0.85f, 0.7f, 0.6f)), toneLevel = 0.2f), ListenActions())
+        }
         "listen-light" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenScreen(PlayerUi(NoiseColour.PINK, Ambience.RAIN, 0.3f, 0.45f), ListenActions()) }
         "listen-night-playing" -> shoot(dark = true, night = true, Tab.LISTEN) {
             ListenScreen(PlayerUi(NoiseColour.WHITE, Ambience.RAIN, 0.35f, 0.25f, playing = true, timerMinutes = 45, timerRemainingMinutes = 38), ListenActions())
@@ -79,7 +84,7 @@ class Renders(private val shot: String) {
     companion object {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-        fun shots() = listOf("listen-light", "listen-night-playing", "listen-none-dark", "journal-light", "journal-empty-dark", "about-dark").map { arrayOf<Any>(it) }
+        fun shots() = listOf("listen-light", "listen-tones-dark", "listen-night-playing", "listen-none-dark", "journal-light", "journal-empty-dark", "about-dark").map { arrayOf<Any>(it) }
     }
 }
 

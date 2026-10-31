@@ -48,6 +48,7 @@ import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.LevelRules
 import app.beansontoast.brume.core.sound.NoiseColour
+import app.beansontoast.brume.core.sound.SoundEngine.Mode
 import app.beansontoast.brume.playback.PlayerUi
 import app.beansontoast.brume.playback.Status
 import app.beansontoast.design.EmptyState
@@ -90,7 +91,7 @@ fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, content: @Composable () -> Uni
 }
 
 fun soundLabel(context: Context, ui: PlayerUi): String =
-    listOfNotNull(ui.noise?.label(), ui.ambience?.label()).joinToString(" · ") { context.getString(it) }
+    if (ui.mode == Mode.TONES) context.getString(R.string.mode_tones) else listOfNotNull(ui.noise?.label(), ui.ambience?.label()).joinToString(" · ") { context.getString(it) }
         .ifEmpty { context.getString(R.string.app_name) }
 
 class ListenActions(
@@ -101,6 +102,8 @@ class ListenActions(
     val timer: (Int?) -> Unit = {},
     val toggle: () -> Unit = {},
     val tooLoud: () -> Unit = {},
+    val mode: (Mode) -> Unit = {},
+    val tones: ToneActions = ToneActions(),
 )
 
 private val gutter = Modifier.padding(horizontal = 20.dp)
@@ -115,27 +118,12 @@ fun ListenScreen(ui: PlayerUi, actions: ListenActions) {
             Text(stringResource(R.string.listen_guide), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 12.dp))
 
-            Layer(
-                title = stringResource(R.string.listen_noise),
-                options = listOf(null) + NoiseColour.entries,
-                selected = ui.noise,
-                label = { it?.label() ?: R.string.listen_none },
-                onSelect = actions.noise,
-                level = ui.noiseLevel,
-                onLevel = actions.noiseLevel,
-                note = if (ui.noise == NoiseColour.BROWN) stringResource(R.string.noise_brown_note) else null,
-            )
-            Spacer(Modifier.height(8.dp))
-            Layer(
-                title = stringResource(R.string.listen_nature),
-                options = listOf(null) + Ambience.entries,
-                selected = ui.ambience,
-                label = { it?.label() ?: R.string.listen_none },
-                onSelect = actions.ambience,
-                level = ui.ambienceLevel,
-                onLevel = actions.ambienceLevel,
-                note = null,
-            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
+                SelectChip(stringResource(R.string.mode_sounds), ui.mode == Mode.SOUNDS, { actions.mode(Mode.SOUNDS) })
+                SelectChip(stringResource(R.string.mode_tones), ui.mode == Mode.TONES, { actions.mode(Mode.TONES) })
+            }
+
+            if (ui.mode == Mode.TONES) TonesPanel(ui, actions.tones) else SoundLayers(ui, actions)
         }
 
         // The lower half, for a thumb at night: timer, then Play and, while playing, Too loud.
@@ -179,6 +167,33 @@ fun ListenScreen(ui: PlayerUi, actions: ListenActions) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SoundLayers(ui: PlayerUi, actions: ListenActions) {
+    Column {
+        Layer(
+            title = stringResource(R.string.listen_noise),
+            options = listOf(null) + NoiseColour.entries,
+            selected = ui.noise,
+            label = { it?.label() ?: R.string.listen_none },
+            onSelect = actions.noise,
+            level = ui.noiseLevel,
+            onLevel = actions.noiseLevel,
+            note = if (ui.noise == NoiseColour.BROWN) stringResource(R.string.noise_brown_note) else null,
+        )
+        Spacer(Modifier.height(8.dp))
+        Layer(
+            title = stringResource(R.string.listen_nature),
+            options = listOf(null) + Ambience.entries,
+            selected = ui.ambience,
+            label = { it?.label() ?: R.string.listen_none },
+            onSelect = actions.ambience,
+            level = ui.ambienceLevel,
+            onLevel = actions.ambienceLevel,
+            note = null,
+        )
     }
 }
 

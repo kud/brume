@@ -11,6 +11,9 @@ import app.beansontoast.brume.core.sound.LevelRules
 import app.beansontoast.brume.core.sound.NoiseColour
 import app.beansontoast.brume.core.sound.SoundEngine
 import app.beansontoast.brume.core.sound.SoundEngine.Command
+import app.beansontoast.brume.core.sound.SoundEngine.Mode
+import app.beansontoast.brume.core.sound.TonePattern
+import app.beansontoast.brume.core.sound.ToneSettings
 import app.beansontoast.brume.data.Journal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -34,8 +37,11 @@ data class PlayerUi(
     val timerMinutes: Int? = null,
     val timerRemainingMinutes: Int? = null,
     val status: Status? = null,
+    val mode: Mode = Mode.SOUNDS,
+    val tones: ToneSettings = ToneSettings(),
+    val toneLevel: Float = TonePattern.DEFAULT_LEVEL,
 ) {
-    val hasSound get() = noise != null || ambience != null
+    val hasSound get() = mode == Mode.TONES || noise != null || ambience != null
 }
 
 /**
@@ -63,6 +69,18 @@ class Player(private val context: Context, private val journal: Journal, private
         val ui = _ui.value
         engine.post(Command.Noise(ui.noise)); engine.post(Command.Nature(ui.ambience))
         engine.post(Command.NoiseLevel(ui.noiseLevel)); engine.post(Command.NatureLevel(ui.ambienceLevel))
+        engine.post(Command.Tones(ui.tones)); engine.post(Command.ToneLevel(ui.toneLevel)); engine.post(Command.Play(ui.mode))
+    }
+
+    fun selectMode(mode: Mode) { change { it.copy(mode = mode) }; engine.post(Command.Play(mode)) }
+    fun setToneLevel(level: Float) { change { it.copy(toneLevel = LevelRules.clampLevel(level)) }; engine.post(Command.ToneLevel(level)) }
+    fun setPitch(hz: Int) = tones { it.copy(pitch = TonePattern.clampPitch(hz)) }
+    fun setTrim(tone: Int, trim: Float) = tones { t -> t.copy(trims = t.trims.mapIndexed { i, v -> if (i == tone) trim.coerceIn(0f, 1f) else v }) }
+    fun setMatch(match: Boolean) = tones { it.copy(match = match) }
+
+    private fun tones(transform: (ToneSettings) -> ToneSettings) {
+        change { it.copy(tones = transform(it.tones)) }
+        engine.post(Command.Tones(_ui.value.tones))
     }
 
     fun selectNoise(colour: NoiseColour?) { change { it.copy(noise = colour) }; engine.post(Command.Noise(colour)) }
@@ -99,8 +117,14 @@ class Player(private val context: Context, private val journal: Journal, private
     fun tooLoud() {
         pendingEnd = EndedBy.TOO_LOUD
         engine.post(Command.TooLoud)
-        change { it.copy(noiseLevel = LevelRules.afterTooLoud(it.noiseLevel), ambienceLevel = LevelRules.afterTooLoud(it.ambienceLevel)) }
+        change {
+            it.copy(
+                noiseLevel = LevelRules.afterTooLoud(it.noiseLevel), ambienceLevel = LevelRules.afterTooLoud(it.ambienceLevel),
+                toneLevel = LevelRules.afterTooLoud(it.toneLevel),
+            )
+        }
         engine.post(Command.NoiseLevel(_ui.value.noiseLevel)); engine.post(Command.NatureLevel(_ui.value.ambienceLevel))
+        engine.post(Command.ToneLevel(_ui.value.toneLevel))
     }
 
     /** Called on the main thread by the service once the engine has gone silent. */
@@ -113,10 +137,15 @@ class Player(private val context: Context, private val journal: Journal, private
         }
         val ui = _ui.value
         val seconds = (engine.playedFrames - sessionStartFrames) / engine.rate
+        // The log has no tone column yet: a tone session goes in the sound slot as TONE_PATTERN, with
+        // its level and never its pitch, so the schema (and every stored row) stays as it is.
+        val tones = ui.mode == Mode.TONES
         val session = ListeningSession(
             startedAt = sessionStartedAt, seconds = seconds,
-            noise = ui.noise?.name, noiseLevel = ui.noise?.let { ui.noiseLevel },
-            ambience = ui.ambience?.name, ambienceLevel = ui.ambience?.let { ui.ambienceLevel },
+            noise = if (tones) TONE_PATTERN else ui.noise?.name,
+            noiseLevel = if (tones) ui.toneLevel else ui.noise?.let { ui.noiseLevel },
+            ambience = if (tones) null else ui.ambience?.name,
+            ambienceLevel = if (tones) null else ui.ambience?.let { ui.ambienceLevel },
             endedBy = ended,
         )
         scope.launch { journal.log(session) }
@@ -149,6 +178,8 @@ class Player(private val context: Context, private val journal: Journal, private
             .putString(NOISE, ui.noise?.name ?: NONE).putString(AMBIENCE, ui.ambience?.name ?: NONE)
             .putFloat(NOISE_LEVEL, ui.noiseLevel).putFloat(AMBIENCE_LEVEL, ui.ambienceLevel)
             .putInt(TIMER, ui.timerMinutes ?: 0)
+            .putString(MODE, ui.mode.name).putFloat(TONE_LEVEL, ui.toneLevel).putInt(PITCH, ui.tones.pitch)
+            .putString(TRIMS, ui.tones.trims.joinToString(","))
             .apply()
     }
 
@@ -162,6 +193,14 @@ class Player(private val context: Context, private val journal: Journal, private
             noiseLevel = prefs.getFloat(NOISE_LEVEL, defaults.noiseLevel),
             ambienceLevel = prefs.getFloat(AMBIENCE_LEVEL, defaults.ambienceLevel),
             timerMinutes = prefs.getInt(TIMER, 0).takeIf { it > 0 },
+            mode = Mode.entries.firstOrNull { it.name == prefs.getString(MODE, null) } ?: defaults.mode,
+            toneLevel = prefs.getFloat(TONE_LEVEL, defaults.toneLevel),
+            // The match tone is never restored: a start always plays the pattern the screen shows.
+            tones = ToneSettings(
+                pitch = TonePattern.clampPitch(prefs.getInt(PITCH, TonePattern.DEFAULT_PITCH)),
+                trims = prefs.getString(TRIMS, null)?.split(",")?.mapNotNull { it.toFloatOrNull()?.coerceIn(0f, 1f) }
+                    ?.takeIf { it.size == TonePattern.TONES } ?: defaults.tones.trims,
+            ),
         )
     }
 
@@ -170,5 +209,7 @@ class Player(private val context: Context, private val journal: Journal, private
         const val NOISE = "noise"; const val AMBIENCE = "ambience"
         const val NOISE_LEVEL = "noise_level"; const val AMBIENCE_LEVEL = "ambience_level"
         const val TIMER = "timer"
+        const val MODE = "mode"; const val TONE_LEVEL = "tone_level"; const val PITCH = "tone_pitch"; const val TRIMS = "tone_trims"
+        const val TONE_PATTERN = "TONE_PATTERN"
     }
 }

@@ -74,6 +74,13 @@ private fun BrumeRoot(graph: AppGraph) {
                     timer = graph.player::setTimer,
                     toggle = graph.player::toggle,
                     tooLoud = graph.player::tooLoud,
+                    mode = graph.player::selectMode,
+                    tones = ToneActions(
+                        pitch = graph.player::setPitch,
+                        level = graph.player::setToneLevel,
+                        trim = graph.player::setTrim,
+                        match = graph.player::setMatch,
+                    ),
                 ))
                 Tab.JOURNAL -> JournalScreen(
                     checkIns = checkIns,
