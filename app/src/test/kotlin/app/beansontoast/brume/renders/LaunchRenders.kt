@@ -27,7 +27,9 @@ import app.beansontoast.brume.playback.PlayerUi
 import app.beansontoast.brume.ui.BrumeScaffold
 import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.ListenActions
-import app.beansontoast.brume.ui.ListenComfort
+import app.beansontoast.brume.ui.SceneScreen
+import app.beansontoast.brume.ui.Scene
+import app.beansontoast.brume.ui.scenes
 import app.beansontoast.brume.Modules
 import app.beansontoast.brume.ui.Onboarding
 import app.beansontoast.brume.ui.Tab
@@ -72,7 +74,7 @@ class LaunchRenders(private val shot: String) {
         }
     }
 
-    @Composable private fun Listen() = BrumeScaffold(Tab.LISTEN, {}, Modules()) { ListenComfort(idle, ListenActions()) }
+    @Composable private fun Listen() = BrumeScaffold(Tab.LISTEN, {}, Modules()) { SceneScreen(Modules().scenes(), Scene.SETTLE, {}, idle, ListenActions()) }
 
     /** What the system splash shows: splash_lockup at 288 dp, centred, on splash_ground. */
     @Composable private fun SplashStill() {
