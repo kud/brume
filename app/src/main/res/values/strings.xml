@@ -51,7 +51,7 @@
     <string name="journal_export_failed">The export couldn\'t be written.</string>
 
     <string name="about_what">Sounds for comfort and sleep. A journal to see how things go over time.</string>
-    <string name="about_disclaimer">It\'s not a treatment, and it doesn\'t replace a doctor. Brume is not a medical device.</string>
+    <string name="about_disclaimer">We live with tinnitus; we\'re not doctors. Brume draws on published research and clinical guidance we\'ve read, to offer some calm to anyone who wants to relax. It isn\'t a treatment or a medical device, and it doesn\'t replace a doctor, an ENT or an audiologist.</string>
     <string name="about_privacy">Everything stays on this phone. Brume has no internet access, no account and no cloud backup. Data leaves only in a file you save yourself, or in the folder you choose to sync with.</string>
     <string name="settings_title">Settings</string>
     <string name="settings_night">Night hours, 22:00–06:00</string>

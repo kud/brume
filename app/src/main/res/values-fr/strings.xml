@@ -50,7 +50,7 @@
     <string name="journal_export_failed">L\'export n\'a pas pu être écrit.</string>
 
     <string name="about_what">Des sons pour le confort et le sommeil. Un journal pour voir comment les choses évoluent.</string>
-    <string name="about_disclaimer">Ce n\'est pas un traitement, et cela ne remplace pas un médecin. Brume n\'est pas un dispositif médical.</string>
+    <string name="about_disclaimer">Nous vivons avec des acouphènes ; nous ne sommes pas médecins. Brume s\'appuie sur des recherches publiées et des recommandations cliniques que nous avons lues, pour offrir un peu de calme à qui veut se détendre. Ce n\'est ni un traitement ni un dispositif médical, et cela ne remplace pas un médecin, un ORL ou un audioprothésiste.</string>
     <string name="about_privacy">Tout reste sur ce téléphone. Brume n\'a ni accès à internet, ni compte, ni sauvegarde dans le cloud. Les données ne sortent que dans un fichier que vous enregistrez vous-même, ou dans le dossier que vous choisissez de synchroniser.</string>
     <string name="settings_title">Réglages</string>
     <string name="settings_night">Heures de nuit, 22:00–06:00</string>

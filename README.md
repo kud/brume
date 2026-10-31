@@ -2,7 +2,7 @@
 
 Sounds for comfort and sleep, and a short daily journal, for people living with tinnitus. A native Android app.
 
-**Brume is a wellness app, not a medical device.** It is not a treatment and doesn't replace a doctor. If your hearing changes suddenly, if it beats with your heart, or if it started after a blow to the head, see a doctor (the app's About screen lists when).
+**Brume is a wellness app, not a medical device.** We live with tinnitus; we're not doctors. Brume draws on published research and clinical guidance we've read, to offer some calm to anyone who wants to relax. It is not a treatment and doesn't replace a doctor, an ENT or an audiologist. If your hearing changes suddenly, if it beats with your heart, or if it started after a blow to the head, see a doctor (the app's About screen lists when).
 
 ## What v0.1 does
 
