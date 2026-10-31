@@ -1,5 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="aeroplane" color="currentColor">
   <g fill="none" stroke="currentColor" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M17 74 40 57 37 20c0-4 3-8 8-8s8 4 8 8l-2 37 26 16-1 8-30-9-25 9-4-7ZM39 57l-5 3M51 57l5 3"/><path d="M10 88h72"/>
+    <g transform="rotate(-18 48 48)">
+  <path d="M11 44h14l6-20h8l-1 20h35c7 0 14 2 18 8-5 5-11 7-18 7H27c-8 0-13-3-16-9Z"/>
+  <path d="M42 59 57 77h11L57 59M24 44l-7-9h8l9 9"/>
+  <path d="M49 47h4M59 47h4M69 47h4"/>
+  <path d="M67 59v5h9v-5"/>
+</g>
   </g>
 </svg>

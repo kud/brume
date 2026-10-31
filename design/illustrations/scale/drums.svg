@@ -1,5 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="drums" color="currentColor">
   <g fill="none" stroke="currentColor" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round">
-    <ellipse cx="47" cy="57" rx="22" ry="9"/><path d="M25 57v15c0 6 10 10 22 10 12 0 22-4 22-10V57"/><path d="M33 67v10M61 67v10"/><path d="M13 27 40 48M78 26 55 48"/><path d="M14 17v7M79 17v6"/><path d="M9 40h20M67 40h20"/>
+    <ellipse cx="25" cy="24" rx="16" ry="4"/><path d="M25 28v26M19 55h12"/>
+<ellipse cx="45" cy="41" rx="12" ry="5"/><path d="M33 41v12c0 3 5 5 12 5s12-2 12-5V41"/>
+<ellipse cx="72" cy="39" rx="12" ry="5"/><path d="M60 39v13c0 3 5 5 12 5s12-2 12-5V39"/>
+<ellipse cx="50" cy="69" rx="21" ry="7"/><path d="M29 69v11c0 5 9 8 21 8s21-3 21-8V69"/>
+<path d="M11 92l30-28M87 92L58 63"/>
   </g>
 </svg>
