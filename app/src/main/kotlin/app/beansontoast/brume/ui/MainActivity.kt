@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.LaunchedEffect
+import androidx.activity.compose.BackHandler
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -62,25 +64,37 @@ private fun BrumeRoot(graph: AppGraph) {
         }
     }
 
+    val actions = ListenActions(
+        noise = graph.player::selectNoise,
+        ambience = graph.player::selectAmbience,
+        noiseLevel = graph.player::setNoiseLevel,
+        ambienceLevel = graph.player::setAmbienceLevel,
+        timer = graph.player::setTimer,
+        toggle = graph.player::toggle,
+        tooLoud = graph.player::tooLoud,
+        mode = graph.player::selectMode,
+        tones = ToneActions(
+            pitch = graph.player::setPitch,
+            level = graph.player::setToneLevel,
+            trim = graph.player::setTrim,
+            match = graph.player::setMatch,
+        ),
+    )
+
+    // The playing view opens when a sound or the tone pattern starts (not when the app opens on
+    // one already playing), and stays, paused or not, until Back or its own way back.
+    var showPlaying by rememberSaveable { mutableStateOf(false) }
+    var wasPlaying by remember { mutableStateOf(player.playing) }
+    LaunchedEffect(player.playing) { if (player.playing && !wasPlaying) showPlaying = true; wasPlaying = player.playing }
+
     BrumeTheme(dark = isSystemInDarkTheme(), night = night) {
-        BrumeScaffold(tab = tab, onTab = { tab = it }) {
+        if (showPlaying && player.hasSound) {
+            BackHandler { showPlaying = false }
+            PlayingView(player, night, onPause = graph.player::toggle, onBack = { showPlaying = false })
+        } else BrumeScaffold(tab = tab, onTab = { tab = it }) {
             when (tab) {
-                Tab.LISTEN -> ListenScreen(player, ListenActions(
-                    noise = graph.player::selectNoise,
-                    ambience = graph.player::selectAmbience,
-                    noiseLevel = graph.player::setNoiseLevel,
-                    ambienceLevel = graph.player::setAmbienceLevel,
-                    timer = graph.player::setTimer,
-                    toggle = graph.player::toggle,
-                    tooLoud = graph.player::tooLoud,
-                    mode = graph.player::selectMode,
-                    tones = ToneActions(
-                        pitch = graph.player::setPitch,
-                        level = graph.player::setToneLevel,
-                        trim = graph.player::setTrim,
-                        match = graph.player::setMatch,
-                    ),
-                ))
+                Tab.LISTEN -> ListenComfort(player, actions)
+                Tab.TONES -> TonesScreen(player, actions)
                 Tab.JOURNAL -> JournalScreen(
                     checkIns = checkIns,
                     weekSeconds = weekSeconds,

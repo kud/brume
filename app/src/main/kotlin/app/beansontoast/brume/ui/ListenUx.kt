@@ -22,7 +22,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -59,42 +59,44 @@ import app.beansontoast.design.tabular
 import kotlin.math.roundToInt
 
 /*
- * Listen UX prototypes (Iris, 2026-10-31), on branch ux-listen for Erwann to choose between.
- * Both share the same three fixes: a "now playing" card that names the two layers as slots
- * (one noise, one nature) with their levels and a Remove each; pickers that look and announce
- * as one-of-a-kind choices (a ring, filled when chosen, and a rule written under the heading)
- * instead of checkboxes that silently swap; and the tone pattern framed as a practice of its own.
- *  (A) one page: comfort sounds first, the tone pattern set apart at the foot behind a switch.
- *  (B) two destinations: Listen holds comfort sounds only; Tones is its own tab with sessions.
+ * Listen and Tones (Iris, 2026-10-31; Erwann chose option B the same day). Listen holds the
+ * comfort sounds only; the tone pattern is its own tab, a practice in timed sessions. One plays
+ * at a time: starting one stops the other, and Listen says so in a line. Both open on a "now
+ * playing" card that names the layers as slots, with their levels and a Remove each; pickers are
+ * one-of-a-kind choices, marked by a check glyph and weight, never by a colour alone.
  */
 
-/** Option A: one page. Comfort sounds, then the tone pattern set apart; one is in use at a time. */
-@Composable
-fun ListenOnePage(ui: PlayerUi, actions: ListenActions) {
-    Column(Modifier.fillMaxSize()) {
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).then(gutter)) {
-            Wordmark(Modifier.padding(top = 20.dp))
-            NowPlaying(ui, actions, Modifier.padding(top = 12.dp))
-            if (ui.mode == Mode.TONES) {
-                TonesPanel(ui, actions.tones)
-                ApartCard(R.string.ux_comfort, R.string.ux_sounds_apart, R.string.ux_sounds_switch) { actions.mode(Mode.SOUNDS) }
-            } else {
-                ComfortPickers(ui, actions)
-                ApartCard(R.string.mode_tones, R.string.ux_tones_apart, R.string.ux_tones_switch) { actions.mode(Mode.TONES) }
-            }
-            Spacer(Modifier.height(12.dp))
-        }
-        Dock(ui, actions)
-    }
+/**
+ * The view of [ui] and the actions as one tab sees them: playing only when its own mode plays,
+ * and any start or choice there switches the engine to that mode first, which stops the other.
+ */
+internal fun forMode(ui: PlayerUi, actions: ListenActions, mode: Mode): Pair<PlayerUi, ListenActions> {
+    val mine = ui.mode == mode
+    fun claim() { if (!mine) actions.mode(mode) }
+    val view = ui.copy(mode = mode, playing = ui.playing && mine, timerRemainingMinutes = if (mine) ui.timerRemainingMinutes else null)
+    return view to ListenActions(
+        noise = { claim(); actions.noise(it) },
+        ambience = { claim(); actions.ambience(it) },
+        noiseLevel = actions.noiseLevel, ambienceLevel = actions.ambienceLevel, timer = actions.timer,
+        toggle = { if (mine) actions.toggle() else { actions.mode(mode); if (!ui.playing) actions.toggle() } },
+        tooLoud = actions.tooLoud, mode = actions.mode,
+        tones = ToneActions(
+            pitch = { claim(); actions.tones.pitch(it) }, level = actions.tones.level,
+            trim = { i, v -> claim(); actions.tones.trim(i, v) }, match = { claim(); actions.tones.match(it) },
+        ),
+    )
 }
 
-/** Option B, the Listen tab: comfort sounds only. The tone pattern lives in its own tab. */
+/** The Listen tab: comfort sounds only. The tone pattern lives in its own tab. */
 @Composable
-fun ListenComfort(ui: PlayerUi, actions: ListenActions) {
+fun ListenComfort(all: PlayerUi, allActions: ListenActions) {
+    val (ui, actions) = forMode(all, allActions, Mode.SOUNDS)
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).then(gutter)) {
             Wordmark(Modifier.padding(top = 20.dp))
             NowPlaying(ui, actions, Modifier.padding(top = 12.dp))
+            Text(stringResource(R.string.ux_one_at_a_time), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
             ComfortPickers(ui, actions)
             Spacer(Modifier.height(12.dp))
         }
@@ -102,9 +104,10 @@ fun ListenComfort(ui: PlayerUi, actions: ListenActions) {
     }
 }
 
-/** Option B, the Tones tab: a practice in sessions, its own heading, its own dock with a session timer. */
+/** The Tones tab: a practice in sessions, its own heading, its own dock with a session timer. */
 @Composable
-fun TonesScreen(ui: PlayerUi, actions: ListenActions) {
+fun TonesScreen(all: PlayerUi, allActions: ListenActions) {
+    val (ui, actions) = forMode(all, allActions, Mode.TONES)
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).then(gutter)) {
             Text(stringResource(R.string.ux_tones_heading), style = MaterialTheme.typography.headlineMedium,
@@ -117,27 +120,6 @@ fun TonesScreen(ui: PlayerUi, actions: ListenActions) {
         }
         Dock(ui, actions, timerTitle = R.string.ux_session_timer)
     }
-}
-
-/** Option B's bar: Listen, Tones, Journal, About. Selected is told by indicator and weight. */
-@Composable
-fun BrumeScaffoldTwo(tones: Boolean, content: @Composable () -> Unit) {
-    @Composable fun label(@StringRes text: Int, selected: Boolean) =
-        Text(stringResource(text), fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
-            Column {
-                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
-                NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
-                    NavigationBarItem(!tones, {}, { Icon(painterResource(R.drawable.ic_brume_mark), null) }, label = { label(R.string.tab_listen, !tones) })
-                    NavigationBarItem(tones, {}, { Icon(painterResource(R.drawable.ic_tones), null) }, label = { label(R.string.tab_tones, tones) })
-                    NavigationBarItem(false, {}, { Icon(Icons.Filled.Edit, null) }, label = { label(R.string.tab_journal, false) })
-                    NavigationBarItem(false, {}, { Icon(Icons.Filled.Info, null) }, label = { label(R.string.tab_about, false) })
-                }
-            }
-        },
-    ) { padding -> Column(Modifier.fillMaxSize().padding(padding)) { content() } }
 }
 
 /**
@@ -223,7 +205,7 @@ private fun Rule(@StringRes text: Int) =
     Text(stringResource(text), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = 8.dp))
 
-/** One of a kind: a ring, filled when chosen, plus weight and a step lighter. Announced as a radio. */
+/** One of a kind: a check glyph when chosen, plus weight and a step lighter. Announced as a radio. */
 @Composable
 private fun ChoiceCard(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier, draw: DrawScope.(Color) -> Unit) {
     val scheme = MaterialTheme.colorScheme
@@ -238,25 +220,10 @@ private fun ChoiceCard(label: String, selected: Boolean, onClick: () -> Unit, mo
     ) {
         Row(Modifier.fillMaxWidth().height(28.dp), verticalAlignment = Alignment.Top) {
             Canvas(Modifier.weight(1f).fillMaxSize()) { draw(quiet.copy(alpha = if (selected) 0.95f else 0.6f)) }
-            Box(Modifier.padding(start = 4.dp).size(16.dp).border(1.5.dp, ink.copy(alpha = if (selected) 1f else 0.5f), CircleShape),
-                contentAlignment = Alignment.Center) {
-                if (selected) Box(Modifier.size(8.dp).clip(CircleShape).background(ink))
-            }
+            if (selected) Icon(Icons.Filled.Check, null, tint = ink, modifier = Modifier.padding(start = 4.dp).size(16.dp))
         }
         Text(label, style = MaterialTheme.typography.titleSmall, color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, modifier = Modifier.padding(top = 8.dp))
     }
 }
 
-/** Option A's other half, set apart: what it is, in one line, and the one switch to it. */
-@Composable
-private fun ApartCard(@StringRes title: Int, @StringRes body: Int, @StringRes action: Int, onSwitch: () -> Unit) {
-    HorizontalDivider(Modifier.padding(top = 24.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh)
-    SectionTitle(stringResource(title))
-    Card {
-        Text(stringResource(body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        OutlinedButton(onClick = onSwitch, modifier = Modifier.padding(top = 12.dp).fillMaxWidth().heightIn(min = 48.dp)) {
-            Text(stringResource(action), maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-    }
-}

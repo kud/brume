@@ -84,7 +84,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
-enum class Tab { LISTEN, JOURNAL, ABOUT }
+enum class Tab { LISTEN, TONES, JOURNAL, ABOUT }
 
 @Composable
 fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, content: @Composable () -> Unit) {
@@ -95,6 +95,7 @@ fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, content: @Composable () -> Uni
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
                 NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
                     NavigationBarItem(tab == Tab.LISTEN, { onTab(Tab.LISTEN) }, { Icon(painterResource(R.drawable.ic_brume_mark), null) }, label = { NavLabel(R.string.tab_listen, tab == Tab.LISTEN) })
+                    NavigationBarItem(tab == Tab.TONES, { onTab(Tab.TONES) }, { Icon(painterResource(R.drawable.ic_tones), null) }, label = { NavLabel(R.string.tab_tones, tab == Tab.TONES) })
                     NavigationBarItem(tab == Tab.JOURNAL, { onTab(Tab.JOURNAL) }, { Icon(Icons.Filled.Edit, null) }, label = { NavLabel(R.string.tab_journal, tab == Tab.JOURNAL) })
                     NavigationBarItem(tab == Tab.ABOUT, { onTab(Tab.ABOUT) }, { Icon(Icons.Filled.Info, null) }, label = { NavLabel(R.string.tab_about, tab == Tab.ABOUT) })
                 }
@@ -164,109 +165,6 @@ internal fun Wordmark(modifier: Modifier = Modifier) {
 internal fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     Text(text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(top = 20.dp, bottom = 8.dp).semantics { heading() })
-}
-
-/**
- * Listen (Iris, 2026-10-31): sounds as small cards on one grid, each with its own drawn texture, levels only for
- * what is chosen, and a dock in the lower half for a thumb at night: the sleep timer, the ink
- * Play disc and, only while playing, Too loud. State is told in words above the disc and by
- * its shape (triangle, bars, or an empty ring when nothing is chosen).
- */
-@Composable
-fun ListenScreen(ui: PlayerUi, actions: ListenActions) {
-    Column(Modifier.fillMaxSize()) {
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).then(gutter)) {
-            Wordmark(Modifier.padding(top = 20.dp))
-
-            ModeSwitch(ui.mode, actions.mode)
-            if (ui.mode == Mode.TONES) TonesPanel(ui, actions.tones) else SoundLayers(ui, actions)
-            Spacer(Modifier.height(12.dp))
-        }
-        Dock(ui, actions)
-    }
-}
-
-/** Sounds or the tone pattern: two segments, the chosen one marked ✓ and a step lighter. */
-@Composable
-private fun ModeSwitch(mode: Mode, onMode: (Mode) -> Unit) {
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(top = 12.dp)) {
-        listOf(Mode.SOUNDS to R.string.mode_sounds, Mode.TONES to R.string.mode_tones).forEachIndexed { i, (m, label) ->
-            SegmentedButton(
-                selected = mode == m,
-                onClick = { onMode(m) },
-                shape = SegmentedButtonDefaults.itemShape(i, 2),
-                modifier = Modifier.heightIn(min = 48.dp),
-            ) {
-                Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    fontWeight = if (mode == m) FontWeight.SemiBold else FontWeight.Normal)
-            }
-        }
-    }
-}
-
-@Composable
-private fun SoundLayers(ui: PlayerUi, actions: ListenActions) {
-    Column {
-        SectionTitle(stringResource(R.string.listen_noise))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            NoiseColour.entries.forEach { colour ->
-                SoundCard(stringResource(colour.label()), ui.noise == colour,
-                    { actions.noise(if (ui.noise == colour) null else colour) }, Modifier.weight(1f)) { texture(colour, null, it) }
-            }
-        }
-
-        SectionTitle(stringResource(R.string.listen_nature))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Ambience.entries.forEach { a ->
-                SoundCard(stringResource(a.label()), ui.ambience == a,
-                    { actions.ambience(if (ui.ambience == a) null else a) }, Modifier.weight(1f)) { texture(null, a, it) }
-            }
-            Spacer(Modifier.weight(1f)) // keeps nature's cards the size of noise's: one grid, no stretched row
-        }
-
-        // Levels appear only for the layers that are chosen (hidden, not disabled), with the
-        // sound's character and the one piece of advice that matters while setting them.
-        if (ui.hasSound) SectionTitle(stringResource(R.string.listen_levels))
-        ui.noise?.let { LevelRow(stringResource(it.label()), stringResource(it.hint()), ui.noiseLevel, actions.noiseLevel) }
-        if (ui.noise == NoiseColour.BROWN) {
-            Text(stringResource(R.string.noise_brown_note), style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        ui.ambience?.let { LevelRow(stringResource(it.label()), stringResource(it.hint()), ui.ambienceLevel, actions.ambienceLevel) }
-        if (ui.hasSound) {
-            Text(stringResource(R.string.listen_guide), style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
-        }
-    }
-}
-
-/** A sound to choose. Chosen: a check, SemiBold, a step lighter, and its lines drawn brighter. */
-@Composable
-private fun SoundCard(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier,
-    draw: DrawScope.(Color) -> Unit,
-) {
-    val scheme = MaterialTheme.colorScheme
-    val ink = if (selected) scheme.onSecondaryContainer else scheme.onSurface
-    val quiet = if (selected) scheme.onSecondaryContainer else scheme.onSurfaceVariant
-    Column(
-        modifier.clip(MaterialTheme.shapes.medium)
-            .background(if (selected) scheme.secondaryContainer else scheme.surfaceContainer)
-            .toggleable(value = selected, role = Role.Checkbox, onValueChange = { onClick() })
-            .heightIn(min = 80.dp)
-            .padding(horizontal = 10.dp, vertical = 10.dp),
-    ) {
-        // The check takes the texture's corner, so the name always has the card's whole width.
-        Row(Modifier.fillMaxWidth().height(28.dp)) {
-            Canvas(Modifier.weight(1f).fillMaxSize()) { draw(quiet.copy(alpha = if (selected) 0.95f else 0.6f)) }
-            if (selected) Icon(Icons.Filled.Check, null, tint = ink, modifier = Modifier.padding(start = 2.dp).size(16.dp))
-        }
-        Text(label, style = MaterialTheme.typography.titleSmall, color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, modifier = Modifier.padding(top = 8.dp))
-    }
 }
 
 @Composable

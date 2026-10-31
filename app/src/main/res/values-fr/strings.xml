@@ -115,11 +115,7 @@
     <string name="ux_slot_empty_nature">Pas de son de nature. Choisissez-en un plus bas, ou laissez vide.</string>
     <string name="ux_noise_rule">Un seul à la fois : en choisir un autre le remplace.</string>
     <string name="ux_nature_rule">Un seul à la fois, joué par-dessus le bruit.</string>
-    <string name="ux_comfort">Sons de confort</string>
-    <string name="ux_tones_apart">Une pratique à part, pas un son de confort : quatre tons réglés sur votre hauteur, joués seuls, par séances.</string>
-    <string name="ux_tones_switch">Passer au motif de tons</string>
-    <string name="ux_sounds_apart">Votre mélange de bruit et de nature attend ici pendant le motif de tons.</string>
-    <string name="ux_sounds_switch">Revenir aux sons de confort</string>
+    <string name="ux_one_at_a_time">Lancer un son arrête le motif de tons, et lancer le motif de tons arrête ces sons.</string>
     <string name="ux_tones_heading">Motif de tons</string>
     <string name="ux_tones_session">ACRN · une pratique en séances minutées, seule, jamais par-dessus d\'autres sons.</string>
     <string name="ux_session_timer">Séance</string>

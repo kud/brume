@@ -17,7 +17,8 @@ import app.beansontoast.brume.ui.BrumeScaffold
 import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.JournalScreen
 import app.beansontoast.brume.ui.ListenActions
-import app.beansontoast.brume.ui.ListenScreen
+import app.beansontoast.brume.ui.ListenComfort
+import app.beansontoast.brume.ui.TonesScreen
 import app.beansontoast.brume.ui.Tab
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -60,14 +61,14 @@ class Renders(private val shot: String) {
     private val tones = PlayerUi(mode = SoundEngine.Mode.TONES, tones = ToneSettings(pitch = 6200, trims = listOf(1f, 0.85f, 0.7f, 0.6f)), toneLevel = 0.2f)
 
     @Test fun render() = when (shot) {
-        "listen-idle-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenScreen(idle, ListenActions()) }
-        "listen-playing-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenScreen(playing, ListenActions()) }
-        "listen-idle-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenScreen(idle, ListenActions()) }
-        "listen-playing-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenScreen(playing, ListenActions()) }
-        "listen-empty-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenScreen(PlayerUi(noise = null, ambience = null), ListenActions()) }
-        "listen-stopped-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenScreen(idle.copy(status = Status.TOO_LOUD), ListenActions()) }
-        "listen-tones-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenScreen(tones.copy(playing = true), ListenActions()) }
-        "listen-tones-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenScreen(tones, ListenActions()) }
+        "listen-idle-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
+        "listen-playing-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
+        "listen-idle-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
+        "listen-playing-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
+        "listen-empty-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenComfort(PlayerUi(noise = null, ambience = null), ListenActions()) }
+        "listen-stopped-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenComfort(idle.copy(status = Status.TOO_LOUD), ListenActions()) }
+        "listen-tones-night" -> shoot(dark = true, night = true, Tab.TONES) { TonesScreen(tones.copy(playing = true), ListenActions()) }
+        "listen-tones-day" -> shoot(dark = false, night = false, Tab.TONES) { TonesScreen(tones, ListenActions()) }
         "journal-day" -> shoot(dark = false, night = false, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-night" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-empty-dark" -> shoot(dark = true, night = false, Tab.JOURNAL) { JournalScreen(emptyList(), 0, today, null, { _, _, _ -> }, {}) }
