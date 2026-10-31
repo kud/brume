@@ -457,16 +457,10 @@ private fun duration(seconds: Long): String {
 
 @Composable
 fun AboutScreen(
-    nightHours: Boolean,
-    onNightHours: (Boolean) -> Unit,
     version: String,
     onIntro: () -> Unit = {},
-    sync: SyncState = SyncState(),
-    syncMessage: String? = null,
-    syncActions: SyncActions = SyncActions(),
-    language: LanguageChoice? = null,
-    modules: Modules = Modules(),
-    onModules: (Modules) -> Unit = {},
+    onTopic: (Int) -> Unit = {},
+    onSettings: () -> Unit = {},
 ) {
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll)) {
@@ -486,16 +480,13 @@ fun AboutScreen(
                 }
             }
 
-            SettingsGroup(stringResource(R.string.settings_title), Modifier.padding(top = 8.dp)) {
-                SwitchRow(stringResource(R.string.settings_night), stringResource(R.string.settings_night_summary), nightHours, onNightHours)
-            }
+            // Understand comes first; the settings wait behind one row (Erwann, 2026-10-31).
+            SectionTitle(stringResource(R.string.learn_title))
+            Text(stringResource(R.string.learn_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            LearnTopics(onTopic)
 
-            ModuleSettings(modules, onModules)
-
-            // Below Android 13 there is no per-app locale and no cached appcompat to stand in: no row.
-            if (language != null) LanguageSettings(language)
-
-            SyncSettings(sync, syncMessage, syncActions)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            NavRow(stringResource(R.string.settings_title), stringResource(R.string.settings_row_summary), onClick = onSettings)
 
             SettingsGroup(stringResource(R.string.doctor_title)) {
                 Text(stringResource(R.string.doctor_intro), style = MaterialTheme.typography.bodyMedium)
@@ -518,6 +509,34 @@ fun AboutScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+    }
+}
+
+/** Settings, one row away from About: night hours, modules, language, sync. */
+@Composable
+fun SettingsScreen(
+    nightHours: Boolean,
+    onNightHours: (Boolean) -> Unit,
+    onBack: () -> Unit,
+    sync: SyncState = SyncState(),
+    syncMessage: String? = null,
+    syncActions: SyncActions = SyncActions(),
+    language: LanguageChoice? = null,
+    modules: Modules = Modules(),
+    onModules: (Modules) -> Unit = {},
+) {
+    val scroll = rememberScrollState()
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+        BackRow(stringResource(R.string.tab_about), onBack)
+        Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
+        SettingsGroup(stringResource(R.string.settings_display), Modifier.padding(top = 8.dp)) {
+            SwitchRow(stringResource(R.string.settings_night), stringResource(R.string.settings_night_summary), nightHours, onNightHours)
+        }
+        ModuleSettings(modules, onModules)
+        // Below Android 13 there is no per-app locale and no cached appcompat to stand in: no row.
+        if (language != null) LanguageSettings(language)
+        SyncSettings(sync, syncMessage, syncActions)
+        Spacer(Modifier.height(24.dp))
     }
 }
 

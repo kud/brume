@@ -99,9 +99,9 @@ class Renders(private val shot: String) {
         "journal-day" -> shoot(dark = false, night = false, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-night" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-empty-dark" -> shoot(dark = true, night = false, Tab.JOURNAL) { JournalScreen(emptyList(), 0, today, null, { _, _, _ -> }, {}) }
-        "about-night" -> shoot(dark = true, night = true, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0", language = LanguageChoice("") {}) }
+        "about-night" -> shoot(dark = true, night = true, Tab.ABOUT) { AboutScreen("0.1.0") }
         "listen-playing-open-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
-        "about-day" -> shoot(dark = false, night = false, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0", language = LanguageChoice("fr") {}) }
+        "about-day" -> shoot(dark = false, night = false, Tab.ABOUT) { AboutScreen("0.1.0") }
         "about-language-night" -> shoot(dark = true, night = true, Tab.ABOUT) { Column(Modifier.padding(horizontal = 20.dp)) { LanguageSettings(LanguageChoice("en") {}) } }
         "about-language-day" -> shoot(dark = false, night = false, Tab.ABOUT) { Column(Modifier.padding(horizontal = 20.dp)) { LanguageSettings(LanguageChoice("") {}) } }
         "balance-centre-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(playing.copy(balance = 0f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
@@ -115,7 +115,7 @@ class Renders(private val shot: String) {
         "screens-breath" -> shoot(dark = true, night = true, Tab.CALM) { calm(BreathSetup(), soundName = "Pink noise") }
         "screens-tones" -> shoot(dark = true, night = true, Tab.TONES) { TonesScreen(tones, ListenActions()) }
         "screens-journal" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
-        "screens-about" -> shoot(dark = true, night = true, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0", language = LanguageChoice("") {}) }
+        "screens-about" -> shoot(dark = true, night = true, Tab.ABOUT) { AboutScreen("0.1.0") }
         "modules-night" -> shoot(dark = true, night = true, Tab.ABOUT) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(), {}) } }
         "modules-day" -> shoot(dark = false, night = false, Tab.ABOUT, Modules(tones = false)) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(tones = false), {}) } }
         "breath-setup-night" -> shoot(dark = true, night = true, Tab.CALM) { calm(BreathSetup(), soundName = "Pink noise") }

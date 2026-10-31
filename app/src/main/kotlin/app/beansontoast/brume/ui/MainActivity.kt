@@ -36,6 +36,8 @@ import app.beansontoast.brume.BrumeApp
 import app.beansontoast.brume.BuildConfig
 import app.beansontoast.brume.R
 import app.beansontoast.brume.core.NightHours
+import app.beansontoast.brume.core.learn.Learn
+import androidx.compose.ui.res.stringResource
 import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.journal.EndedBy
 import app.beansontoast.brume.core.breath.BreathPlan
@@ -138,6 +140,11 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     )
 
     var showPlaying by rememberSaveable { mutableStateOf(false) }
+    // Pages opened inside a tab, as a "/"-joined stack: "topic:3", "card:c3_1", "settings". Cleared on a tab change.
+    var pages by rememberSaveable { mutableStateOf("") }
+    val stack = pages.split('/').filter { it.isNotEmpty() }
+    fun push(page: String) { pages = (stack + page).joinToString("/") }
+    fun pop() { pages = stack.dropLast(1).joinToString("/") }
     // The introduction shows once, on first launch, and again from About. Finishing or skipping marks it seen.
     var showIntro by rememberSaveable { mutableStateOf(!graph.settings.introSeen) }
 
@@ -205,8 +212,22 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                 } else if (showPlaying && player.hasSound) {
                     BackHandler { showPlaying = false }
                     PlayingView(player, night, onPause = graph.player::toggle, onBack = { showPlaying = false })
-                } else BrumeScaffold(tab = tab, onTab = { tab = it }, modules = modules) {
-                    when (tab) {
+                } else BrumeScaffold(tab = tab, onTab = { tab = it; pages = "" }, modules = modules) {
+                    val page = stack.lastOrNull()
+                    if (page != null) BackHandler { pop() }
+                    when {
+                        page == "settings" -> SettingsScreen(nightHours = nightHours, onNightHours = graph.settings::setNightHours, onBack = ::pop,
+                            sync = syncState, syncMessage = syncMessage, syncActions = syncActions,
+                            modules = modules, onModules = graph.settings::setModules,
+                            language = if (Build.VERSION.SDK_INT >= 33) remember { LanguageChoice(currentLanguage(context)) { applyLanguage(context, it) } } else null)
+                        page?.startsWith("topic:") == true -> LearnTopicScreen(page.removePrefix("topic:").toInt(), onBack = ::pop, onCard = { push("card:$it") })
+                        page?.startsWith("card:") == true -> {
+                            val card = Learn.card(page.removePrefix("card:"))
+                            if (card == null) LaunchedEffect(page) { pop() }
+                            else LearnCardScreen(card, backLabel = stringResource(R.string.learn_back), onBack = ::pop,
+                                onNext = { pages = (stack.dropLast(1) + "card:$it").joinToString("/") })
+                        }
+                        else -> when (tab) {
                         Tab.LISTEN -> ListenComfort(player, actions)
                         Tab.CALM -> CalmScreen(
                             modules = modules,
@@ -242,10 +263,9 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                             },
                             onExport = { export.launch("brume-export-${LocalDate.now()}.json") },
                         )
-                        Tab.ABOUT -> AboutScreen(nightHours = nightHours, onNightHours = graph.settings::setNightHours, version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true },
-                            sync = syncState, syncMessage = syncMessage, syncActions = syncActions,
-                            modules = modules, onModules = graph.settings::setModules,
-                            language = if (Build.VERSION.SDK_INT >= 33) remember { LanguageChoice(currentLanguage(context)) { applyLanguage(context, it) } } else null)
+                        Tab.ABOUT -> AboutScreen(version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true },
+                            onTopic = { push("topic:$it") }, onSettings = { push("settings") })
+                        }
                     }
                 }
                 LaunchIntroOverlay(intro, firstLaunch)
