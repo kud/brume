@@ -307,7 +307,8 @@ fun JournalScreen(
     val dayFormat = remember { DateTimeFormatter.ofPattern("EEEE d MMMM") }
     val shortFormat = remember { DateTimeFormatter.ofPattern("EEE d MMM") }
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(gutter)) {
+    val scroll = rememberScrollState()
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
         Text(stringResource(R.string.journal_title), style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(top = 24.dp).semantics { heading() })
         Text(stringResource(R.string.journal_listened, duration(weekSeconds)), style = MaterialTheme.typography.bodyMedium.tabular(),
@@ -430,7 +431,8 @@ fun AboutScreen(
     syncMessage: String? = null,
     syncActions: SyncActions = SyncActions(),
 ) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    val scroll = rememberScrollState()
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll)) {
         Box(Modifier.fillMaxWidth().height(148.dp)) {
             Mist(Modifier.fillMaxSize(), strength = 0.6f)
             Column(gutter.align(Alignment.BottomStart).padding(bottom = 8.dp)) {

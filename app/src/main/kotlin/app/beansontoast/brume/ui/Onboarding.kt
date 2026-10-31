@@ -80,7 +80,8 @@ fun Onboarding(onFinish: (setPitch: Boolean) -> Unit, startPage: Int = 0) {
             if (!last) TextButton({ onFinish(false) }, Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.intro_skip)) }
         }
         Crossfade(page, Modifier.weight(1f), animationSpec = if (still) snap() else tween(280), label = "intro") { p ->
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            val scroll = rememberScrollState()
+            Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll)) {
                 when (p) {
                     0 -> Welcome()
                     1 -> Privacy()

@@ -90,13 +90,16 @@ internal fun forMode(ui: PlayerUi, actions: ListenActions, mode: Mode): Pair<Pla
 fun ListenComfort(all: PlayerUi, allActions: ListenActions) {
     val (ui, actions) = forMode(all, allActions, Mode.SOUNDS)
     Column(Modifier.fillMaxSize()) {
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).then(gutter)) {
+        val scroll = rememberScrollState()
+        Column(Modifier.weight(1f).scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
             Wordmark(Modifier.padding(top = 20.dp))
             NowPlaying(ui, actions, Modifier.padding(top = 12.dp))
-            Text(stringResource(R.string.ux_one_at_a_time), style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
+            // The pickers come straight after the card, so at 360x780 the Nature heading meets the fold and
+            // reads as "more" through the scroll cue; the one-at-a-time rule closes the page with the guide.
             ComfortPickers(ui, actions)
-            Spacer(Modifier.height(12.dp))
+            Text(stringResource(R.string.ux_one_at_a_time), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+            Spacer(Modifier.height(24.dp))
         }
         Dock(ui, actions)
     }
@@ -107,14 +110,15 @@ fun ListenComfort(all: PlayerUi, allActions: ListenActions) {
 fun TonesScreen(all: PlayerUi, allActions: ListenActions) {
     val (ui, actions) = forMode(all, allActions, Mode.TONES)
     Column(Modifier.fillMaxSize()) {
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).then(gutter)) {
+        val scroll = rememberScrollState()
+        Column(Modifier.weight(1f).scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
             Text(stringResource(R.string.ux_tones_heading), style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(top = 24.dp).semantics { heading() })
             Text(stringResource(R.string.ux_tones_session), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
             NowPlaying(ui, actions, Modifier.padding(top = 16.dp))
             TonesPanel(ui, actions.tones)
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(24.dp))
         }
         Dock(ui, actions, timerTitle = R.string.ux_session_timer)
     }
@@ -193,8 +197,8 @@ private fun Empty(@StringRes text: Int) =
 
 /** Noise, then nature, each a one-of-a-kind choice with its rule written under the heading. */
 @Composable
-private fun ComfortPickers(ui: PlayerUi, actions: ListenActions) {
-    SectionTitle(stringResource(R.string.listen_noise), Modifier.padding(top = 4.dp))
+private fun ComfortPickers(ui: PlayerUi, actions: ListenActions, modifier: Modifier = Modifier) {
+    SectionTitle(stringResource(R.string.listen_noise), modifier)
     Rule(R.string.ux_noise_rule)
     Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         NoiseColour.entries.forEach { c ->
