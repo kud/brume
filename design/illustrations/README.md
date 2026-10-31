@@ -1,18 +1,18 @@
-# Illustrations — Horizon
+# Horizon educational illustrations
 
-Twenty single-colour vector illustrations for Brume's educational screens.
+Twenty illustrations carefully extracted from the **approved Brume Horizon discovery board** into Android-sized masters. The artwork is intentionally restrained and descriptive, not a replacement for the app's navigation icons or Horizon mark.
 
-- `scale/`: twelve everyday sound contexts, each with `viewBox="0 0 96 96"`, intended to remain legible at **48 dp**.
-- `learn/`: eight editorial spot illustrations, each with `viewBox="0 0 160 120"`.
-- Every illustration is an independent, transparent SVG. No text, noise level, gradient, glow, photograph, filter or background is embedded.
-- All visible paths use `stroke="currentColor"` so the app can tint them with the current foreground colour for night and day. Use the same file on both surfaces.
-- Stroke caps and joins are rounded. The uniform line language is related to the Horizon icon family; these are **illustrations**, not replacements for UI/navigation icons.
-- `contact-sheet.png`: reference only; a comparison on night and dawn backgrounds. The SVGs remain the sources of truth.
+## Deliverables
 
-## Use
+- `night/scale/*.png` (12 × 384 × 384): transparent pale mist outlines including the soft luminosity of the approved board.
+- `night/learn/*.png` (8 × 640 × 480): the same nocturnal treatment for the learning cards.
+- `day/scale/*.png` and `day/learn/*.png`: matching illustrations in dark `#2A3440` ink on **transparent** backgrounds; designed to be composited over the paper `#EEF1F4` ground.
+- `line/scale/*.svg` (`viewBox="0 0 96 96"`) and `line/learn/*.svg` (`viewBox="0 0 160 120"`): flat single-colour traced silhouettes (paths in `currentColor`), without glow, blur or filters.
+- `scale/*.svg` and `learn/*.svg`: the previous illustrations replaced by identical copies of these new line-only vector sources, retaining the original public file paths.
+- `contact-sheet.png`: night/day review matrix; text appears only on the sheet, never in an individual asset.
 
-Set the CSS `color` of the containing element to the appropriate text colour; for Android, convert these source paths into tintable VectorDrawables as needed, retaining their aspect ratio and padding. Do not embed specific dB numbers in the illustration: those are content, supplied and formatted by the app.
+Use appropriately accessible text-colour tinting at runtime; illustrations communicate objects through shape only. Night and day variants share the same artwork, cropped and extracted from the same approved board. Raster-to-vector tracing is an **approximation of outlines**, not an authored master SVG. SVG paths are filled outlines of strokes, not font or bitmap references. The night halo exists only in the PNGs.
 
-The scale illustrations depict illustrative *sound sources*, not calibrated measurements. Listening-time advice requires context, source and qualification; it must not be inferred from the hourglass illustration.
+The reference graphic is a composition; some faint details will be lost at 64 pixels. Validate visually at intended density/contrast in the final UI, especially traffic, concert and drums.
 
-No app logic or pre-existing icons are changed in this branch.
+Decibel numbers are deliberately not in the illustrations; the app supplies measurements, context and explanatory copy. No real health data.
