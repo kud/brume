@@ -23,15 +23,6 @@ class LearnTest {
         Tag.entries.forEach { assertTrue(it.name, Learn.card(it.card) != null) }
     }
 
-    @Test fun `the path takes one step a day and comes round`() {
-        val n = Learn.cards.size
-        assertEquals(1, Learn.step(100, 100))
-        assertEquals(2, Learn.step(100, 101))
-        assertEquals(1, Learn.step(100, 100L + n))
-        assertEquals(1, Learn.step(100, 90))
-        assertEquals("c1_1", Learn.atStep(1).id)
-    }
-
     @Test fun `tags ride on the note's last line and come back`() {
         val note = NoteTags.compose("Loud bar at lunch.", setOf(Tag.STRESS, Tag.CAFFEINE))
         assertEquals("Loud bar at lunch.\n#caffeine #stress", note)

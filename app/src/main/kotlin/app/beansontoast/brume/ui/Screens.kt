@@ -91,25 +91,28 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
-/** HOME is « Ce soir » by night and « Aujourd'hui » by day; it replaced Listen, whose controls open from it. */
-enum class Tab { HOME, CALM, TONES, JOURNAL, ABOUT }
+/**
+ * Each tab is a category used directly (Erwann, 2026-10-31, reversing the guide): Listen first, then
+ * Calm, Tones, Journal, and Learn, which holds the cards, the settings and About Brume.
+ */
+enum class Tab { LISTEN, CALM, TONES, JOURNAL, LEARN }
 
-/** Home, Journal and About are always there; the others follow their module switch, Calm while Breathe or Meditation is on (ADR 0003). */
+/** Listen, Journal and Learn are always there; the others follow their module switch, Calm while Breathe or Meditation is on (ADR 0003). */
 fun Modules.shows(tab: Tab) = when (tab) { Tab.TONES -> tones; Tab.CALM -> calm; else -> true }
 
 @Composable
-fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), night: Boolean = false, content: @Composable () -> Unit) {
+fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), content: @Composable () -> Unit) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             Column {
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
                 NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
-                    NavigationBarItem(tab == Tab.HOME, { onTab(Tab.HOME) }, { Icon(painterResource(R.drawable.ic_horizon), null) }, label = { NavLabel(if (night) R.string.tab_home_night else R.string.tab_home_day, tab == Tab.HOME) })
+                    NavigationBarItem(tab == Tab.LISTEN, { onTab(Tab.LISTEN) }, { Icon(painterResource(R.drawable.ic_horizon), null) }, label = { NavLabel(R.string.tab_listen, tab == Tab.LISTEN) })
                     if (modules.calm) NavigationBarItem(tab == Tab.CALM, { onTab(Tab.CALM) }, { Icon(painterResource(R.drawable.ic_breath), null) }, label = { NavLabel(R.string.tab_calm, tab == Tab.CALM) })
                     if (modules.tones) NavigationBarItem(tab == Tab.TONES, { onTab(Tab.TONES) }, { Icon(painterResource(R.drawable.ic_tones), null) }, label = { NavLabel(R.string.tab_tones, tab == Tab.TONES) })
                     NavigationBarItem(tab == Tab.JOURNAL, { onTab(Tab.JOURNAL) }, { Icon(painterResource(R.drawable.ic_journal), null) }, label = { NavLabel(R.string.tab_journal, tab == Tab.JOURNAL) })
-                    NavigationBarItem(tab == Tab.ABOUT, { onTab(Tab.ABOUT) }, { Icon(painterResource(R.drawable.ic_info), null) }, label = { NavLabel(R.string.tab_about, tab == Tab.ABOUT) })
+                    NavigationBarItem(tab == Tab.LEARN, { onTab(Tab.LEARN) }, { Icon(painterResource(R.drawable.ic_info), null) }, label = { NavLabel(R.string.tab_learn, tab == Tab.LEARN) })
                 }
             }
         },
@@ -121,9 +124,11 @@ fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), 
 /** The selected tab is told by its indicator and its weight, never by a hue. */
 @Composable
 private fun NavLabel(@StringRes text: Int, selected: Boolean) =
-    // One line always: « Aujourd'hui » is the longest label and once broke in two at 360 dp.
+    // One line always: « Comprendre » is the longest label and must never break in two at 360 dp.
+    // At 360 dp the item gives it about 60 dp: a hair smaller and tighter, and never clipped mid-letter.
     Text(stringResource(text), fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, maxLines = 1, softWrap = false,
-        style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.sp, letterSpacing = 0.sp))
+        overflow = TextOverflow.Visible,
+        style = MaterialTheme.typography.labelMedium.copy(fontSize = 10.5.sp, letterSpacing = (-0.15).sp))
 
 @StringRes fun NoiseColour.label() = when (this) {
     NoiseColour.WHITE -> R.string.noise_white
@@ -335,9 +340,9 @@ internal fun Card(modifier: Modifier = Modifier, content: @Composable () -> Unit
 }
 
 /**
- * The Journal asks one question at a time (Iris, 2026-10-31): how much room the sound took (bother),
- * how loud it was (loudness), then anything to note, with tags. Tags ride in the note (NoteTags), so
- * nothing in storage changes. A tag leads to its Learn card as an invitation, never as an insight.
+ * The Journal, one screen (Iris, 2026-10-31, after Erwann reversed the one-question flow): how loud,
+ * how much room, a note with four tags, Save. Tags ride in the note (NoteTags), so nothing in storage
+ * changes. A tag leads to its Learn card as an invitation, never as an insight.
  */
 @Composable
 fun JournalScreen(
@@ -348,8 +353,6 @@ fun JournalScreen(
     onSave: (Int, Int, String) -> Unit,
     onExport: () -> Unit,
     onCard: (String) -> Unit = {},
-    startEditing: Boolean = false,
-    startQuestion: Int = 1,
 ) {
     val todays = checkIns.firstOrNull { it.day == today.toString() }
     val start = todays ?: checkIns.firstOrNull()
@@ -358,8 +361,6 @@ fun JournalScreen(
     var bother by remember(todays) { mutableIntStateOf(start?.bother ?: 5) }
     var note by remember(todays) { mutableStateOf(todaysParts.text) }
     var tags by remember(todays) { mutableStateOf(todaysParts.tags) }
-    var editing by remember(todays) { mutableStateOf(todays == null || startEditing) }
-    var question by remember(todays) { mutableIntStateOf(startQuestion) }
     val dayFormat = remember { DateTimeFormatter.ofPattern("EEEE d MMMM") }
     val shortFormat = remember { DateTimeFormatter.ofPattern("EEE d MMM") }
 
@@ -368,52 +369,31 @@ fun JournalScreen(
         ScreenTitle(R.string.tab_journal, stringResource(R.string.journal_listened, duration(weekSeconds)))
 
         SectionTitle(stringResource(R.string.journal_today) + " · " + today.format(dayFormat))
-        if (editing) Card {
-            Text(stringResource(R.string.journal_question, question, 3), style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            when (question) {
-                1 -> Question(stringResource(R.string.journal_q_place), stringResource(R.string.journal_bother), bother,
-                    stringResource(R.string.journal_q_place_low), stringResource(R.string.journal_q_place_high)) { bother = it }
-                2 -> Question(stringResource(R.string.journal_q_loud), stringResource(R.string.journal_loudness), loudness,
-                    stringResource(R.string.journal_q_loud_low), stringResource(R.string.journal_q_loud_high)) { loudness = it }
-                else -> {
-                    Text(stringResource(R.string.journal_q_note), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
-                    Text(stringResource(R.string.journal_q_note_hint), style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
-                    TagChips(tags) { tag -> tags = if (tag in tags) tags - tag else tags + tag }
-                    OutlinedTextField(
-                        value = note,
-                        onValueChange = { note = it.take(CheckIn.NOTE_MAX - 60) },
-                        label = { Text(stringResource(R.string.journal_note)) },
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    )
-                }
-            }
-            Row(Modifier.fillMaxWidth().padding(top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (question > 1) OutlinedButton({ question-- }, Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.journal_back)) }
-                Spacer(Modifier.weight(1f))
-                // The screen's one ink action: Next, then Save on the last question.
-                Button(
-                    onClick = { if (question < 3) question++ else { onSave(loudness, bother, NoteTags.compose(note, tags)); editing = false; question = 1 } },
-                    modifier = Modifier.heightIn(min = 52.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.inverseSurface, contentColor = MaterialTheme.colorScheme.inverseOnSurface),
-                ) {
-                    Text(stringResource(when {
-                        question < 3 -> R.string.journal_next
-                        todays == null -> R.string.journal_save
-                        else -> R.string.journal_update
-                    }), style = MaterialTheme.typography.labelLarge)
-                }
-            }
-        } else if (todays != null) Card {
-            Text(stringResource(R.string.journal_done_title), style = MaterialTheme.typography.titleMedium)
-            Scale(stringResource(R.string.journal_bother), todays.bother)
-            Scale(stringResource(R.string.journal_loudness), todays.loudness)
-            val words = tagWords(todaysParts.tags)
-            if (words.isNotEmpty()) Text(words, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
-            if (todaysParts.text.isNotBlank()) Text(todaysParts.text, style = MaterialTheme.typography.bodyMedium,
+        Card {
+            Question(stringResource(R.string.journal_q_loud), stringResource(R.string.journal_loudness), loudness,
+                stringResource(R.string.journal_q_loud_low), stringResource(R.string.journal_q_loud_high)) { loudness = it }
+            Spacer(Modifier.height(12.dp))
+            Question(stringResource(R.string.journal_q_place), stringResource(R.string.journal_bother), bother,
+                stringResource(R.string.journal_q_place_low), stringResource(R.string.journal_q_place_high)) { bother = it }
+            Text(stringResource(R.string.journal_q_note), style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 20.dp).semantics { heading() })
+            Text(stringResource(R.string.journal_q_note_hint), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
-            OutlinedButton({ editing = true; question = 1 }, Modifier.padding(top = 12.dp).heightIn(min = 48.dp)) { Text(stringResource(R.string.journal_edit)) }
+            TagChips(tags) { tag -> tags = if (tag in tags) tags - tag else tags + tag }
+            OutlinedTextField(
+                value = note,
+                onValueChange = { note = it.take(CheckIn.NOTE_MAX - 60) },
+                label = { Text(stringResource(R.string.journal_note)) },
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            )
+            // The screen's one ink action.
+            Button(
+                onClick = { onSave(loudness, bother, NoteTags.compose(note, tags)) },
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp).heightIn(min = 52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.inverseSurface, contentColor = MaterialTheme.colorScheme.inverseOnSurface),
+            ) {
+                Text(stringResource(if (todays == null) R.string.journal_save else R.string.journal_update), style = MaterialTheme.typography.labelLarge)
+            }
         }
         if (message != null) {
             Text(message, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
@@ -423,7 +403,7 @@ fun JournalScreen(
         // An invitation from the latest day with a tag, today or yesterday: one card, never a finding.
         val invite = checkIns.filter { it.day == today.toString() || it.day == today.minusDays(1).toString() }
             .firstNotNullOfOrNull { NoteTags.parse(it.note).tags.firstOrNull() }
-        if (invite != null && !editing) {
+        if (invite != null) {
             val card = Learn.card(invite.card)
             if (card != null) Column(
                 Modifier.padding(top = 14.dp).fillMaxWidth().clip(MaterialTheme.shapes.large)
@@ -498,9 +478,9 @@ private fun Scale(name: String, value: Int) {
 @Composable
 private fun Question(question: String, name: String, value: Int, low: String, high: String, onChange: (Int) -> Unit) {
     val text = stringResource(R.string.journal_rating, name, value)
-    Text(question, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
-    Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.Bottom) {
-        Text("$value", style = MaterialTheme.typography.displaySmall.tabular())
+    Text(question, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.Bottom) {
+        Text("$value", style = MaterialTheme.typography.headlineMedium.tabular())
         Text(stringResource(R.string.journal_of_ten), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 6.dp, bottom = 6.dp))
     }
@@ -560,64 +540,86 @@ private fun duration(seconds: Long): String {
     else stringResource(R.string.duration_minutes, minutes)
 }
 
+/**
+ * The Learn tab (Erwann, 2026-10-31: « Comprendre à la place d'À propos »): the seven topics first,
+ * when to see a doctor, then two rows, Settings and About Brume.
+ */
+@Composable
+fun LearnScreen(
+    onTopic: (Int) -> Unit = {},
+    onSettings: () -> Unit = {},
+    onAbout: () -> Unit = {},
+) {
+    val scroll = rememberScrollState()
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+        ScreenTitle(R.string.tab_learn, stringResource(R.string.learn_intro))
+        Spacer(Modifier.height(8.dp))
+        LearnTopics(onTopic)
+
+        SettingsGroup(stringResource(R.string.doctor_title)) {
+            Text(stringResource(R.string.doctor_intro), style = MaterialTheme.typography.bodyMedium)
+            listOf(R.string.doctor_1, R.string.doctor_2, R.string.doctor_3, R.string.doctor_4, R.string.doctor_5, R.string.doctor_6).forEach {
+                Row(Modifier.padding(top = 4.dp)) {
+                    Text("–", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(16.dp))
+                    Text(stringResource(it), style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+            HorizontalDivider(Modifier.padding(vertical = 10.dp), color = MaterialTheme.colorScheme.outlineVariant)
+            Text(stringResource(R.string.support_line), style = MaterialTheme.typography.bodyMedium)
+        }
+
+        Spacer(Modifier.height(8.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        NavRow(stringResource(R.string.settings_title), stringResource(R.string.settings_row_summary), onClick = onSettings)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        NavRow(stringResource(R.string.about_brume), stringResource(R.string.about_row_summary), onClick = onAbout)
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+/** About Brume, one row away from Learn: what it is, the disclaimer, privacy, sources, the version, and the wordmark at its foot. */
 @Composable
 fun AboutScreen(
     version: String,
     onIntro: () -> Unit = {},
-    onTopic: (Int) -> Unit = {},
-    onSettings: () -> Unit = {},
+    onBack: () -> Unit = {},
 ) {
     val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll)) {
-        Column(gutter) {
-            ScreenTitle(R.string.tab_about, stringResource(R.string.about_what))
-            Text(stringResource(R.string.about_disclaimer), style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+        BackRow(stringResource(R.string.tab_learn), onBack)
+        Text(stringResource(R.string.about_brume), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
+        Text(stringResource(R.string.about_what), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
+        Text(stringResource(R.string.about_disclaimer), style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
 
-            Card(Modifier.padding(top = 16.dp)) {
-                Row(verticalAlignment = Alignment.Top) {
-                    Icon(painterResource(R.drawable.ic_lock), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp).size(20.dp))
-                    Column(Modifier.padding(start = 12.dp)) {
-                        Text(stringResource(R.string.about_privacy_title), style = MaterialTheme.typography.titleSmall)
-                        Text(stringResource(R.string.about_privacy), style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
-                    }
+        Card(Modifier.padding(top = 16.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Icon(painterResource(R.drawable.ic_lock), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp).size(20.dp))
+                Column(Modifier.padding(start = 12.dp)) {
+                    Text(stringResource(R.string.about_privacy_title), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.about_privacy), style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
                 }
             }
+        }
 
-            // Understand comes first; the settings wait behind one row (Erwann, 2026-10-31).
-            SectionTitle(stringResource(R.string.learn_title))
-            Text(stringResource(R.string.learn_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            LearnTopics(onTopic)
+        SectionTitle(stringResource(R.string.about_sources_title))
+        Text(stringResource(R.string.about_sources), style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            NavRow(stringResource(R.string.settings_title), stringResource(R.string.settings_row_summary), onClick = onSettings)
-
-            SettingsGroup(stringResource(R.string.doctor_title)) {
-                Text(stringResource(R.string.doctor_intro), style = MaterialTheme.typography.bodyMedium)
-                listOf(R.string.doctor_1, R.string.doctor_2, R.string.doctor_3, R.string.doctor_4, R.string.doctor_5, R.string.doctor_6).forEach {
-                    Row(Modifier.padding(top = 4.dp)) {
-                        Text("–", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(16.dp))
-                        Text(stringResource(it), style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-                HorizontalDivider(Modifier.padding(vertical = 10.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                Text(stringResource(R.string.support_line), style = MaterialTheme.typography.bodyMedium)
-            }
-            OutlinedButton(onIntro, Modifier.fillMaxWidth().padding(top = 12.dp).heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.about_intro))
-            }
-            // The brand signs About at its foot, never as a title (Erwann, 2026-10-31).
-            Column(Modifier.padding(top = 24.dp, bottom = 16.dp)) {
-                Text(stringResource(R.string.brand_word), style = MaterialTheme.typography.titleLarge)
-                Text(stringResource(R.string.about_version, version), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+        OutlinedButton(onIntro, Modifier.fillMaxWidth().padding(top = 16.dp).heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.about_intro))
+        }
+        // The brand signs About at its foot, never as a title (Erwann, 2026-10-31).
+        Column(Modifier.padding(top = 24.dp, bottom = 16.dp)) {
+            Text(stringResource(R.string.brand_word), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.about_version, version), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
-/** Settings, one row away from About: night hours, modules, language, sync. */
+/** Settings, one row away from Learn: night hours, activities, language, sync, where the sound plays. */
 @Composable
 fun SettingsScreen(
     nightHours: Boolean,
@@ -629,10 +631,11 @@ fun SettingsScreen(
     language: LanguageChoice? = null,
     modules: Modules = Modules(),
     onModules: (Modules) -> Unit = {},
+    onOutput: () -> Unit = {},
 ) {
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
-        BackRow(stringResource(R.string.tab_about), onBack)
+        BackRow(stringResource(R.string.tab_learn), onBack)
         Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
         SettingsGroup(stringResource(R.string.settings_display), Modifier.padding(top = 8.dp)) {
             SwitchRow(stringResource(R.string.settings_night), stringResource(R.string.settings_night_summary), nightHours, onNightHours)
@@ -641,6 +644,10 @@ fun SettingsScreen(
         // Below Android 13 there is no per-app locale and no cached appcompat to stand in: no row.
         if (language != null) LanguageSettings(language)
         SyncSettings(sync, syncMessage, syncActions)
+        // The same switcher Listen's output row opens: the system's own, so Brume never picks for you.
+        SettingsGroup(stringResource(R.string.settings_output)) {
+            NavRow(stringResource(R.string.output_change_label), onClick = onOutput)
+        }
         Spacer(Modifier.height(24.dp))
     }
 }

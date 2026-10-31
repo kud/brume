@@ -76,13 +76,4 @@ object Learn {
 
     /** The cards of one topic, in reading order. */
     fun topic(n: Int): List<Card> = cards.filter { it.topic == n }
-
-    /**
-     * Today's step on the path, 1-based: one card a day from the day the path started, then
-     * round again. A day before the start (a clock moved back) reads as the first step.
-     */
-    fun step(startEpochDay: Long, todayEpochDay: Long): Int =
-        (((todayEpochDay - startEpochDay).coerceAtLeast(0)) % cards.size).toInt() + 1
-
-    fun atStep(step: Int): Card = cards[(step - 1).mod(cards.size)]
 }

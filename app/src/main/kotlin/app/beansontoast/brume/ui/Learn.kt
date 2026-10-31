@@ -41,8 +41,8 @@ import app.beansontoast.brume.core.learn.Learn
 
 /*
  * Learn (Iris, 2026-10-31; Erwann chose direction B the same day): short cards, each with its
- * evidence as a shape plus a word. The library lives in About, one topic per row; the home tab
- * walks the same cards as a path, one a day. Words live in string resources, keyed by card id.
+ * evidence as a shape plus a word. The library opens the Learn tab, one topic per row (Erwann,
+ * 2026-10-31: « Comprendre à la place d'À propos »); a Journal tag or Tones' « How it works » leads in. Words live in string resources, keyed by card id.
  */
 
 /** A card's words by id. getIdentifier, so `:core` can hold the catalogue; LearnStringsTest pins every key. */
@@ -113,7 +113,7 @@ internal fun BackRow(label: String, onBack: () -> Unit) {
     }
 }
 
-/** The topics of the library, as rows: About's "Understand" section. */
+/** The topics of the library, as rows: the head of the Learn tab. */
 @Composable
 fun LearnTopics(onTopic: (Int) -> Unit) {
     val context = LocalContext.current
@@ -131,7 +131,7 @@ fun LearnTopicScreen(topic: Int, onBack: () -> Unit, onCard: (String) -> Unit) {
     val context = LocalContext.current
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
-        BackRow(stringResource(R.string.learn_title), onBack)
+        BackRow(stringResource(R.string.tab_learn), onBack)
         Text(topicName(context, topic), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
         Spacer(Modifier.height(8.dp))
         Learn.topic(topic).forEachIndexed { i, card ->
@@ -150,17 +150,17 @@ fun LearnTopicScreen(topic: Int, onBack: () -> Unit, onCard: (String) -> Unit) {
 }
 
 /**
- * One card: topic, title, the text, what to try, the evidence and the sources. [step] is set when
- * it was reached from the home's path ("Step 3 of 31"); [onNext] walks the reading order.
+ * One card: topic, title, the text, what to try, the evidence and the sources. [onNext] walks the
+ * reading order.
  */
 @Composable
-fun LearnCardScreen(card: LearnCard, backLabel: String, onBack: () -> Unit, step: Int? = null, onNext: ((String) -> Unit)? = null) {
+fun LearnCardScreen(card: LearnCard, backLabel: String, onBack: () -> Unit, onNext: ((String) -> Unit)? = null) {
     val context = LocalContext.current
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
         BackRow(backLabel, onBack)
         Text(
-            topicName(context, card.topic) + (step?.let { " · " + stringResource(R.string.learn_step, it, Learn.cards.size) } ?: ""),
+            topicName(context, card.topic),
             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
         )
         Text(cardTitle(card), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 6.dp).semantics { heading() })
@@ -181,6 +181,27 @@ fun LearnCardScreen(card: LearnCard, backLabel: String, onBack: () -> Unit, step
                 NavRow(stringResource(R.string.learn_next, cardTitle(next))) { onNext(next.id) }
             }
         }
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+/**
+ * Tones' own card, opened by its quiet « How it works »: what the practice is, how a session goes,
+ * and that the evidence is thin, as a shape and a word like every card.
+ */
+@Composable
+fun TonesHowScreen(onBack: () -> Unit) {
+    val scroll = rememberScrollState()
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+        BackRow(stringResource(R.string.tab_tones), onBack)
+        Text(stringResource(R.string.tab_tones), style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+        Text(stringResource(R.string.tones_how), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 6.dp).semantics { heading() })
+        EvidenceMark(Evidence.LITTLE, Modifier.padding(top = 10.dp))
+        Text(stringResource(R.string.tones_note), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 14.dp))
+        Text(stringResource(R.string.ux_tones_session), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 10.dp))
+        Text(stringResource(R.string.tones_evidence_note), style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
         Spacer(Modifier.height(24.dp))
     }
 }

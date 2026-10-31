@@ -3,7 +3,6 @@
     <!-- Wellness wording only: comfort, calm, sleep, cover, blend, track. Never a claim (CLAUDE.md). -->
     <string name="tab_listen">Listen</string>
     <string name="tab_journal">Journal</string>
-    <string name="tab_about">About</string>
     <string name="listen_guide">Set it so your tinnitus blends in, still just there. Covering it completely isn\'t needed.</string>
     <string name="listen_noise">Noise</string>
     <string name="listen_nature">Nature</string>
@@ -54,7 +53,7 @@
     <string name="about_privacy">Everything stays on this phone. Brume has no internet access, no account and no cloud backup. Data leaves only in a file you save yourself, or in the folder you choose to sync with.</string>
     <string name="settings_title">Settings</string>
     <string name="settings_night">Night hours, 22:00–06:00</string>
-    <string name="settings_night_summary">Dark and dim at night, whatever the system theme, and opens on Tonight.</string>
+    <string name="settings_night_summary">Dark and dim at night, whatever the system theme, and opens on Listen.</string>
     <string name="doctor_title">When to see a doctor</string>
     <string name="doctor_intro">See a doctor if any of this is true for you:</string>
     <string name="doctor_1">Your hearing dropped suddenly, in the last month. (Today)</string>
@@ -129,7 +128,7 @@
     <string name="play_state_paused">Paused</string>
     <string name="play_resume">Resume</string>
 
-    <!-- The introduction (Iris, 2026-10-31): shown once, skippable, replayed from About. -->
+    <!-- The introduction (Iris, 2026-10-31): shown once, skippable, replayed from About Brume. -->
     <string name="intro_skip">Skip</string>
     <string name="intro_next">Next</string>
     <string name="intro_back">Back</string>
@@ -356,52 +355,15 @@
     <string name="evidence_little">Little evidence</string>
     <string name="evidence_myth">Myth</string>
     <string name="learn_evidence">Studies: %1$s</string>
-    <string name="learn_title">Understand</string>
     <string name="learn_intro">Short cards on what research says, each with how well it\'s supported.</string>
     <string name="learn_try">Try this</string>
     <string name="learn_sources">Sources: %1$s</string>
     <string name="learn_next">Next: %1$s</string>
-    <string name="learn_step">Step %1$d of %2$d</string>
     <string name="learn_read">Read the card</string>
     <string name="learn_back">Back</string>
     <string name="learn_count">%1$d cards</string>
-    <string name="settings_row_summary">Night hours, modules, language, sync</string>
-    <string name="tab_home_night">Tonight</string>
-    <string name="tab_home_day">Today</string>
-    <string name="home_for_night">For the night</string>
-    <string name="home_for_day">For now</string>
-    <string name="home_sound_timer">%1$s, %2$d minutes</string>
-    <string name="home_reason_night_last">The sound you chose last time, with a timer so it stops on its own. A low sound in the bedroom keeps total silence away; at night, prefer the speaker to earbuds.</string>
-    <string name="home_reason_night_soft">Soft rain, low, with a timer. A quiet sound in the bedroom keeps total silence away; at night, prefer the speaker to earbuds.</string>
-    <string name="home_reason_day_last">The sound you chose last time. Set it just under your tinnitus, so the two blend.</string>
-    <string name="home_reason_day_blend">A soft pink noise, set just under your tinnitus so the two blend.</string>
-    <string name="home_play_hint">It starts softly</string>
-    <string name="home_other_sound">Choose another sound</string>
-    <string name="home_why">What the studies say</string>
-    <string name="home_learn_eyebrow">One thing to know · step %1$d of %2$d</string>
-    <string name="home_tomorrow">Tomorrow morning</string>
-    <string name="home_tomorrow_pitch">Find your tinnitus\'s pitch, in Tones. It goes better in the calm of the day; we\'ll offer it here.</string>
-    <string name="home_day_pitch">A calm moment? Find your tinnitus\'s pitch, step by step.</string>
-    <string name="home_open_tones">Open Tones</string>
-    <string name="tones_path_subtitle">A practice in sessions, in four steps</string>
-    <string name="tones_step_1">Understand the practice</string>
-    <string name="tones_step_1_detail">Four tones around your pitch</string>
-    <string name="tones_step_2">Find your pitch</string>
-    <string name="tones_step_2_night">Easier in the calm of the day: tomorrow morning is fine.</string>
-    <string name="tones_step_3">The right volume</string>
-    <string name="tones_step_3_detail">Just audible, never louder</string>
-    <string name="tones_step_3_hint">Start low and raise it until you can only just hear it.</string>
-    <string name="tones_step_4">A session</string>
-    <string name="tones_step_4_detail">Alone, with the session timer below</string>
-    <string name="tones_step_4_ready">Ready for a session: start it below.</string>
-    <string name="tones_done">done</string>
-    <string name="tones_now">now</string>
-    <string name="tones_next_1">I\'ve read it</string>
-    <string name="tones_next_2">That\'s my pitch</string>
-    <string name="tones_next_3">Just audible</string>
+    <string name="settings_row_summary">Night hours, activities, language, sync, sound output</string>
     <string name="tones_evidence_note">Studies on tone patterns like this one are few and small: try it if you\'re curious, and stop if it doesn\'t suit you.</string>
-    <string name="tones_step_label">Step %1$d, %2$s</string>
-    <string name="journal_question">Question %1$d of %2$d</string>
     <string name="journal_q_place">How much room did the sound take today?</string>
     <string name="journal_q_place_low">barely there</string>
     <string name="journal_q_place_high">all the room</string>
@@ -410,15 +372,18 @@
     <string name="journal_q_loud_high">very loud</string>
     <string name="journal_q_note">Anything to note?</string>
     <string name="journal_q_note_hint">Tags are for noticing, at your pace. Nothing is concluded from them.</string>
-    <string name="journal_next">Next</string>
-    <string name="journal_back">Back</string>
     <string name="tag_caffeine">Coffee</string>
     <string name="tag_alcohol">Alcohol</string>
     <string name="tag_stress">Stress</string>
     <string name="tag_poor_sleep">Poor sleep</string>
-    <string name="journal_done_title">Today is noted</string>
-    <string name="journal_edit">Change</string>
     <string name="journal_invite_title">You noted “%1$s”</string>
     <string name="journal_invite_body">Curious what studies say? The tag is there to notice, at your pace.</string>
     <string name="settings_display">Night</string>
+    <string name="tab_learn">Learn</string>
+    <string name="about_brume">About Brume</string>
+    <string name="about_row_summary">What Brume is, privacy, sources, version</string>
+    <string name="settings_output">Sound output</string>
+    <string name="about_sources_title">Sources</string>
+    <string name="about_sources">Brume draws on clinical guidance and patient groups: NICE NG155, the AAO-HNSF guideline, WHO–ITU H.870, France Acouphènes and Tinnitus UK. Each Learn card names its own sources.</string>
+    <string name="tones_how">How it works</string>
 </resources>

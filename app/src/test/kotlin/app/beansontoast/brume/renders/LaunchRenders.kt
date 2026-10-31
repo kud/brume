@@ -72,7 +72,7 @@ class LaunchRenders(private val shot: String) {
         }
     }
 
-    @Composable private fun Listen() = BrumeScaffold(Tab.HOME, {}, Modules()) { ListenComfort(idle, ListenActions()) }
+    @Composable private fun Listen() = BrumeScaffold(Tab.LISTEN, {}, Modules()) { ListenComfort(idle, ListenActions()) }
 
     /** What the system splash shows: splash_lockup at 288 dp, centred, on splash_ground. */
     @Composable private fun SplashStill() {

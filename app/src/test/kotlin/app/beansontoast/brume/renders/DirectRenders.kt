@@ -6,8 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import app.beansontoast.brume.Modules
-import app.beansontoast.brume.core.home.LastSound
-import app.beansontoast.brume.core.home.Suggest
 import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.learn.Learn
 import app.beansontoast.brume.core.sound.Ambience
@@ -20,7 +18,9 @@ import app.beansontoast.brume.ui.BreathSetup
 import app.beansontoast.brume.ui.BrumeScaffold
 import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.CalmScreen
-import app.beansontoast.brume.ui.HomeScreen
+import app.beansontoast.brume.ui.LanguageChoice
+import app.beansontoast.brume.ui.LearnScreen
+import app.beansontoast.brume.ui.TonesHowScreen
 import app.beansontoast.brume.ui.JournalScreen
 import app.beansontoast.brume.ui.LearnCardScreen
 import app.beansontoast.brume.ui.LearnTopicScreen
@@ -43,13 +43,13 @@ import java.io.File
 import java.time.LocalDate
 
 /**
- * The guide (direction B, built for real), in French at 360x780, night and day, on invented data.
- * `BRUME_RENDERS=<dir> ./gradlew --offline :app:testDebugUnitTest --tests '*GuideRenders*'`.
+ * Direct tabs (Erwann, 2026-10-31), in French at 360x780, night and day, on invented data.
+ * `BRUME_RENDERS=<dir> ./gradlew --offline :app:testDebugUnitTest --tests '*DirectRenders*'`.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "fr-w360dp-h780dp-xxhdpi")
-class GuideRenders(private val shot: String) {
+class DirectRenders(private val shot: String) {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Before fun only() = assumeTrue(System.getenv("BRUME_RENDERS") != null)
@@ -70,34 +70,24 @@ class GuideRenders(private val shot: String) {
         val dark = night || shot.endsWith("-dark")
         val name = shot.removeSuffix("-night").removeSuffix("-day")
         when (name) {
-            "home" -> tab(dark, night, Tab.HOME) { home(night, idle) }
-            "home-first" -> tab(dark, night, Tab.HOME) { home(night, PlayerUi(noise = null, ambience = null)) }
-            "home-playing" -> tab(dark, night, Tab.HOME) { home(night, playing) }
-            "controls" -> tab(dark, night, Tab.HOME) { ListenComfort(idle, ListenActions(), onBack = {}) }
+            "listen" -> tab(dark, night, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
+            "listen-playing" -> tab(dark, night, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
             "calm" -> tab(dark, night, Tab.CALM) { CalmScreen(Modules(), Practice.BREATHE, {}, BreathSetup(), MeditationSetup(), "Bruit brun", {}, {}, {}, {}) }
-            "tones-1", "tones-2", "tones-3", "tones-4" ->
-                tab(dark, night, Tab.TONES) { TonesScreen(tones, ListenActions(), step = name.last().digitToInt(), night = night) }
-            "journal-q1" -> tab(dark, night, Tab.JOURNAL) { JournalScreen(week, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
-            "journal-q3" -> tab(dark, night, Tab.JOURNAL) { JournalScreen(week, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}, startQuestion = 3) }
-            "journal-done" -> tab(dark, night, Tab.JOURNAL) { JournalScreen(noted, 4 * 3600 + 25 * 60, today, "Enregistré", { _, _, _ -> }, {}) }
-            "about" -> tab(dark, night, Tab.ABOUT) { AboutScreen("0.2.0") }
-            "settings" -> tab(dark, night, Tab.ABOUT) { SettingsScreen(true, {}, {}) }
-            "learn-topic" -> tab(dark, night, Tab.ABOUT) { LearnTopicScreen(3, {}, {}) }
-            "card-coffee" -> tab(dark, night, Tab.HOME) { LearnCardScreen(Learn.card("c3_1")!!, "Retour", {}, step = 6) }
-            "card-time" -> tab(dark, night, Tab.ABOUT) { LearnCardScreen(Learn.card("c5_3")!!, "Retour", {}, onNext = {}) }
-            "card-sound" -> tab(dark, night, Tab.ABOUT) { LearnCardScreen(Learn.card("c2_3")!!, "Retour", {}, onNext = {}) }
-            "card-heavy" -> tab(dark, night, Tab.ABOUT) { LearnCardScreen(Learn.card("c6_3")!!, "Retour", {}, onNext = {}) }
+            "tones" -> tab(dark, night, Tab.TONES) { TonesScreen(tones, ListenActions()) }
+            "tones-how" -> tab(dark, night, Tab.TONES) { TonesHowScreen {} }
+            "journal" -> tab(dark, night, Tab.JOURNAL) { JournalScreen(week, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
+            "journal-saved" -> tab(dark, night, Tab.JOURNAL) { JournalScreen(noted, 4 * 3600 + 25 * 60, today, "Enregistré", { _, _, _ -> }, {}) }
+            "learn" -> tab(dark, night, Tab.LEARN) { LearnScreen() }
+            "learn-topic" -> tab(dark, night, Tab.LEARN) { LearnTopicScreen(3, {}, {}) }
+            "card-coffee" -> tab(dark, night, Tab.LEARN) { LearnCardScreen(Learn.card("c3_1")!!, "Retour", {}, onNext = {}) }
+            "settings" -> tab(dark, night, Tab.LEARN) { SettingsScreen(true, {}, {}, language = LanguageChoice("fr") {}) }
+            "about" -> tab(dark, night, Tab.LEARN) { AboutScreen("0.2.0") }
             else -> error(shot)
         }
     }
 
-    @Composable private fun home(night: Boolean, ui: PlayerUi) = HomeScreen(
-        night = night, ui = ui, suggestion = Suggest.of(night, LastSound(ui.noise, ui.ambience, ui.timerMinutes)), step = 6,
-        actions = ListenActions(), onPlay = {}, onOtherSound = {}, onCard = { _, _ -> }, tonesStep = 2,
-    )
-
     private fun tab(dark: Boolean, night: Boolean, tab: Tab, content: @Composable () -> Unit) = capture {
-        BrumeTheme(dark = dark, night = night) { BrumeScaffold(tab, {}, Modules(), night = night) { content() } }
+        BrumeTheme(dark = dark, night = night) { BrumeScaffold(tab, {}, Modules()) { content() } }
     }
 
     private fun capture(content: @Composable () -> Unit) {
@@ -107,16 +97,15 @@ class GuideRenders(private val shot: String) {
             val v = compose.activity.window.decorView
             Bitmap.createBitmap(v.width, v.height, Bitmap.Config.ARGB_8888).also { v.draw(Canvas(it)) }
         }
-        writePng(bitmap, File(System.getenv("BRUME_RENDERS")!!, "guide-$shot.png"))
+        writePng(bitmap, File(System.getenv("BRUME_RENDERS")!!, "direct-$shot.png"))
     }
 
     companion object {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun shots() = listOf(
-            "home", "home-first", "home-playing", "controls", "calm", "tones-1", "tones-2", "tones-3", "tones-4",
-            "journal-q1", "journal-q3", "journal-done", "about", "settings", "learn-topic",
-            "card-coffee", "card-time", "card-sound", "card-heavy",
+            "listen", "listen-playing", "calm", "tones", "tones-how", "journal", "journal-saved",
+            "learn", "learn-topic", "card-coffee", "settings", "about",
         ).flatMap { listOf("$it-night", "$it-day") }.map { arrayOf<Any>(it) }
     }
 }
