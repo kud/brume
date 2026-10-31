@@ -3,12 +3,9 @@
     <string name="tab_listen">Écouter</string>
     <string name="tab_journal">Journal</string>
     <string name="tab_about">À propos</string>
-
-    <string name="listen_title">Écouter</string>
     <string name="listen_guide">Réglez-le pour que votre acouphène se fonde dedans, encore un peu là. Le couvrir complètement n\'est pas nécessaire.</string>
     <string name="listen_noise">Bruit</string>
     <string name="listen_nature">Nature</string>
-    <string name="listen_none">Aucun</string>
     <string name="noise_white">Blanc</string>
     <string name="noise_pink">Rose</string>
     <string name="noise_brown">Brun</string>
@@ -20,9 +17,8 @@
     <string name="listen_level">Niveau %1$d sur 20</string>
     <string name="listen_level_label">Niveau : %1$s</string>
     <string name="listen_timer">Minuterie</string>
-    <string name="timer_off">Non</string>
+    <string name="timer_off">Désactivée</string>
     <string name="timer_minutes">%1$d min</string>
-    <string name="timer_remaining">S\'estompe et s\'arrête dans %1$d min</string>
     <string name="action_play">Lecture</string>
     <string name="action_pause">Pause</string>
     <string name="action_pick">Choisir un son</string>
@@ -43,7 +39,6 @@
     <string name="journal_update">Mettre à jour aujourd\'hui</string>
     <string name="journal_saved">Enregistré</string>
     <string name="journal_recent">Derniers jours</string>
-    <string name="journal_entry">Intensité %1$d · Gêne %2$d</string>
     <string name="journal_empty_title">Aucune saisie pour l\'instant</string>
     <string name="journal_empty_body">Une par jour suffit. Cela prend quelques secondes.</string>
     <string name="journal_listened">Écouté cette semaine : %1$s</string>
@@ -54,7 +49,6 @@
     <string name="journal_exported">Exporté</string>
     <string name="journal_export_failed">L\'export n\'a pas pu être écrit.</string>
 
-    <string name="about_title">À propos de Brume</string>
     <string name="about_what">Des sons pour le confort et le sommeil. Un journal pour voir comment les choses évoluent.</string>
     <string name="about_disclaimer">Ce n\'est pas un traitement, et cela ne remplace pas un médecin. Brume n\'est pas un dispositif médical.</string>
     <string name="about_privacy">Tout reste sur ce téléphone. Brume n\'a ni accès à internet, ni compte, ni sauvegarde dans le cloud. Les données ne sortent que par un export que vous enregistrez vous-même.</string>
@@ -76,4 +70,24 @@
     <string name="notification_playing">En lecture</string>
     <string name="notification_paused">En pause</string>
     <string name="notification_stop">Arrêter</string>
+
+    <!-- Redesign, 2026-10-31 -->
+    <string name="brand_word">brume</string>
+    <string name="noise_white_hint">Clair et régulier</string>
+    <string name="noise_pink_hint">Plus doux, équilibré</string>
+    <string name="noise_brown_hint">Profond et grave</string>
+    <string name="noise_grey_hint">Égal à l\'oreille</string>
+    <string name="nature_rain_hint">Pluie régulière</string>
+    <string name="nature_surf_hint">Vagues lentes</string>
+    <string name="nature_wind_hint">Air qui passe</string>
+    <string name="listen_levels">Niveaux</string>
+    <string name="listen_state_empty">Choisissez un son plus haut.</string>
+    <string name="listen_state_ready">Prêt : %1$s. Le son démarre en douceur.</string>
+    <string name="listen_state_playing">En lecture : %1$s</string>
+    <string name="timer_left">encore %1$d min</string>
+    <string name="timer_change">Changer la minuterie</string>
+    <string name="journal_scale">%1$s %2$d</string>
+    <string name="journal_of_ten">sur 10</string>
+    <string name="journal_export_title">Vos données</string>
+    <string name="about_privacy_title">Sur ce téléphone uniquement</string>
 </resources>

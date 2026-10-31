@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="launcher_ground">#FF1C1B1F</color>
+    <!-- Brume's night: the launcher ground and the light window, matching the in-app scheme (ui/Theme.kt). -->
+    <color name="launcher_ground">#FF10141A</color>
+    <color name="launcher_mist">#FFDCE3EB</color>
+    <color name="dawn_ground">#FFF5F6F8</color>
 </resources>

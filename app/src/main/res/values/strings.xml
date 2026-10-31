@@ -4,12 +4,9 @@
     <string name="tab_listen">Listen</string>
     <string name="tab_journal">Journal</string>
     <string name="tab_about">About</string>
-
-    <string name="listen_title">Listen</string>
     <string name="listen_guide">Set it so your tinnitus blends in, still just there. Covering it completely isn\'t needed.</string>
     <string name="listen_noise">Noise</string>
     <string name="listen_nature">Nature</string>
-    <string name="listen_none">None</string>
     <string name="noise_white">White</string>
     <string name="noise_pink">Pink</string>
     <string name="noise_brown">Brown</string>
@@ -23,7 +20,6 @@
     <string name="listen_timer">Sleep timer</string>
     <string name="timer_off">Off</string>
     <string name="timer_minutes">%1$d min</string>
-    <string name="timer_remaining">Fades out and stops in %1$d min</string>
     <string name="action_play">Play</string>
     <string name="action_pause">Pause</string>
     <string name="action_pick">Pick a sound</string>
@@ -44,7 +40,6 @@
     <string name="journal_update">Update today</string>
     <string name="journal_saved">Saved</string>
     <string name="journal_recent">Recent days</string>
-    <string name="journal_entry">Loudness %1$d · Bother %2$d</string>
     <string name="journal_empty_title">No check-ins yet</string>
     <string name="journal_empty_body">One a day is enough. It takes a few seconds.</string>
     <string name="journal_listened">Listened this week: %1$s</string>
@@ -55,7 +50,6 @@
     <string name="journal_exported">Exported</string>
     <string name="journal_export_failed">The export couldn\'t be written.</string>
 
-    <string name="about_title">About Brume</string>
     <string name="about_what">Sounds for comfort and sleep. A journal to see how things go over time.</string>
     <string name="about_disclaimer">It\'s not a treatment, and it doesn\'t replace a doctor. Brume is not a medical device.</string>
     <string name="about_privacy">Everything stays on this phone. Brume has no internet access, no account and no cloud backup. Data leaves only in an export you save yourself.</string>
@@ -77,4 +71,24 @@
     <string name="notification_playing">Playing</string>
     <string name="notification_paused">Paused</string>
     <string name="notification_stop">Stop</string>
+
+    <!-- Redesign, 2026-10-31 -->
+    <string name="brand_word">brume</string>
+    <string name="noise_white_hint">Bright and even</string>
+    <string name="noise_pink_hint">Softer, balanced</string>
+    <string name="noise_brown_hint">Deep and low</string>
+    <string name="noise_grey_hint">Even to the ear</string>
+    <string name="nature_rain_hint">Steady rain</string>
+    <string name="nature_surf_hint">Slow waves</string>
+    <string name="nature_wind_hint">Moving air</string>
+    <string name="listen_levels">Levels</string>
+    <string name="listen_state_empty">Choose a sound above.</string>
+    <string name="listen_state_ready">Ready: %1$s. It starts softly.</string>
+    <string name="listen_state_playing">Playing: %1$s</string>
+    <string name="timer_left">%1$d min left</string>
+    <string name="timer_change">Change the sleep timer</string>
+    <string name="journal_scale">%1$s %2$d</string>
+    <string name="journal_of_ten">of 10</string>
+    <string name="journal_export_title">Your data</string>
+    <string name="about_privacy_title">On this phone only</string>
 </resources>

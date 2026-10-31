@@ -22,7 +22,6 @@ import app.beansontoast.brume.BuildConfig
 import app.beansontoast.brume.R
 import app.beansontoast.brume.core.NightHours
 import app.beansontoast.brume.core.journal.CheckIn
-import app.beansontoast.design.GammeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,7 +62,7 @@ private fun BrumeRoot(graph: AppGraph) {
         }
     }
 
-    GammeTheme(darkTheme = night || isSystemInDarkTheme(), trueBlack = true, dim = night) {
+    BrumeTheme(dark = isSystemInDarkTheme(), night = night) {
         BrumeScaffold(tab = tab, onTab = { tab = it }) {
             when (tab) {
                 Tab.LISTEN -> ListenScreen(player, ListenActions(

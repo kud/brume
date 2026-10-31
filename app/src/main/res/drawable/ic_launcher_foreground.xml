@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- A low moon behind three lines of mist. The safe zone is the middle 66 of 108. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
-    <group android:translateX="30" android:translateY="30" android:scaleX="2" android:scaleY="2">
-        <path android:strokeColor="#FFE6E0E9" android:strokeWidth="2" android:strokeLineCap="round"
-            android:pathData="M4,8 C7,6 9,10 12,8 C15,6 17,10 20,8" />
-        <path android:strokeColor="#FFE6E0E9" android:strokeWidth="2" android:strokeLineCap="round"
-            android:pathData="M4,12.5 C7,10.5 9,14.5 12,12.5 C15,10.5 17,14.5 20,12.5" />
-        <path android:strokeColor="#FFE6E0E9" android:strokeWidth="2" android:strokeLineCap="round"
-            android:pathData="M7,17 C9,15.5 11,18.5 13,17 C15,15.5 16,18 17,17" />
-    </group>
+    <!-- Crescent: the outer disc's long arc, back along the inner disc's short one. -->
+    <path android:fillColor="@color/launcher_mist"
+        android:pathData="M51.51,25.24 A13,13 0 1,0 66.1,42.75 A11.5,11.5 0 0,1 51.51,25.24 Z" />
+    <path android:strokeColor="@color/launcher_mist" android:strokeWidth="3.2" android:strokeLineCap="round"
+        android:pathData="M30,56 C36,52 42,60 48,56 C54,52 60,60 66,56 C70,53.5 74,57 78,56" />
+    <path android:strokeColor="@color/launcher_mist" android:strokeWidth="3.2" android:strokeLineCap="round"
+        android:pathData="M34,66 C40,62 46,70 52,66 C58,62 64,70 70,66 C72,65 74,65.5 76,66" />
+    <path android:strokeColor="@color/launcher_mist" android:strokeWidth="3.2" android:strokeLineCap="round"
+        android:pathData="M40,76 C45,73 49,79 54,76 C59,73 63,78 68,76" />
 </vector>

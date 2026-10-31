@@ -12,11 +12,11 @@ import app.beansontoast.brume.playback.PlayerUi
 import app.beansontoast.brume.playback.Status
 import app.beansontoast.brume.ui.AboutScreen
 import app.beansontoast.brume.ui.BrumeScaffold
+import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.JournalScreen
 import app.beansontoast.brume.ui.ListenActions
 import app.beansontoast.brume.ui.ListenScreen
 import app.beansontoast.brume.ui.Tab
-import app.beansontoast.design.GammeTheme
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -52,22 +52,26 @@ class Renders(private val shot: String) {
         CheckIn("2026-01-17", 7, 6, "Loud restaurant at lunch."),
     )
 
+    private val idle = PlayerUi(NoiseColour.PINK, Ambience.RAIN, 0.3f, 0.45f)
+    private val playing = PlayerUi(NoiseColour.BROWN, Ambience.RAIN, 0.35f, 0.25f, playing = true, timerMinutes = 45, timerRemainingMinutes = 38)
+
     @Test fun render() = when (shot) {
-        "listen-light" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenScreen(PlayerUi(NoiseColour.PINK, Ambience.RAIN, 0.3f, 0.45f), ListenActions()) }
-        "listen-night-playing" -> shoot(dark = true, night = true, Tab.LISTEN) {
-            ListenScreen(PlayerUi(NoiseColour.WHITE, Ambience.RAIN, 0.35f, 0.25f, playing = true, timerMinutes = 45, timerRemainingMinutes = 38), ListenActions())
-        }
-        "listen-none-dark" -> shoot(dark = true, night = false, Tab.LISTEN) {
-            ListenScreen(PlayerUi(noise = null, ambience = null, status = Status.TOO_LOUD), ListenActions())
-        }
-        "journal-light" -> shoot(dark = false, night = false, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
+        "listen-idle-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenScreen(idle, ListenActions()) }
+        "listen-playing-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenScreen(playing, ListenActions()) }
+        "listen-idle-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenScreen(idle, ListenActions()) }
+        "listen-playing-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenScreen(playing, ListenActions()) }
+        "listen-empty-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenScreen(PlayerUi(noise = null, ambience = null), ListenActions()) }
+        "listen-stopped-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenScreen(idle.copy(status = Status.TOO_LOUD), ListenActions()) }
+        "journal-day" -> shoot(dark = false, night = false, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
+        "journal-night" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-empty-dark" -> shoot(dark = true, night = false, Tab.JOURNAL) { JournalScreen(emptyList(), 0, today, null, { _, _, _ -> }, {}) }
-        "about-dark" -> shoot(dark = true, night = false, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0") }
+        "about-night" -> shoot(dark = true, night = true, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0") }
+        "about-day" -> shoot(dark = false, night = false, Tab.ABOUT) { AboutScreen(true, {}, "0.1.0") }
         else -> error(shot)
     }
 
     private fun shoot(dark: Boolean, night: Boolean, tab: Tab, content: @Composable () -> Unit) {
-        compose.setContent { GammeTheme(darkTheme = dark, trueBlack = true, dim = night) { BrumeScaffold(tab, {}) { content() } } }
+        compose.setContent { BrumeTheme(dark = dark, night = night) { BrumeScaffold(tab, {}) { content() } } }
         compose.waitForIdle()
         val bitmap = compose.runOnUiThread {
             val v = compose.activity.window.decorView
@@ -79,7 +83,10 @@ class Renders(private val shot: String) {
     companion object {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-        fun shots() = listOf("listen-light", "listen-night-playing", "listen-none-dark", "journal-light", "journal-empty-dark", "about-dark").map { arrayOf<Any>(it) }
+        fun shots() = listOf(
+            "listen-idle-night", "listen-playing-night", "listen-idle-day", "listen-playing-day", "listen-empty-dark", "listen-stopped-dark",
+            "journal-day", "journal-night", "journal-empty-dark", "about-night", "about-day",
+        ).map { arrayOf<Any>(it) }
     }
 }
 
