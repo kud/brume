@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="headphones max" color="currentColor">
+  <g fill="none" stroke="currentColor" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 52V42c0-17 12-30 28-30s28 13 28 30v10"/><rect x="15" y="47" width="13" height="29" rx="6"/><rect x="68" y="47" width="13" height="29" rx="6"/><path d="M22 76c5 6 12 10 21 10h10c10 0 19-5 24-12"/>
+  </g>
+</svg>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="ambulance" color="currentColor">
+  <g fill="none" stroke="currentColor" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 40h56v33H11zM67 48h11l11 13v12H67V48Z"/><path d="M23 40V26h30v14M36 20v6M22 30H12M58 30h8"/><circle cx="27" cy="74" r="7"/><circle cx="76" cy="74" r="7"/><path d="M17 52h38M23 62h18"/>
+  </g>
+</svg>

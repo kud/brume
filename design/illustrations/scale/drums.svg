@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="drums" color="currentColor">
+  <g fill="none" stroke="currentColor" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="47" cy="57" rx="22" ry="9"/><path d="M25 57v15c0 6 10 10 22 10 12 0 22-4 22-10V57"/><path d="M33 67v10M61 67v10"/><path d="M13 27 40 48M78 26 55 48"/><path d="M14 17v7M79 17v6"/><path d="M9 40h20M67 40h20"/>
+  </g>
+</svg>

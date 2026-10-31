@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" width="160" height="120" role="img" aria-label="earplugs filtered" color="currentColor">
+  <g fill="none" stroke="currentColor" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M52 20v18M52 38c-18 0-22 16-9 22 5 2 11 2 18 0 13-6 10-22-9-22Z"/><path d="M52 60v36M41 69c7 6 15 6 22 0M44 82c6 5 11 5 17 0"/><rect x="92" y="26" width="26" height="22" rx="9"/><path d="M105 48v48M94 64c7 5 15 5 22 0M96 78c6 5 13 5 19 0"/>
+  </g>
+</svg>

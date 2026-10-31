@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="rocket" color="currentColor">
+  <g fill="none" stroke="currentColor" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M47 14C36 27 34 42 35 59h24c1-17-2-32-12-45Z"/><path d="M35 48 23 65v8l13-6M59 48l12 17v8l-13-6M47 22v9"/><circle cx="47" cy="43" r="6"/><path d="M40 67 42 83M54 67l-2 16M46 69l1 19M15 89h17M62 89h20"/>
+  </g>
+</svg>
