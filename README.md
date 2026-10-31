@@ -29,6 +29,10 @@ Modules: `:core` (pure Kotlin: sound generation, level rules, journal and export
 
 Pushing a `vMAJOR.MINOR.PATCH` tag, or running the Android workflow on `main` with a tag, builds the APK and attaches it to a GitHub Release. A `-dev.N` tag is a pre-release and ships the debug build when the signing secrets are absent. A final release needs four repository secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
 
+## Sources
+
+The research, guidelines, open-source projects and design Brume draws on are listed in [docs/SOURCES.md](docs/SOURCES.md).
+
 ## Licence
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).
