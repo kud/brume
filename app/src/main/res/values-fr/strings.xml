@@ -385,4 +385,36 @@
     <string name="about_sources_title">Sources</string>
     <string name="about_sources">Brume s\'appuie sur des recommandations cliniques et des associations de patients : NICE NG155, la recommandation AAO-HNSF, OMS–UIT H.870, France Acouphènes et Tinnitus UK. Chaque fiche de Comprendre cite ses propres sources.</string>
     <string name="tones_how">Comment ça marche</string>
+    <!-- The scene (Iris, 2026-10-31) -->
+    <string name="scene_sleep">Dormir</string>
+    <string name="scene_settle">Se poser</string>
+    <string name="scene_breathe">Respirer</string>
+    <string name="scene_tones">Tons</string>
+    <string name="scene_swipe">Glissez de côté pour changer de scène</string>
+    <string name="scene_volume_hint">Glissez vers le haut ou le bas pour le volume</string>
+    <string name="volume_0">très doux</string>
+    <string name="volume_1">doux</string>
+    <string name="volume_2">moyen</string>
+    <string name="volume_3">fort</string>
+    <string name="volume_4">très fort</string>
+    <string name="volume_label">Volume</string>
+    <string name="volume_up">Plus fort</string>
+    <string name="volume_down">Plus doux</string>
+    <string name="scene_mix_and">%1$s et %2$s</string>
+    <string name="scene_no_sound">Aucun son</string>
+    <string name="scene_no_sound_line">Touchez + pour en choisir un</string>
+    <string name="scene_ready">Prêt</string>
+    <string name="scene_add">Ajouter ou changer un son</string>
+    <string name="scene_in_mix">%1$s, dans le mélange. Changer les sons</string>
+    <string name="scene_sounds">Sons</string>
+    <string name="scene_sounds_hint">Touchez un son pour l’ajouter au mélange : un bruit et un son de nature.</string>
+    <string name="scene_levels">Chaque son</string>
+    <string name="scene_tones_setup">Hauteur et niveaux</string>
+    <string name="scene_breathe_setup">Rythme et durée</string>
+    <string name="scene_practice_breathe">Respiration</string>
+    <string name="scene_practice_meditate">Méditation</string>
+    <string name="scene_start">Commencer</string>
+    <string name="scene_minutes_with">%1$d min · avec %2$s</string>
+    <string name="scene_minutes">%1$d min</string>
+    <string name="scene_choose">Scène</string>
 </resources>

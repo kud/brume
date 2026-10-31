@@ -386,4 +386,36 @@
     <string name="about_sources_title">Sources</string>
     <string name="about_sources">Brume draws on clinical guidance and patient groups: NICE NG155, the AAO-HNSF guideline, WHO–ITU H.870, France Acouphènes and Tinnitus UK. Each Learn card names its own sources.</string>
     <string name="tones_how">How it works</string>
+    <!-- The scene (Iris, 2026-10-31) -->
+    <string name="scene_sleep">Sleep</string>
+    <string name="scene_settle">Settle</string>
+    <string name="scene_breathe">Breathe</string>
+    <string name="scene_tones">Tones</string>
+    <string name="scene_swipe">Swipe sideways for another scene</string>
+    <string name="scene_volume_hint">Slide up or down for the volume</string>
+    <string name="volume_0">very soft</string>
+    <string name="volume_1">soft</string>
+    <string name="volume_2">medium</string>
+    <string name="volume_3">loud</string>
+    <string name="volume_4">very loud</string>
+    <string name="volume_label">Volume</string>
+    <string name="volume_up">Louder</string>
+    <string name="volume_down">Softer</string>
+    <string name="scene_mix_and">%1$s and %2$s</string>
+    <string name="scene_no_sound">No sound yet</string>
+    <string name="scene_no_sound_line">Tap + to choose one</string>
+    <string name="scene_ready">Ready</string>
+    <string name="scene_add">Add or change a sound</string>
+    <string name="scene_in_mix">%1$s, in the mix. Change the sounds</string>
+    <string name="scene_sounds">Sounds</string>
+    <string name="scene_sounds_hint">Tap a sound to add it to the mix: one noise and one nature sound.</string>
+    <string name="scene_levels">Each sound</string>
+    <string name="scene_tones_setup">Pitch and levels</string>
+    <string name="scene_breathe_setup">Pattern and length</string>
+    <string name="scene_practice_breathe">Breathing</string>
+    <string name="scene_practice_meditate">Meditation</string>
+    <string name="scene_start">Start</string>
+    <string name="scene_minutes_with">%1$d min · with %2$s</string>
+    <string name="scene_minutes">%1$d min</string>
+    <string name="scene_choose">Scene</string>
 </resources>

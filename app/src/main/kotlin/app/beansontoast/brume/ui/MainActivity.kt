@@ -42,6 +42,7 @@ import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.journal.EndedBy
 import app.beansontoast.brume.core.breath.BreathPlan
 import app.beansontoast.brume.core.breath.Pattern
+import app.beansontoast.brume.core.sound.SoundEngine
 import app.beansontoast.brume.sync.ImportResult
 import app.beansontoast.brume.sync.SyncProblem
 import kotlinx.coroutines.Dispatchers
@@ -78,8 +79,13 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     // Brume always opens on Listen: the sounds, chosen directly; nothing else asks for effort at night.
     var tab by rememberSaveable { mutableStateOf(Tab.LISTEN) }
     val modules by graph.settings.modules.collectAsStateWithLifecycle()
-    // A tab whose module was just switched off, here or on the other phone, falls back to Listen.
-    LaunchedEffect(modules) { if (!modules.shows(tab)) tab = Tab.LISTEN }
+    // Calm and Tones are scenes inside Listen now: only Listen, Journal and Learn are tabs.
+    LaunchedEffect(Unit) { if (tab == Tab.CALM || tab == Tab.TONES) tab = Tab.LISTEN }
+    // Brume reopens on the scene last used (Iris, 2026-10-31): the clock never picks one for him,
+    // which is what he disliked in dev.11. The first time, Settle, the scene that assumes nothing.
+    var scene by rememberSaveable { mutableStateOf(Scene.entries.firstOrNull { it.name == graph.settings.scene } ?: Scene.SETTLE) }
+    // A scene whose module was just switched off, here or on the other phone, falls back to Settle.
+    LaunchedEffect(modules) { if (scene !in modules.scenes()) scene = Scene.SETTLE }
     var breath by remember {
         mutableStateOf(BreathSetup(
             pattern = Pattern.entries.firstOrNull { it.name == graph.settings.breathPattern } ?: Pattern.LONG_OUT,
@@ -139,7 +145,6 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
         import = { importFile.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
     )
 
-    var showPlaying by rememberSaveable { mutableStateOf(false) }
     // Pages opened inside a tab, as a "/"-joined stack: "topic:3", "card:c3_1", "settings", "about", "tones-how". Cleared on a tab change.
     var pages by rememberSaveable { mutableStateOf("") }
     val stack = pages.split('/').filter { it.isNotEmpty() }
@@ -148,16 +153,32 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     // The introduction shows once, on first launch, and again from About Brume. Finishing or skipping marks it seen.
     var showIntro by rememberSaveable { mutableStateOf(!graph.settings.introSeen) }
 
+    // A sound scene keeps its own mix: any change to its sounds or timer is saved to it at once.
+    fun keepMix() { if (scene.sounds) graph.settings.setSceneMix(scene.name, SceneMix.of(graph.player.ui.value).encode()) }
+    // Moving to a sound scene brings its mix back. A swipe is his own gesture, and levels stay his,
+    // per headphones, so a scene never makes anything louder. Never on the first visit: the scene
+    // then starts from the mix already chosen, so nothing is lost when scenes arrive.
+    fun goScene(next: Scene) {
+        scene = next
+        graph.settings.scene = next.name
+        if (!next.sounds) return
+        val mix = SceneMix.decode(graph.settings.sceneMix(next.name)) ?: return keepMix()
+        val now = graph.player.ui.value
+        if (mix.noise != now.noise) graph.player.selectNoise(mix.noise)
+        if (mix.ambience != now.ambience) graph.player.selectAmbience(mix.ambience)
+        // The tone pattern playing keeps its own timer until a sound scene is played.
+        if (mix.timer != now.timerMinutes && !(now.playing && now.mode == SoundEngine.Mode.TONES)) graph.player.setTimer(mix.timer)
+    }
     val actions = ListenActions(
-        noise = graph.player::selectNoise,
-        ambience = graph.player::selectAmbience,
+        noise = { graph.player.selectNoise(it); keepMix() },
+        ambience = { graph.player.selectAmbience(it); keepMix() },
         noiseLevel = graph.player::setNoiseLevel,
         ambienceLevel = graph.player::setAmbienceLevel,
-        timer = graph.player::setTimer,
+        timer = { graph.player.setTimer(it); keepMix() },
         toggle = graph.player::toggle,
         tooLoud = graph.player::tooLoud,
         mode = graph.player::selectMode,
-        open = { showPlaying = true },
+        open = { pages = "" },
         balance = graph.player::setBalance,
         output = { openOutputSwitcher(context) },
         tones = ToneActions(
@@ -168,10 +189,6 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
         ),
     )
 
-    // The playing view opens when a sound or the tone pattern starts (not when the app opens on
-    // one already playing), and stays, paused or not, until Back or its own way back.
-    var wasPlaying by remember { mutableStateOf(player.playing) }
-    LaunchedEffect(player.playing) { if (player.playing && !wasPlaying) showPlaying = true; wasPlaying = player.playing }
 
     // The sound underneath goes through the player as ever: its fade-in, its levels, Too loud.
     // Already playing, it plays on and is left playing after. Breathe and Meditation share this.
@@ -186,7 +203,6 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
         breathStartedSound = false
         breathStartedAt = null
         meditationStartedAt = null
-        showPlaying = false
     }
 
     val anchors = remember { LaunchAnchors() }
@@ -201,7 +217,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                         showIntro = false
                         // Replayed from About Brume, Later returns there; on first launch the tab is still Listen.
                         // Setting the pitch from the intro turns Tones back on if it was off.
-                        if (setPitch) { if (!modules.tones) graph.settings.setModules(modules.copy(tones = true)); tab = Tab.TONES }
+                        if (setPitch) { if (!modules.tones) graph.settings.setModules(modules.copy(tones = true)); tab = Tab.LISTEN; goScene(Scene.TONES); pages = "tones" }
                     })
                 } else if (breathStartedAt != null) {
                     BackHandler { endBreath() }
@@ -209,9 +225,6 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                 } else if (meditationStartedAt != null) {
                     BackHandler { endBreath() }
                     MeditationSession(meditation, meditationStartedAt!!, night, onEnd = ::endBreath)
-                } else if (showPlaying && player.hasSound) {
-                    BackHandler { showPlaying = false }
-                    PlayingView(player, night, onPause = graph.player::toggle, onBack = { showPlaying = false })
                 } else BrumeScaffold(tab = tab, onTab = { tab = it; pages = "" }, modules = modules) {
                     val page = stack.lastOrNull()
                     if (page != null) BackHandler { pop() }
@@ -223,16 +236,9 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                         page?.startsWith("topic:") == true -> LearnTopicScreen(page.removePrefix("topic:").toInt(), onBack = ::pop, onCard = { push("card:$it") })
                         page == "about" -> AboutScreen(version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true }, onBack = ::pop)
                         page == "tones-how" -> TonesHowScreen(onBack = ::pop)
-                        page?.startsWith("card:") == true -> {
-                            // "card:c3_1" from the library or a Journal tag; Next walks the reading order in place.
-                            val card = Learn.card(page.removePrefix("card:"))
-                            if (card == null) LaunchedEffect(page) { pop() }
-                            else LearnCardScreen(card, backLabel = stringResource(R.string.learn_back), onBack = ::pop,
-                                onNext = { pages = (stack.dropLast(1) + "card:$it").joinToString("/") })
-                        }
-                        else -> when (tab) {
-                        Tab.LISTEN -> ListenComfort(player, actions)
-                        Tab.CALM -> CalmScreen(
+                        page == "sounds" -> SoundsScreen(player, actions, onBack = ::pop)
+                        page == "tones" -> TonesScreen(player, actions, onHow = { push("tones-how") })
+                        page == "calm" -> CalmScreen(
                             modules = modules,
                             practice = practice,
                             onPractice = { practice = it; graph.settings.calmPractice = it.name },
@@ -252,7 +258,29 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                             onStartBreath = ::startBreath,
                             onStartMeditation = ::startMeditation,
                         )
-                        Tab.TONES -> TonesScreen(player, actions, onHow = { push("tones-how") })
+                        page?.startsWith("card:") == true -> {
+                            // "card:c3_1" from the library or a Journal tag; Next walks the reading order in place.
+                            val card = Learn.card(page.removePrefix("card:"))
+                            if (card == null) LaunchedEffect(page) { pop() }
+                            else LearnCardScreen(card, backLabel = stringResource(R.string.learn_back), onBack = ::pop,
+                                onNext = { pages = (stack.dropLast(1) + "card:$it").joinToString("/") })
+                        }
+                        else -> when (tab) {
+                        Tab.LISTEN, Tab.CALM, Tab.TONES -> SceneScreen(
+                            scenes = modules.scenes(), scene = scene, onScene = ::goScene,
+                            ui = player, actions = actions, night = night,
+                            onSounds = { push("sounds") }, onTonesSetup = { push("tones") },
+                            breathe = BreatheScene(
+                                practices = listOfNotNull(Practice.BREATHE.takeIf { modules.breath }, Practice.MEDITATE.takeIf { modules.meditation }),
+                                practice = if (!modules.breath) Practice.MEDITATE else if (!modules.meditation) Practice.BREATHE else practice,
+                                onPractice = { practice = it; graph.settings.calmPractice = it.name },
+                                minutes = if (practice == Practice.MEDITATE && modules.meditation || !modules.breath) meditation.minutes else breath.minutes,
+                                soundName = chosenSound(context, player).ifEmpty { null }
+                                    ?.takeIf { if (practice == Practice.MEDITATE && modules.meditation || !modules.breath) meditation.sound else breath.sound },
+                                onStart = { if (practice == Practice.MEDITATE && modules.meditation || !modules.breath) startMeditation() else startBreath() },
+                                onSetup = { push("calm") },
+                            ),
+                        )
                         Tab.JOURNAL -> JournalScreen(
                             checkIns = checkIns,
                             weekSeconds = weekSeconds,

@@ -1,5 +1,8 @@
 package app.beansontoast.brume.ui
 
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import app.beansontoast.brume.ui.launch.LocalLaunchAnchors
@@ -102,17 +105,17 @@ fun Modules.shows(tab: Tab) = when (tab) { Tab.TONES -> tones; Tab.CALM -> calm;
 
 @Composable
 fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), content: @Composable () -> Unit) {
+    // A few words across the top (Erwann chose A's shape, 2026-10-31): Listen, Journal, Learn.
+    // Breathe and Tones are scenes inside Listen, so they are not here twice; [modules] only
+    // decides which scenes Listen shows.
+    val here = when (tab) { Tab.CALM, Tab.TONES -> Tab.LISTEN; else -> tab }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
-            Column {
-                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
-                NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
-                    NavigationBarItem(tab == Tab.LISTEN, { onTab(Tab.LISTEN) }, { Icon(painterResource(R.drawable.ic_horizon), null) }, label = { NavLabel(R.string.tab_listen, tab == Tab.LISTEN) })
-                    if (modules.calm) NavigationBarItem(tab == Tab.CALM, { onTab(Tab.CALM) }, { Icon(painterResource(R.drawable.ic_breath), null) }, label = { NavLabel(R.string.tab_calm, tab == Tab.CALM) })
-                    if (modules.tones) NavigationBarItem(tab == Tab.TONES, { onTab(Tab.TONES) }, { Icon(painterResource(R.drawable.ic_tones), null) }, label = { NavLabel(R.string.tab_tones, tab == Tab.TONES) })
-                    NavigationBarItem(tab == Tab.JOURNAL, { onTab(Tab.JOURNAL) }, { Icon(painterResource(R.drawable.ic_journal), null) }, label = { NavLabel(R.string.tab_journal, tab == Tab.JOURNAL) })
-                    NavigationBarItem(tab == Tab.LEARN, { onTab(Tab.LEARN) }, { Icon(painterResource(R.drawable.ic_info), null) }, label = { NavLabel(R.string.tab_learn, tab == Tab.LEARN) })
+        topBar = {
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 12.dp).selectableGroup(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                listOf(Tab.LISTEN to R.string.tab_listen, Tab.JOURNAL to R.string.tab_journal, Tab.LEARN to R.string.tab_learn).forEach { (t, label) ->
+                    TopWord(label, here == t) { onTab(t) }
                 }
             }
         },
@@ -121,14 +124,19 @@ fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), 
     }
 }
 
-/** The selected tab is told by its indicator and its weight, never by a hue. */
+/** The page you are on is told by weight and a short rule under the word, never by a hue. */
 @Composable
-private fun NavLabel(@StringRes text: Int, selected: Boolean) =
-    // One line always: « Comprendre » is the longest label and must never break in two at 360 dp.
-    // At 360 dp the item gives it about 60 dp: a hair smaller and tighter, and never clipped mid-letter.
-    Text(stringResource(text), fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, maxLines = 1, softWrap = false,
-        overflow = TextOverflow.Visible,
-        style = MaterialTheme.typography.labelMedium.copy(fontSize = 10.5.sp, letterSpacing = (-0.15).sp))
+private fun TopWord(@StringRes text: Int, selected: Boolean, onClick: () -> Unit) {
+    val ink = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+    Column(
+        Modifier.heightIn(min = 48.dp).selectable(selected = selected, role = Role.Tab, onClick = onClick).padding(horizontal = 8.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.Start,
+    ) {
+        Text(stringResource(text), style = MaterialTheme.typography.titleMedium, color = ink, maxLines = 1,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
+        Box(Modifier.padding(top = 4.dp).width(20.dp).height(2.dp).background(if (selected) ink else Color.Transparent))
+    }
+}
 
 @StringRes fun NoiseColour.label() = when (this) {
     NoiseColour.WHITE -> R.string.noise_white
@@ -300,7 +308,7 @@ private fun PlayDisc(ui: PlayerUi, onToggle: () -> Unit) {
 
 /** One tap steps Off, 20, 45, 90, Off: nothing to open at night. The value is always written. */
 @Composable
-private fun TimerControl(ui: PlayerUi, onTimer: (Int?) -> Unit, @StringRes titleRes: Int, modifier: Modifier) {
+internal fun TimerControl(ui: PlayerUi, onTimer: (Int?) -> Unit, @StringRes titleRes: Int, modifier: Modifier) {
     val options = listOf<Int?>(null) + LevelRules.SLEEP_MINUTES
     val next = options[(options.indexOf(ui.timerMinutes) + 1) % options.size]
     val value = when {

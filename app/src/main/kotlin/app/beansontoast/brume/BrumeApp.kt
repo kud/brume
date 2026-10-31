@@ -99,7 +99,21 @@ class Settings(context: Context) {
         get() = prefs.getBoolean(MEDITATION_SOUND, false)
         set(v) = prefs.edit().putBoolean(MEDITATION_SOUND, v).apply()
 
+    /** The scene last used, this phone only: Brume reopens where it was left, never on a guess. */
+    var scene: String?
+        get() = prefs.getString(SCENE, null)
+        set(v) = prefs.edit().putString(SCENE, v).apply()
+
+    /**
+     * A sound scene's own mix, "noise|nature|timer" ("-" for none); null until the scene is first
+     * left with a mix, so on the first run of scenes each one starts from the mix already chosen.
+     */
+    fun sceneMix(scene: String): String? = prefs.getString("$SCENE_MIX$scene", null)
+    fun setSceneMix(scene: String, mix: String) = prefs.edit().putString("$SCENE_MIX$scene", mix).apply()
+
     internal companion object {
+        const val SCENE = "scene"
+        const val SCENE_MIX = "scene_mix_"
         const val MODULE_TONES = "module_tones"
         const val MODULE_BREATH = "module_breath"
         const val MODULE_MEDITATION = "module_meditation"

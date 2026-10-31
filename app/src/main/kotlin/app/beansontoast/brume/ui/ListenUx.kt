@@ -263,3 +263,61 @@ private fun ChoiceCard(label: String, selected: Boolean, onClick: () -> Unit, mo
     }
 }
 
+
+/**
+ * The sounds (« + » on the scene; Iris, 2026-10-31, B's tiles inside A): every sound as a tile,
+ * two by two, a check and weight on the ones in the mix; one noise and one nature sound at most.
+ * Under them, each sound's own level and, once, the listening settings kept per headphones
+ * (balance and output), so they live in this one place and nowhere on the scene.
+ */
+@Composable
+fun SoundsScreen(all: PlayerUi, allActions: ListenActions, onBack: () -> Unit) {
+    val (ui, actions) = forMode(all, allActions, Mode.SOUNDS)
+    val scroll = rememberScrollState()
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+        TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) {
+            Icon(painterResource(R.drawable.ic_back), null, modifier = Modifier.size(20.dp))
+            Text(stringResource(R.string.learn_back), modifier = Modifier.padding(start = 4.dp))
+        }
+        ScreenTitle(R.string.scene_sounds, stringResource(R.string.scene_sounds_hint))
+        class Spec(val name: String, val on: Boolean, val noise: NoiseColour?, val ambience: Ambience?, val onClick: () -> Unit)
+        val tiles = NoiseColour.entries.map { c -> Spec(stringResource(c.label()), ui.noise == c, c, null) { actions.noise(if (ui.noise == c) null else c) } } +
+            Ambience.entries.map { a -> Spec(stringResource(a.label()), ui.ambience == a, null, a) { actions.ambience(if (ui.ambience == a) null else a) } }
+        Column(Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            tiles.chunked(2).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    row.forEach { t -> Tile(t.name, t.on, t.onClick, Modifier.weight(1f)) { ink -> texture(t.noise, t.ambience, ink) } }
+                    if (row.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+        }
+        if (ui.noise != null || ui.ambience != null) {
+            SectionTitle(stringResource(R.string.scene_levels))
+            Slot(stringResource(R.string.listen_noise), ui.noise?.let { stringResource(it.label()) }, ui.noiseLevel, actions.noiseLevel, { actions.noise(null) })
+            Slot(stringResource(R.string.listen_nature), ui.ambience?.let { stringResource(it.label()) }, ui.ambienceLevel, actions.ambienceLevel, { actions.ambience(null) })
+        }
+        EarsRows(ui.balance, ui.output, actions.balance, actions.output)
+        Spacer(Modifier.height(32.dp))
+    }
+}
+
+/** A sound tile: its texture (Sacha's thumbnail later) above, its name and, when in the mix, a check. */
+@Composable
+private fun Tile(name: String, on: Boolean, onClick: () -> Unit, modifier: Modifier, draw: DrawScope.(Color) -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val ink = if (on) scheme.onSurface else scheme.onSurfaceVariant
+    Column(
+        modifier.clip(MaterialTheme.shapes.large)
+            .background(scheme.surfaceContainer)
+            .then(if (on) Modifier.border(2.dp, scheme.onSurface, MaterialTheme.shapes.large) else Modifier)
+            .selectable(selected = on, role = Role.Checkbox, onClick = onClick),
+    ) {
+        Canvas(Modifier.fillMaxWidth().height(88.dp)) { draw(ink.copy(alpha = if (on) 0.9f else 0.55f)) }
+        Row(Modifier.fillMaxWidth().background(scheme.surfaceContainerHigh).heightIn(min = 48.dp).padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            if (on) Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = scheme.onSurface, modifier = Modifier.padding(end = 6.dp).size(16.dp))
+            Text(name, style = MaterialTheme.typography.titleSmall, color = if (on) scheme.onSurface else scheme.onSurfaceVariant, maxLines = 1,
+                overflow = TextOverflow.Ellipsis, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal)
+        }
+    }
+}
