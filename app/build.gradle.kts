@@ -155,6 +155,7 @@ dependencies {
     implementation(project(":design"))
     implementation(libs.activity.compose)
     implementation(libs.core.ktx)
+    implementation(libs.core.splashscreen)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.savedstate)

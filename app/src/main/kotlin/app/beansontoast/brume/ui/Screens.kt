@@ -1,5 +1,10 @@
 package app.beansontoast.brume.ui
 
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import app.beansontoast.brume.ui.launch.LocalLaunchAnchors
+import app.beansontoast.brume.ui.launch.MistAnchor
+
 import app.beansontoast.brume.Modules
 
 import android.content.Context
@@ -226,7 +231,12 @@ internal fun Dock(ui: PlayerUi, actions: ListenActions, @StringRes timerTitle: I
         else -> stringResource(R.string.listen_state_ready, sound)
     }
     Box(Modifier.fillMaxWidth()) {
-        Mist(Modifier.fillMaxWidth().height(132.dp).align(Alignment.Center), strength = if (ui.playing) 1f else 0.35f)
+        // The launch intro lands Horizon's lines on this mist (ui/launch).
+        val anchors = LocalLaunchAnchors.current
+        val strength = if (ui.playing) 1f else 0.35f
+        val mistInk = MaterialTheme.colorScheme.onSurfaceVariant
+        Mist(Modifier.fillMaxWidth().height(132.dp).align(Alignment.Center)
+            .onGloballyPositioned { anchors?.mist = MistAnchor(it.boundsInWindow(), strength, mistInk) }, strength = strength, color = mistInk)
         Column(gutter.padding(top = 8.dp, bottom = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(line, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, minLines = 2,

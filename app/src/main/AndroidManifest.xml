@@ -23,6 +23,7 @@
 
         <activity
             android:name=".ui.MainActivity"
+            android:theme="@style/Theme.Brume.Starting"
             android:exported="true"
             android:launchMode="singleTask">
             <intent-filter>

@@ -3,6 +3,15 @@ package app.beansontoast.brume.ui
 import app.beansontoast.brume.playback.openOutputSwitcher
 import android.os.Build
 import android.os.Bundle
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import app.beansontoast.brume.ui.launch.LaunchAnchors
+import app.beansontoast.brume.ui.launch.LaunchIntro
+import app.beansontoast.brume.ui.launch.LaunchIntroOverlay
+import app.beansontoast.brume.ui.launch.LocalLaunchAnchors
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -41,20 +50,25 @@ import java.time.LocalTime
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splash = installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        // The system splash is only a still bridge: the intro takes over at the same place and plays
+        // on the app's own frame clock, over the screen already drawn underneath (ui/launch).
+        val intro = LaunchIntro(LaunchIntro.kindFor(restored = savedInstanceState != null))
+        splash.setOnExitAnimationListener(intro::takeOver)
         val graph = (application as BrumeApp).graph
         // Sync pulls the other phone's changes on the way in and pushes this one's on the way out.
         lifecycle.addObserver(LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) graph.sync.request()
             if (event == Lifecycle.Event.ON_STOP) graph.sync.flush()
         })
-        setContent { BrumeRoot(graph) }
+        setContent { BrumeRoot(graph, intro) }
     }
 }
 
 @Composable
-private fun BrumeRoot(graph: AppGraph) {
+private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val nightHours by graph.settings.nightHours.collectAsStateWithLifecycle()
@@ -158,47 +172,55 @@ private fun BrumeRoot(graph: AppGraph) {
         showPlaying = false
     }
 
+    val anchors = remember { LaunchAnchors() }
+    // Read once: the launch intro lands on the introduction only on the launch that shows it.
+    val firstLaunch = remember { showIntro }
     BrumeTheme(dark = isSystemInDarkTheme(), night = night) {
-        if (showIntro) {
-            Onboarding(onFinish = { setPitch ->
-                graph.settings.setIntroSeen()
-                showIntro = false
-                // Replayed from About, Later returns there; on first launch the tab is still Listen.
-                // Setting the pitch from the intro turns Tones back on if it was off.
-                if (setPitch) { if (!modules.tones) graph.settings.setModules(modules.copy(tones = true)); tab = Tab.TONES }
-            })
-        } else if (breathStartedAt != null) {
-            BackHandler { endBreath() }
-            BreathSession(BreathPlan(breath.pattern, breath.minutes), breathStartedAt!!, night, breath.haptics, onEnd = ::endBreath)
-        } else if (showPlaying && player.hasSound) {
-            BackHandler { showPlaying = false }
-            PlayingView(player, night, onPause = graph.player::toggle, onBack = { showPlaying = false })
-        } else BrumeScaffold(tab = tab, onTab = { tab = it }, modules = modules) {
-            when (tab) {
-                Tab.LISTEN -> ListenComfort(player, actions)
-                Tab.BREATH -> BreathScreen(breath, chosenSound(context, player).ifEmpty { null }, onChange = {
-                    breath = it
-                    graph.settings.breathPattern = it.pattern.name; graph.settings.breathMinutes = it.minutes
-                    graph.settings.breathHaptics = it.haptics; graph.settings.breathSound = it.sound
-                }, onStart = ::startBreath)
-                Tab.TONES -> TonesScreen(player, actions)
-                Tab.JOURNAL -> JournalScreen(
-                    checkIns = checkIns,
-                    weekSeconds = weekSeconds,
-                    today = LocalDate.now(),
-                    message = journalMessage,
-                    onSave = { loudness, bother, note ->
-                        scope.launch {
-                            graph.journal.save(CheckIn.of(LocalDate.now(), loudness, bother, note))
-                            journalMessage = context.getString(R.string.journal_saved)
-                        }
-                    },
-                    onExport = { export.launch("brume-export-${LocalDate.now()}.json") },
-                )
-                Tab.ABOUT -> AboutScreen(nightHours = nightHours, onNightHours = graph.settings::setNightHours, version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true },
-                    sync = syncState, syncMessage = syncMessage, syncActions = syncActions,
-                    modules = modules, onModules = graph.settings::setModules,
-                    language = if (Build.VERSION.SDK_INT >= 33) remember { LanguageChoice(currentLanguage(context)) { applyLanguage(context, it) } } else null)
+        CompositionLocalProvider(LocalLaunchAnchors provides anchors) {
+            Box(Modifier.fillMaxSize()) {
+                if (showIntro) {
+                    Onboarding(onFinish = { setPitch ->
+                        graph.settings.setIntroSeen()
+                        showIntro = false
+                        // Replayed from About, Later returns there; on first launch the tab is still Listen.
+                        // Setting the pitch from the intro turns Tones back on if it was off.
+                        if (setPitch) { if (!modules.tones) graph.settings.setModules(modules.copy(tones = true)); tab = Tab.TONES }
+                    })
+                } else if (breathStartedAt != null) {
+                    BackHandler { endBreath() }
+                    BreathSession(BreathPlan(breath.pattern, breath.minutes), breathStartedAt!!, night, breath.haptics, onEnd = ::endBreath)
+                } else if (showPlaying && player.hasSound) {
+                    BackHandler { showPlaying = false }
+                    PlayingView(player, night, onPause = graph.player::toggle, onBack = { showPlaying = false })
+                } else BrumeScaffold(tab = tab, onTab = { tab = it }, modules = modules) {
+                    when (tab) {
+                        Tab.LISTEN -> ListenComfort(player, actions)
+                        Tab.BREATH -> BreathScreen(breath, chosenSound(context, player).ifEmpty { null }, onChange = {
+                            breath = it
+                            graph.settings.breathPattern = it.pattern.name; graph.settings.breathMinutes = it.minutes
+                            graph.settings.breathHaptics = it.haptics; graph.settings.breathSound = it.sound
+                        }, onStart = ::startBreath)
+                        Tab.TONES -> TonesScreen(player, actions)
+                        Tab.JOURNAL -> JournalScreen(
+                            checkIns = checkIns,
+                            weekSeconds = weekSeconds,
+                            today = LocalDate.now(),
+                            message = journalMessage,
+                            onSave = { loudness, bother, note ->
+                                scope.launch {
+                                    graph.journal.save(CheckIn.of(LocalDate.now(), loudness, bother, note))
+                                    journalMessage = context.getString(R.string.journal_saved)
+                                }
+                            },
+                            onExport = { export.launch("brume-export-${LocalDate.now()}.json") },
+                        )
+                        Tab.ABOUT -> AboutScreen(nightHours = nightHours, onNightHours = graph.settings::setNightHours, version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true },
+                            sync = syncState, syncMessage = syncMessage, syncActions = syncActions,
+                            modules = modules, onModules = graph.settings::setModules,
+                            language = if (Build.VERSION.SDK_INT >= 33) remember { LanguageChoice(currentLanguage(context)) { applyLanguage(context, it) } } else null)
+                    }
+                }
+                LaunchIntroOverlay(intro, firstLaunch)
             }
         }
     }

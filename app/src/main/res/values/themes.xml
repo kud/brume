@@ -3,4 +3,15 @@
     <style name="Theme.Brume" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/dawn_ground</item>
     </style>
+
+    <!--
+        Launch screen (core-splashscreen, Android 10 and up alike): the lockup, Horizon over "brume",
+        still, on the ground Listen's first frame paints (dawn by day, true black at night), so the
+        hand-off never flashes. The in-app intro (ui/launch) takes over from it at the same place.
+    -->
+    <style name="Theme.Brume.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_ground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_lockup</item>
+        <item name="postSplashScreenTheme">@style/Theme.Brume</item>
+    </style>
 </resources>
