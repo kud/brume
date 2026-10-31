@@ -21,11 +21,9 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -140,6 +138,7 @@ internal fun NowPlaying(ui: PlayerUi, actions: ListenActions, modifier: Modifier
                 val label = stringResource(R.string.ux_open_playing_label)
                 TextButton(actions.open, Modifier.heightIn(min = 48.dp).semantics { contentDescription = label }) {
                     Text(stringResource(R.string.ux_open_playing))
+                    Icon(painterResource(R.drawable.ic_open), null, modifier = Modifier.padding(start = 4.dp).size(16.dp))
                 }
             }
         }
@@ -170,8 +169,12 @@ private fun Slot(kind: String, name: String?, level: Float, onLevel: ((Float) ->
             overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         if (name != null) {
             Text(stringResource(R.string.ux_level_short, (level * 20).roundToInt()), style = MaterialTheme.typography.bodyMedium.tabular(), color = muted)
-            if (onRemove != null) TextButton(onClick = onRemove) {
-                Text(stringResource(R.string.ux_remove), style = MaterialTheme.typography.labelLarge)
+            // Sacha's remove mark, named with the layer for TalkBack ("Remove Pink noise").
+            if (onRemove != null) {
+                val label = stringResource(R.string.ux_remove) + " " + name
+                IconButton(onClick = onRemove, modifier = Modifier.semantics { contentDescription = label }) {
+                    Icon(painterResource(R.drawable.ic_remove), null, tint = muted, modifier = Modifier.size(20.dp))
+                }
             }
         }
     }
@@ -230,7 +233,7 @@ private fun ChoiceCard(label: String, selected: Boolean, onClick: () -> Unit, mo
     ) {
         Row(Modifier.fillMaxWidth().height(28.dp), verticalAlignment = Alignment.Top) {
             Canvas(Modifier.weight(1f).fillMaxSize()) { draw(quiet.copy(alpha = if (selected) 0.95f else 0.6f)) }
-            if (selected) Icon(Icons.Filled.Check, null, tint = ink, modifier = Modifier.padding(start = 4.dp).size(16.dp))
+            if (selected) Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = ink, modifier = Modifier.padding(start = 4.dp).size(16.dp))
         }
         Text(label, style = MaterialTheme.typography.titleSmall, color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, modifier = Modifier.padding(top = 8.dp))

@@ -68,10 +68,10 @@ fun TonesPanel(ui: PlayerUi, actions: ToneActions) {
             val pitchText = stringResource(R.string.tones_pitch_value, tones.pitch)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // ±1 %, about a sixth of a semitone: fine enough to settle a match the slider overshoots.
-                Nudge("−", stringResource(R.string.tones_pitch_down)) { actions.pitch((tones.pitch * 0.99).roundToInt()) }
+                Nudge(R.drawable.ic_minus, stringResource(R.string.tones_pitch_down)) { actions.pitch((tones.pitch * 0.99).roundToInt()) }
                 Text(pitchText, style = MaterialTheme.typography.headlineSmall.tabular(), textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f))
-                Nudge("+", stringResource(R.string.tones_pitch_up)) { actions.pitch((tones.pitch * 1.01).roundToInt()) }
+                Nudge(R.drawable.ic_plus, stringResource(R.string.tones_pitch_up)) { actions.pitch((tones.pitch * 1.01).roundToInt()) }
             }
             val pitchLabel = stringResource(R.string.tones_pitch)
             Slider(
@@ -114,11 +114,11 @@ fun TonesPanel(ui: PlayerUi, actions: ToneActions) {
 
 /** A quiet round step button, 48 dp, its meaning in its label for TalkBack. */
 @Composable
-private fun Nudge(sign: String, label: String, onClick: () -> Unit) {
+private fun Nudge(@androidx.annotation.DrawableRes sign: Int, label: String, onClick: () -> Unit) {
     Box(
         Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
-    ) { Text(sign, style = MaterialTheme.typography.titleLarge) }
+    ) { androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(sign), null, modifier = Modifier.size(20.dp)) }
 }

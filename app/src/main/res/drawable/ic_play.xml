@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Play (Sacha, 2026-10-31, traced) without its ring: the play disc and the notification supply the round. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M8,5v14l11,-7z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M8.5,6.4v11.2c0,0.85 0.94,1.36 1.65,0.9l8.6,-5.6c0.65,-0.42 0.65,-1.38 0,-1.8l-8.6,-5.6C9.44,5.04 8.5,5.55 8.5,6.4z" />
 </vector>

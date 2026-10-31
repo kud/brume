@@ -24,9 +24,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -164,7 +161,7 @@ private fun Welcome() {
 
 @Composable
 private fun Privacy() {
-    Header(R.string.about_privacy_title, rememberVector(Icons.Filled.Lock))
+    Header(R.string.about_privacy_title, painterResource(R.drawable.ic_lock))
     Body(R.string.about_privacy, Modifier.padding(top = 16.dp))
     Body(R.string.journal_export_body, Modifier.padding(top = 16.dp), muted = true)
 }
@@ -187,7 +184,7 @@ private fun Safely() {
 /** The red flags, calmly: About's list, then the one step worth taking anyway, then the support line. */
 @Composable
 private fun Doctor() {
-    Header(R.string.doctor_title, rememberVector(Icons.Filled.Info))
+    Header(R.string.doctor_title, painterResource(R.drawable.ic_info))
     Body(R.string.intro_doctor_intro, Modifier.padding(top = 16.dp))
     Column(gutter.padding(top = 4.dp)) {
         listOf(R.string.doctor_1, R.string.doctor_2, R.string.doctor_3, R.string.doctor_4, R.string.doctor_5, R.string.doctor_6).forEach {
@@ -211,6 +208,3 @@ private fun Pitch() {
     Body(R.string.intro_pitch_optional, Modifier.padding(top = 12.dp), muted = true)
 }
 
-@Composable
-private fun rememberVector(vector: androidx.compose.ui.graphics.vector.ImageVector): Painter =
-    androidx.compose.ui.graphics.vector.rememberVectorPainter(vector)

@@ -92,7 +92,9 @@ fun PlayingView(ui: PlayerUi, night: Boolean, onPause: () -> Unit, onBack: () ->
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             val back = stringResource(R.string.play_back)
             TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = back }) {
-                Text("‹  " + stringResource(R.string.tab_listen), style = MaterialTheme.typography.labelLarge, color = muted)
+                Icon(painterResource(R.drawable.ic_back), null, tint = muted, modifier = Modifier.size(20.dp))
+                Text(stringResource(R.string.tab_listen), style = MaterialTheme.typography.labelLarge, color = muted,
+                    modifier = Modifier.padding(start = 4.dp))
             }
             Text(
                 ui.timerRemainingMinutes?.let { stringResource(R.string.timer_left, it) } ?: stringResource(R.string.play_no_timer),

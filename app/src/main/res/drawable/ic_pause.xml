@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Pause (Sacha, 2026-10-31, traced) without its ring; bars weighted to sit beside the filled play. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M6,19h4V5H6v14zM14,5v14h4V5h-4z" />
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2.75" android:strokeLineCap="round" android:pathData="M9.25,7v10M14.75,7v10" />
 </vector>

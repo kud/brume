@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Four tones as bars of different heights: the tone pattern's tab. -->
+<!-- Tones (Sacha, 2026-10-31, traced): three short marks above a tapered horizon. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M4,10h2.5v8H4zM9,6h2.5v12H9zM14,12h2.5v6H14zM19,8h2.5v10H19z" />
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.75" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M5.5,9.5h3M10.5,8h3M15.5,9.5h3" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M2,15.4C8,14.1 16,14.1 22,15C16,16.5 8,16.6 2,15.4Z" />
 </vector>

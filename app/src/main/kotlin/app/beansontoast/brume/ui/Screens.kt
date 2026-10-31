@@ -23,11 +23,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -96,8 +91,8 @@ fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, content: @Composable () -> Uni
                 NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
                     NavigationBarItem(tab == Tab.LISTEN, { onTab(Tab.LISTEN) }, { Icon(painterResource(R.drawable.ic_horizon), null) }, label = { NavLabel(R.string.tab_listen, tab == Tab.LISTEN) })
                     NavigationBarItem(tab == Tab.TONES, { onTab(Tab.TONES) }, { Icon(painterResource(R.drawable.ic_tones), null) }, label = { NavLabel(R.string.tab_tones, tab == Tab.TONES) })
-                    NavigationBarItem(tab == Tab.JOURNAL, { onTab(Tab.JOURNAL) }, { Icon(Icons.Filled.Edit, null) }, label = { NavLabel(R.string.tab_journal, tab == Tab.JOURNAL) })
-                    NavigationBarItem(tab == Tab.ABOUT, { onTab(Tab.ABOUT) }, { Icon(Icons.Filled.Info, null) }, label = { NavLabel(R.string.tab_about, tab == Tab.ABOUT) })
+                    NavigationBarItem(tab == Tab.JOURNAL, { onTab(Tab.JOURNAL) }, { Icon(painterResource(R.drawable.ic_journal), null) }, label = { NavLabel(R.string.tab_journal, tab == Tab.JOURNAL) })
+                    NavigationBarItem(tab == Tab.ABOUT, { onTab(Tab.ABOUT) }, { Icon(painterResource(R.drawable.ic_info), null) }, label = { NavLabel(R.string.tab_about, tab == Tab.ABOUT) })
                 }
             }
         },
@@ -222,6 +217,8 @@ internal fun Dock(ui: PlayerUi, actions: ListenActions, @StringRes timerTitle: I
                     if (ui.playing) {
                         OutlinedButton(onClick = actions.tooLoud, modifier = Modifier.fillMaxWidth().height(56.dp),
                             contentPadding = PaddingValues(horizontal = 8.dp)) {
+                            Icon(painterResource(R.drawable.ic_too_loud), null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
                             Text(stringResource(R.string.action_too_loud), style = MaterialTheme.typography.labelLarge, maxLines = 1)
                         }
                     }
@@ -248,7 +245,7 @@ private fun PlayDisc(ui: PlayerUi, onToggle: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         when {
-            !ui.hasSound -> Icon(painterResource(R.drawable.ic_brume_mark), null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
+            !ui.hasSound -> Icon(painterResource(R.drawable.ic_horizon), null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(36.dp))
             ui.playing -> Icon(painterResource(R.drawable.ic_pause), null, tint = scheme.inverseOnSurface, modifier = Modifier.size(36.dp))
             else -> Icon(painterResource(R.drawable.ic_play), null, tint = scheme.inverseOnSurface, modifier = Modifier.size(40.dp))
         }
@@ -364,6 +361,8 @@ fun JournalScreen(
             Text(stringResource(R.string.journal_export_body), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedButton(onClick = onExport, modifier = Modifier.padding(top = 12.dp).heightIn(min = 48.dp)) {
+                Icon(painterResource(R.drawable.ic_export), null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.journal_export))
             }
         }
@@ -436,7 +435,7 @@ fun AboutScreen(nightHours: Boolean, onNightHours: (Boolean) -> Unit, version: S
 
             Card(Modifier.padding(top = 16.dp)) {
                 Row(verticalAlignment = Alignment.Top) {
-                    Icon(Icons.Filled.Lock, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp).size(20.dp))
+                    Icon(painterResource(R.drawable.ic_lock), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp).size(20.dp))
                     Column(Modifier.padding(start = 12.dp)) {
                         Text(stringResource(R.string.about_privacy_title), style = MaterialTheme.typography.titleSmall)
                         Text(stringResource(R.string.about_privacy), style = MaterialTheme.typography.bodyMedium,
