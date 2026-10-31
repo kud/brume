@@ -48,9 +48,62 @@ class Settings(context: Context) {
 
     fun setIntroSeen() = prefs.edit().putBoolean(INTRO_SEEN, true).apply()
 
+    private val _modules = MutableStateFlow(Modules(
+        tones = prefs.getBoolean(MODULE_TONES, true),
+        breath = prefs.getBoolean(MODULE_BREATH, true),
+    ))
+    /** Which modules are on. Listen is always on; it is not a module. */
+    val modules: StateFlow<Modules> = _modules
+
+    /** When a module switch last changed, epoch ms; 0 if never. The later change wins in sync. */
+    val modulesAt: Long get() = prefs.getLong(MODULES_AT, 0L)
+
+    fun setModules(modules: Modules) = applyModules(modules, System.currentTimeMillis())
+
+    /** Sets the switches with the time they were chosen, here or on another phone. */
+    fun applyModules(modules: Modules, at: Long) {
+        prefs.edit().putBoolean(MODULE_TONES, modules.tones).putBoolean(MODULE_BREATH, modules.breath).putLong(MODULES_AT, at).apply()
+        _modules.value = modules
+    }
+
+    /** The last breathing choices, this phone only: how to breathe is not worth a sync conflict. */
+    var breathPattern: String?
+        get() = prefs.getString(BREATH_PATTERN, null)
+        set(v) = prefs.edit().putString(BREATH_PATTERN, v).apply()
+    var breathMinutes: Int
+        get() = prefs.getInt(BREATH_MINUTES, 5)
+        set(v) = prefs.edit().putInt(BREATH_MINUTES, v).apply()
+    var breathHaptics: Boolean
+        get() = prefs.getBoolean(BREATH_HAPTICS, true)
+        set(v) = prefs.edit().putBoolean(BREATH_HAPTICS, v).apply()
+    var breathSound: Boolean
+        get() = prefs.getBoolean(BREATH_SOUND, false)
+        set(v) = prefs.edit().putBoolean(BREATH_SOUND, v).apply()
+
     private companion object {
+        const val MODULE_TONES = "module_tones"
+        const val MODULE_BREATH = "module_breath"
+        const val MODULES_AT = "modules_at"
+        const val BREATH_PATTERN = "breath_pattern"
+        const val BREATH_MINUTES = "breath_minutes"
+        const val BREATH_HAPTICS = "breath_haptics"
+        const val BREATH_SOUND = "breath_sound"
         const val NIGHT_HOURS = "night_hours"
         const val NIGHT_HOURS_AT = "night_hours_at"
         const val INTRO_SEEN = "intro_seen"
+    }
+}
+
+/**
+ * The switchable modules (ADR 0003). Each is a pillar the person can turn off; the home and the
+ * tabs show only what is on. Defaults are on: existing users already have Tones.
+ */
+data class Modules(val tones: Boolean = true, val breath: Boolean = true) {
+    fun toWire(): Map<String, Boolean> = mapOf(TONES to tones, BREATH to breath)
+
+    companion object {
+        const val TONES = "TONES"
+        const val BREATH = "BREATH"
+        fun fromWire(map: Map<String, Boolean>) = Modules(tones = map[TONES] ?: true, breath = map[BREATH] ?: true)
     }
 }

@@ -133,7 +133,7 @@ private fun wander(t: Float, i: Int): Float =
  * One horizon line: tapered toward both ends, as in the icon, drawn as short segments whose width
  * and alpha follow a sine envelope.
  */
-private fun DrawScope.horizon(y: Float, amp: Float, wavelength: Float, phase: Float, x0: Float, x1: Float, color: Color, width: Float) {
+internal fun DrawScope.horizon(y: Float, amp: Float, wavelength: Float, phase: Float, x0: Float, x1: Float, color: Color, width: Float) {
     val step = 3f * density
     var x = x0
     var prev = Offset(x, y + amp * sin(2 * PI.toFloat() * x / wavelength + phase))

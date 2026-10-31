@@ -1,5 +1,7 @@
 package app.beansontoast.brume.ui
 
+import app.beansontoast.brume.Modules
+
 import android.content.Context
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
@@ -80,10 +82,13 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
-enum class Tab { LISTEN, TONES, JOURNAL, ABOUT }
+enum class Tab { LISTEN, BREATH, TONES, JOURNAL, ABOUT }
+
+/** Listen, Journal and About are always there; the others follow their module switch (ADR 0003). */
+fun Modules.shows(tab: Tab) = when (tab) { Tab.TONES -> tones; Tab.BREATH -> breath; else -> true }
 
 @Composable
-fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, content: @Composable () -> Unit) {
+fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), content: @Composable () -> Unit) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
@@ -91,7 +96,8 @@ fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, content: @Composable () -> Uni
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
                 NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
                     NavigationBarItem(tab == Tab.LISTEN, { onTab(Tab.LISTEN) }, { Icon(painterResource(R.drawable.ic_horizon), null) }, label = { NavLabel(R.string.tab_listen, tab == Tab.LISTEN) })
-                    NavigationBarItem(tab == Tab.TONES, { onTab(Tab.TONES) }, { Icon(painterResource(R.drawable.ic_tones), null) }, label = { NavLabel(R.string.tab_tones, tab == Tab.TONES) })
+                    if (modules.breath) NavigationBarItem(tab == Tab.BREATH, { onTab(Tab.BREATH) }, { Icon(painterResource(R.drawable.ic_breath), null) }, label = { NavLabel(R.string.tab_breath, tab == Tab.BREATH) })
+                    if (modules.tones) NavigationBarItem(tab == Tab.TONES, { onTab(Tab.TONES) }, { Icon(painterResource(R.drawable.ic_tones), null) }, label = { NavLabel(R.string.tab_tones, tab == Tab.TONES) })
                     NavigationBarItem(tab == Tab.JOURNAL, { onTab(Tab.JOURNAL) }, { Icon(painterResource(R.drawable.ic_journal), null) }, label = { NavLabel(R.string.tab_journal, tab == Tab.JOURNAL) })
                     NavigationBarItem(tab == Tab.ABOUT, { onTab(Tab.ABOUT) }, { Icon(painterResource(R.drawable.ic_info), null) }, label = { NavLabel(R.string.tab_about, tab == Tab.ABOUT) })
                 }
@@ -133,6 +139,8 @@ private fun NavLabel(@StringRes text: Int, selected: Boolean) =
     Ambience.WIND -> R.string.nature_wind_hint
 }
 
+internal fun chosenSound(context: Context, ui: PlayerUi): String = chosen(context, ui)
+
 private fun chosen(context: Context, ui: PlayerUi): String =
     if (ui.mode == Mode.TONES) context.getString(R.string.mode_tones) else listOfNotNull(ui.noise?.label(), ui.ambience?.label()).joinToString(" + ") { context.getString(it) }
 
@@ -157,8 +165,20 @@ class ListenActions(
 
 internal val gutter = Modifier.padding(horizontal = 20.dp)
 
+/**
+ * Every top-level screen is titled by its tab's label, in the serif headline, with an optional
+ * quiet line under it (Iris, 2026-10-31, from Erwann: « brume partout ou jamais » — never).
+ */
+@Composable
+internal fun ScreenTitle(@StringRes title: Int, subtitle: String? = null) {
+    Text(stringResource(title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 24.dp).semantics { heading() })
+    if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodyMedium.tabular(),
+        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+}
+
 @Composable
 internal fun Wordmark(modifier: Modifier = Modifier) {
+    // The wordmark lives in the launcher, the splash and the introduction, never as a screen title.
     Text(stringResource(R.string.brand_word), style = MaterialTheme.typography.displaySmall, modifier = modifier.semantics { heading() })
 }
 
@@ -316,10 +336,7 @@ fun JournalScreen(
 
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
-        Text(stringResource(R.string.journal_title), style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(top = 24.dp).semantics { heading() })
-        Text(stringResource(R.string.journal_listened, duration(weekSeconds)), style = MaterialTheme.typography.bodyMedium.tabular(),
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+        ScreenTitle(R.string.tab_journal, stringResource(R.string.journal_listened, duration(weekSeconds)))
 
         SectionTitle(stringResource(R.string.journal_today) + " · " + today.format(dayFormat))
         Card {
@@ -438,17 +455,13 @@ fun AboutScreen(
     syncMessage: String? = null,
     syncActions: SyncActions = SyncActions(),
     language: LanguageChoice? = null,
+    modules: Modules = Modules(),
+    onModules: (Modules) -> Unit = {},
 ) {
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll)) {
-        Box(Modifier.fillMaxWidth().height(148.dp)) {
-            Mist(Modifier.fillMaxSize(), strength = 0.6f)
-            Column(gutter.align(Alignment.BottomStart).padding(bottom = 8.dp)) {
-                Wordmark()
-                Text(stringResource(R.string.about_what), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
-            }
-        }
         Column(gutter) {
+            ScreenTitle(R.string.tab_about, stringResource(R.string.about_what))
             Text(stringResource(R.string.about_disclaimer), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
 
@@ -466,6 +479,8 @@ fun AboutScreen(
             SettingsGroup(stringResource(R.string.settings_title), Modifier.padding(top = 8.dp)) {
                 SwitchRow(stringResource(R.string.settings_night), stringResource(R.string.settings_night_summary), nightHours, onNightHours)
             }
+
+            ModuleSettings(modules, onModules)
 
             // Below Android 13 there is no per-app locale and no cached appcompat to stand in: no row.
             if (language != null) LanguageSettings(language)
@@ -486,8 +501,31 @@ fun AboutScreen(
             OutlinedButton(onIntro, Modifier.fillMaxWidth().padding(top = 12.dp).heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.about_intro))
             }
-            Text(stringResource(R.string.about_version, version), style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 16.dp))
+            // The brand signs About at its foot, never as a title (Erwann, 2026-10-31).
+            Column(Modifier.padding(top = 24.dp, bottom = 16.dp)) {
+                Text(stringResource(R.string.brand_word), style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.about_version, version), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
+    }
+}
+
+/**
+ * The switchable modules. Listen is always there, said in words rather than shown as a switch
+ * that can't move; each other row is a switch whose state is its thumb's place, not a hue.
+ */
+@Composable
+fun ModuleSettings(modules: Modules, onModules: (Modules) -> Unit) {
+    SettingsGroup(stringResource(R.string.modules_title)) {
+        Text(stringResource(R.string.modules_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                Text(stringResource(R.string.tab_listen), style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.module_listen_summary), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        SwitchRow(stringResource(R.string.tab_breath), stringResource(R.string.module_breath_summary), modules.breath) { onModules(modules.copy(breath = it)) }
+        SwitchRow(stringResource(R.string.tab_tones), stringResource(R.string.module_tones_summary), modules.tones) { onModules(modules.copy(tones = it)) }
     }
 }

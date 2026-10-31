@@ -51,6 +51,9 @@ data class SettingsV1(
     val tonePitch: Int? = null,
     val toneTrims: List<Float>? = null,
     val tonesAt: Long? = null,
+    /** Which modules are on, by name ("TONES", "BREATH"); names this version doesn't know are kept as they came. */
+    val modules: Map<String, Boolean>? = null,
+    val modulesAt: Long? = null,
 )
 
 /** A file from a later Brume: its schema is newer than this one reads. */

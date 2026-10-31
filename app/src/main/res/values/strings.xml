@@ -29,7 +29,6 @@
     <string name="status_focus">Paused: another app is playing.</string>
     <string name="status_timer">The sleep timer ended.</string>
 
-    <string name="journal_title">Journal</string>
     <string name="journal_today">Today</string>
     <string name="journal_loudness">Loudness</string>
     <string name="journal_bother">Bother</string>
@@ -199,4 +198,35 @@
     <string name="language_system">System default</string>
     <string name="language_en">English</string>
     <string name="language_fr">Français</string>
+
+    <!-- Breathe (Souffle) and the module switches -->
+    <string name="tab_breath">Breathe</string>
+    <string name="breath_intro">A few minutes of slow breathing, eyes open or closed.</string>
+    <string name="breath_rhythm">Rhythm</string>
+    <string name="breath_long_out_hint">In for 4, out for 6: a longer out-breath.</string>
+    <string name="breath_even_hint">In for 5, out for 5: about six breaths a minute.</string>
+    <string name="breath_478_hint">In for 4, hold for 7, out for 8.</string>
+    <string name="breath_478_note">Hold only as long as it feels easy, and stop if you feel light-headed.</string>
+    <string name="breath_length">Length</string>
+    <string name="breath_minutes">%d min</string>
+    <string name="breath_options">While you breathe</string>
+    <string name="breath_haptics">Vibrate at each change</string>
+    <string name="breath_haptics_summary">A light tap, so you can close your eyes.</string>
+    <string name="breath_sound">Sound underneath</string>
+    <string name="breath_sound_summary">%s, fading in.</string>
+    <string name="breath_sound_none">Choose a sound in Listen first.</string>
+    <string name="breath_start">Start</string>
+    <string name="breath_in">Breathe in</string>
+    <string name="breath_hold">Hold</string>
+    <string name="breath_out">Breathe out</string>
+    <string name="breath_left">%1$d:%2$02d left</string>
+    <string name="breath_end">End</string>
+    <string name="breath_done">Done</string>
+    <string name="breath_done_body">Take a moment before you move on.</string>
+    <string name="breath_back">Back</string>
+    <string name="modules_title">Activities</string>
+    <string name="modules_intro">Turn off what you don\'t use and its tab goes away. Nothing is deleted.</string>
+    <string name="module_listen_summary">Comfort sounds. Always on.</string>
+    <string name="module_tones_summary">The tone pattern, set to your pitch.</string>
+    <string name="module_breath_summary">Paced breathing, with a sound underneath if you like.</string>
 </resources>

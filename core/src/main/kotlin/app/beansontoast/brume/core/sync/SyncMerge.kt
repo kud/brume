@@ -14,7 +14,7 @@ import java.time.Instant
  *   (`updatedAt`). A row with no time (a file from before sync) counts as oldest, so an old export
  *   fills gaps and never overwrites a day this phone has.
  * - Sessions: an append-only log, so the union, each session once.
- * - Settings: per group (night hours; tone pitch and trims together), the later change wins.
+ * - Settings: per group (night hours; tone pitch and trims together; the module switches together), the later change wins.
  *
  * Every tie is broken on the values themselves, never on which side is "local", so two phones that
  * merge the same pair reach the same file. Brume never deletes a check-in, so no base or tombstone
@@ -39,9 +39,12 @@ object SyncMerge {
             .maxWithOrNull(compareBy({ it.nightHoursAt ?: 0L }, { it.nightHours }))
         val tones = listOf(a, b).filter { it.tonePitch != null && it.toneTrims != null }
             .maxWithOrNull(compareBy({ it.tonesAt ?: 0L }, { it.tonePitch }, { it.toneTrims.toString() }))
+        val modules = listOf(a, b).filter { it.modules != null }
+            .maxWithOrNull(compareBy({ it.modulesAt ?: 0L }, { it.modules.toString() }))
         return SettingsV1(
             nightHours = night?.nightHours, nightHoursAt = night?.nightHoursAt,
             tonePitch = tones?.tonePitch, toneTrims = tones?.toneTrims, tonesAt = tones?.tonesAt,
+            modules = modules?.modules, modulesAt = modules?.modulesAt,
         )
     }
 
@@ -57,8 +60,10 @@ object SyncMerge {
         val nightHours: Pair<Boolean, Long>?,
         /** Tone pitch, trims and their time, when they changed. */
         val tones: Triple<Int, List<Float>, Long>?,
+        /** The module switches and their time, when they changed. */
+        val modules: Pair<Map<String, Boolean>, Long>? = null,
     ) {
-        val isEmpty get() = checkIns.isEmpty() && sessions.isEmpty() && nightHours == null && tones == null
+        val isEmpty get() = checkIns.isEmpty() && sessions.isEmpty() && nightHours == null && tones == null && modules == null
     }
 
     fun changesFor(local: ExportFile, merged: ExportFile): Changes {
@@ -74,6 +79,8 @@ object SyncMerge {
             tones = if (s?.tonePitch != null && s.toneTrims != null &&
                 (s.tonePitch != l?.tonePitch || s.toneTrims != l?.toneTrims || s.tonesAt != l?.tonesAt)
             ) Triple(s.tonePitch, s.toneTrims, s.tonesAt ?: 0L) else null,
+            modules = s?.modules?.takeIf { s.modules != l?.modules || s.modulesAt != l?.modulesAt }
+                ?.let { it to (s.modulesAt ?: 0L) },
         )
     }
 }

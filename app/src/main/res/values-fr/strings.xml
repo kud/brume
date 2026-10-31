@@ -28,7 +28,6 @@
     <string name="status_focus">En pause : une autre application joue.</string>
     <string name="status_timer">La minuterie est terminée.</string>
 
-    <string name="journal_title">Journal</string>
     <string name="journal_today">Aujourd\'hui</string>
     <string name="journal_loudness">Intensité</string>
     <string name="journal_bother">Gêne</string>
@@ -198,4 +197,35 @@
     <string name="language_system">Langue du système</string>
     <string name="language_en">English</string>
     <string name="language_fr">Français</string>
+
+    <!-- Breathe (Souffle) and the module switches -->
+    <string name="tab_breath">Souffle</string>
+    <string name="breath_intro">Quelques minutes de respiration lente, les yeux ouverts ou fermés.</string>
+    <string name="breath_rhythm">Rythme</string>
+    <string name="breath_long_out_hint">Inspirez sur 4, expirez sur 6 : une expiration plus longue.</string>
+    <string name="breath_even_hint">Inspirez sur 5, expirez sur 5 : environ six souffles par minute.</string>
+    <string name="breath_478_hint">Inspirez sur 4, retenez sur 7, expirez sur 8.</string>
+    <string name="breath_478_note">Ne retenez que tant que c\'est facile, et arrêtez si la tête vous tourne.</string>
+    <string name="breath_length">Durée</string>
+    <string name="breath_minutes">%d min</string>
+    <string name="breath_options">Pendant la séance</string>
+    <string name="breath_haptics">Vibrer à chaque changement</string>
+    <string name="breath_haptics_summary">Une légère pulsation, pour pouvoir fermer les yeux.</string>
+    <string name="breath_sound">Son en fond</string>
+    <string name="breath_sound_summary">%s, en fondu.</string>
+    <string name="breath_sound_none">Choisissez d\'abord un son dans Écouter.</string>
+    <string name="breath_start">Commencer</string>
+    <string name="breath_in">Inspirez</string>
+    <string name="breath_hold">Retenez</string>
+    <string name="breath_out">Expirez</string>
+    <string name="breath_left">encore %1$d:%2$02d</string>
+    <string name="breath_end">Terminer</string>
+    <string name="breath_done">Terminé</string>
+    <string name="breath_done_body">Prenez un moment avant de reprendre.</string>
+    <string name="breath_back">Retour</string>
+    <string name="modules_title">Activités</string>
+    <string name="modules_intro">Désactivez ce que vous n\'utilisez pas : son onglet disparaît. Rien n\'est effacé.</string>
+    <string name="module_listen_summary">Les sons de confort. Toujours là.</string>
+    <string name="module_tones_summary">Le motif de tons, réglé sur votre hauteur.</string>
+    <string name="module_breath_summary">Respiration rythmée, avec un son en fond si vous voulez.</string>
 </resources>

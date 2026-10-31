@@ -28,6 +28,9 @@ import app.beansontoast.brume.BuildConfig
 import app.beansontoast.brume.R
 import app.beansontoast.brume.core.NightHours
 import app.beansontoast.brume.core.journal.CheckIn
+import app.beansontoast.brume.core.journal.EndedBy
+import app.beansontoast.brume.core.breath.BreathPlan
+import app.beansontoast.brume.core.breath.Pattern
 import app.beansontoast.brume.sync.ImportResult
 import app.beansontoast.brume.sync.SyncProblem
 import kotlinx.coroutines.Dispatchers
@@ -58,6 +61,18 @@ private fun BrumeRoot(graph: AppGraph) {
     val night = nightHours && NightHours.contains(LocalTime.now().hour)
     // At night Brume always opens on Listen: Listen is the first tab, and nothing else asks for effort.
     var tab by rememberSaveable { mutableStateOf(Tab.LISTEN) }
+    val modules by graph.settings.modules.collectAsStateWithLifecycle()
+    // A tab whose module was just switched off, here or on the other phone, falls back to Listen.
+    LaunchedEffect(modules) { if (!modules.shows(tab)) tab = Tab.LISTEN }
+    var breath by remember {
+        mutableStateOf(BreathSetup(
+            pattern = Pattern.entries.firstOrNull { it.name == graph.settings.breathPattern } ?: Pattern.LONG_OUT,
+            minutes = graph.settings.breathMinutes, haptics = graph.settings.breathHaptics, sound = graph.settings.breathSound,
+        ))
+    }
+    // A running session: when it started (wall clock), so it survives rotation. Null when none.
+    var breathStartedAt by rememberSaveable { mutableStateOf<Long?>(null) }
+    var breathStartedSound by rememberSaveable { mutableStateOf(false) }
     val player by graph.player.ui.collectAsStateWithLifecycle()
     val checkIns by graph.journal.checkIns.collectAsStateWithLifecycle(emptyList())
     val weekSeconds by remember { graph.journal.weekSeconds() }.collectAsStateWithLifecycle(0L)
@@ -129,20 +144,43 @@ private fun BrumeRoot(graph: AppGraph) {
     var wasPlaying by remember { mutableStateOf(player.playing) }
     LaunchedEffect(player.playing) { if (player.playing && !wasPlaying) showPlaying = true; wasPlaying = player.playing }
 
+    fun startBreath() {
+        // The sound underneath goes through the player as ever: its fade-in, its levels, Too loud.
+        // Already playing, it plays on and is left playing after.
+        breathStartedSound = breath.sound && player.hasSound && !player.playing
+        if (breathStartedSound) graph.player.play()
+        breathStartedAt = System.currentTimeMillis()
+    }
+    fun endBreath() {
+        if (breathStartedSound) graph.player.pause(EndedBy.USER)
+        breathStartedSound = false
+        breathStartedAt = null
+        showPlaying = false
+    }
+
     BrumeTheme(dark = isSystemInDarkTheme(), night = night) {
         if (showIntro) {
             Onboarding(onFinish = { setPitch ->
                 graph.settings.setIntroSeen()
                 showIntro = false
                 // Replayed from About, Later returns there; on first launch the tab is still Listen.
-                if (setPitch) tab = Tab.TONES
+                // Setting the pitch from the intro turns Tones back on if it was off.
+                if (setPitch) { if (!modules.tones) graph.settings.setModules(modules.copy(tones = true)); tab = Tab.TONES }
             })
+        } else if (breathStartedAt != null) {
+            BackHandler { endBreath() }
+            BreathSession(BreathPlan(breath.pattern, breath.minutes), breathStartedAt!!, night, breath.haptics, onEnd = ::endBreath)
         } else if (showPlaying && player.hasSound) {
             BackHandler { showPlaying = false }
             PlayingView(player, night, onPause = graph.player::toggle, onBack = { showPlaying = false })
-        } else BrumeScaffold(tab = tab, onTab = { tab = it }) {
+        } else BrumeScaffold(tab = tab, onTab = { tab = it }, modules = modules) {
             when (tab) {
                 Tab.LISTEN -> ListenComfort(player, actions)
+                Tab.BREATH -> BreathScreen(breath, chosenSound(context, player).ifEmpty { null }, onChange = {
+                    breath = it
+                    graph.settings.breathPattern = it.pattern.name; graph.settings.breathMinutes = it.minutes
+                    graph.settings.breathHaptics = it.haptics; graph.settings.breathSound = it.sound
+                }, onStart = ::startBreath)
                 Tab.TONES -> TonesScreen(player, actions)
                 Tab.JOURNAL -> JournalScreen(
                     checkIns = checkIns,
@@ -159,6 +197,7 @@ private fun BrumeRoot(graph: AppGraph) {
                 )
                 Tab.ABOUT -> AboutScreen(nightHours = nightHours, onNightHours = graph.settings::setNightHours, version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true },
                     sync = syncState, syncMessage = syncMessage, syncActions = syncActions,
+                    modules = modules, onModules = graph.settings::setModules,
                     language = if (Build.VERSION.SDK_INT >= 33) remember { LanguageChoice(currentLanguage(context)) { applyLanguage(context, it) } } else null)
             }
         }

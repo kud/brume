@@ -86,4 +86,17 @@ class SyncMergeTest {
         assertEquals(SyncFile.Choice.Use("3", 2), SyncFile.choose(kids))
         assertEquals(SyncFile.Choice.Create, SyncFile.choose(kids.take(1)))
     }
+
+    @Test fun `the module switches go together and the later change wins`() {
+        val a = file(settings = SettingsV1(modules = mapOf("TONES" to true, "BREATH" to false), modulesAt = 100))
+        val b = file(settings = SettingsV1(modules = mapOf("TONES" to false, "BREATH" to true), modulesAt = 200))
+        assertEquals(mapOf("TONES" to false, "BREATH" to true), merge(a, b).settings?.modules)
+        assertEquals(mapOf("TONES" to false, "BREATH" to true), merge(b, a).settings?.modules)
+        assertEquals(mapOf("TONES" to false, "BREATH" to true) to 200L, SyncMerge.changesFor(a, merge(a, b)).modules)
+        assertEquals(null, SyncMerge.changesFor(b, merge(a, b)).modules)
+        // An older file without modules never switches anything off.
+        val old = file(settings = SettingsV1(nightHours = true, nightHoursAt = 1))
+        assertEquals(a.settings?.modules, merge(a, old).settings?.modules)
+        assertEquals(null, SyncMerge.changesFor(a, merge(a, old)).modules)
+    }
 }

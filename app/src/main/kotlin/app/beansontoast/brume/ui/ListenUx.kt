@@ -92,7 +92,7 @@ fun ListenComfort(all: PlayerUi, allActions: ListenActions) {
     Column(Modifier.fillMaxSize()) {
         val scroll = rememberScrollState()
         Column(Modifier.weight(1f).scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
-            Wordmark(Modifier.padding(top = 20.dp))
+            ScreenTitle(R.string.tab_listen)
             NowPlaying(ui, actions, Modifier.padding(top = 12.dp))
             // The pickers come straight after the card, so at 360x780 the Nature heading meets the fold and
             // reads as "more" through the scroll cue; the one-at-a-time rule closes the page with the guide.
@@ -112,10 +112,7 @@ fun TonesScreen(all: PlayerUi, allActions: ListenActions) {
     Column(Modifier.fillMaxSize()) {
         val scroll = rememberScrollState()
         Column(Modifier.weight(1f).scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
-            Text(stringResource(R.string.ux_tones_heading), style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(top = 24.dp).semantics { heading() })
-            Text(stringResource(R.string.ux_tones_session), style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+            ScreenTitle(R.string.tab_tones, stringResource(R.string.ux_tones_heading) + " · " + stringResource(R.string.ux_tones_session))
             NowPlaying(ui, actions, Modifier.padding(top = 16.dp))
             TonesPanel(ui, actions.tones)
             Spacer(Modifier.height(24.dp))

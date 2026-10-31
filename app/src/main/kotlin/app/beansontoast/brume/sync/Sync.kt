@@ -7,6 +7,7 @@ import androidx.room.InvalidationTracker
 import androidx.room.withTransaction
 import app.beansontoast.brume.BuildConfig
 import app.beansontoast.brume.Settings
+import app.beansontoast.brume.Modules
 import app.beansontoast.brume.core.export.ExportFile
 import app.beansontoast.brume.core.export.ExportFormat
 import app.beansontoast.brume.core.export.NewerSchemaException
@@ -82,6 +83,7 @@ class Sync(
             override fun onInvalidated(tables: Set<String>) = request()
         })
         scope.launch { settings.nightHours.drop(1).collect { request() } }
+        scope.launch { settings.modules.drop(1).collect { request() } }
         scope.launch { player.ui.map { it.tones.pitch to it.tones.trims }.distinctUntilChanged().drop(1).collect { request() } }
         // A sound stopping is when tones skipped while it played can come in.
         scope.launch { player.ui.map { it.playing }.distinctUntilChanged().drop(1).collect { if (!it) request() } }
@@ -160,7 +162,8 @@ class Sync(
         val tones = player.ui.value.tones
         return journal.snapshot(
             BuildConfig.VERSION_NAME,
-            SettingsV1(settings.nightHours.value, settings.nightHoursAt, tones.pitch, tones.trims, player.tonesAt),
+            SettingsV1(settings.nightHours.value, settings.nightHoursAt, tones.pitch, tones.trims, player.tonesAt,
+                settings.modules.value.toWire(), settings.modulesAt.takeIf { it > 0 }),
         )
     }
 
@@ -173,6 +176,7 @@ class Sync(
         withContext(Dispatchers.Main) {
             changes.nightHours?.let { (on, at) -> settings.applyNightHours(on, at) }
             changes.tones?.let { (pitch, trims, at) -> player.applySyncedTones(pitch, trims, at) }
+            changes.modules?.let { (map, at) -> settings.applyModules(Modules.fromWire(map), at) }
         }
         return counts
     }
