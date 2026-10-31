@@ -87,11 +87,13 @@ internal fun forMode(ui: PlayerUi, actions: ListenActions, mode: Mode): Pair<Pla
 
 /** The Listen tab: comfort sounds only. The tone pattern lives in its own tab. */
 @Composable
-fun ListenComfort(all: PlayerUi, allActions: ListenActions) {
+fun ListenComfort(all: PlayerUi, allActions: ListenActions, onBack: (() -> Unit)? = null) {
     val (ui, actions) = forMode(all, allActions, Mode.SOUNDS)
     Column(Modifier.fillMaxSize()) {
         val scroll = rememberScrollState()
         Column(Modifier.weight(1f).scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+            // Opened from the home tab's folded line; Back returns there.
+            if (onBack != null) BackRow(stringResource(R.string.learn_back), onBack)
             ScreenTitle(R.string.tab_listen)
             NowPlaying(ui, actions, Modifier.padding(top = 12.dp))
             // The pickers come straight after the card, so at 360x780 the Nature heading meets the fold and

@@ -87,20 +87,21 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
-enum class Tab { LISTEN, CALM, TONES, JOURNAL, ABOUT }
+/** HOME is « Ce soir » by night and « Aujourd'hui » by day; it replaced Listen, whose controls open from it. */
+enum class Tab { HOME, CALM, TONES, JOURNAL, ABOUT }
 
-/** Listen, Journal and About are always there; the others follow their module switch, Calm while Breathe or Meditation is on (ADR 0003). */
+/** Home, Journal and About are always there; the others follow their module switch, Calm while Breathe or Meditation is on (ADR 0003). */
 fun Modules.shows(tab: Tab) = when (tab) { Tab.TONES -> tones; Tab.CALM -> calm; else -> true }
 
 @Composable
-fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), content: @Composable () -> Unit) {
+fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), night: Boolean = false, content: @Composable () -> Unit) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             Column {
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
                 NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
-                    NavigationBarItem(tab == Tab.LISTEN, { onTab(Tab.LISTEN) }, { Icon(painterResource(R.drawable.ic_horizon), null) }, label = { NavLabel(R.string.tab_listen, tab == Tab.LISTEN) })
+                    NavigationBarItem(tab == Tab.HOME, { onTab(Tab.HOME) }, { Icon(painterResource(R.drawable.ic_horizon), null) }, label = { NavLabel(if (night) R.string.tab_home_night else R.string.tab_home_day, tab == Tab.HOME) })
                     if (modules.calm) NavigationBarItem(tab == Tab.CALM, { onTab(Tab.CALM) }, { Icon(painterResource(R.drawable.ic_breath), null) }, label = { NavLabel(R.string.tab_calm, tab == Tab.CALM) })
                     if (modules.tones) NavigationBarItem(tab == Tab.TONES, { onTab(Tab.TONES) }, { Icon(painterResource(R.drawable.ic_tones), null) }, label = { NavLabel(R.string.tab_tones, tab == Tab.TONES) })
                     NavigationBarItem(tab == Tab.JOURNAL, { onTab(Tab.JOURNAL) }, { Icon(painterResource(R.drawable.ic_journal), null) }, label = { NavLabel(R.string.tab_journal, tab == Tab.JOURNAL) })
@@ -313,7 +314,7 @@ private fun TimerControl(ui: PlayerUi, onTimer: (Int?) -> Unit, @StringRes title
     }
 }
 
-@StringRes private fun Status.message() = when (this) {
+@StringRes internal fun Status.message() = when (this) {
     Status.TOO_LOUD -> R.string.status_too_loud
     Status.ROUTE -> R.string.status_route
     Status.FOCUS -> R.string.status_focus

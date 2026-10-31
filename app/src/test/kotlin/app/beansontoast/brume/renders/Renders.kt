@@ -84,34 +84,34 @@ class Renders(private val shot: String) {
     private val tones = PlayerUi(mode = SoundEngine.Mode.TONES, tones = ToneSettings(pitch = 6200, trims = listOf(1f, 0.85f, 0.7f, 0.6f)), toneLevel = 0.2f)
 
     @Test fun render() = when (shot) {
-        "listen-idle-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
-        "listen-playing-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
-        "listen-idle-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
-        "listen-playing-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
-        "listen-empty-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenComfort(PlayerUi(noise = null, ambience = null), ListenActions()) }
-        "listen-stopped-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenComfort(idle.copy(status = Status.TOO_LOUD), ListenActions()) }
+        "listen-idle-night" -> shoot(dark = true, night = true, Tab.HOME) { ListenComfort(idle, ListenActions()) }
+        "listen-playing-night" -> shoot(dark = true, night = true, Tab.HOME) { ListenComfort(playing, ListenActions()) }
+        "listen-idle-day" -> shoot(dark = false, night = false, Tab.HOME) { ListenComfort(idle, ListenActions()) }
+        "listen-playing-day" -> shoot(dark = false, night = false, Tab.HOME) { ListenComfort(playing, ListenActions()) }
+        "listen-empty-dark" -> shoot(dark = true, night = false, Tab.HOME) { ListenComfort(PlayerUi(noise = null, ambience = null), ListenActions()) }
+        "listen-stopped-dark" -> shoot(dark = true, night = false, Tab.HOME) { ListenComfort(idle.copy(status = Status.TOO_LOUD), ListenActions()) }
         "listen-tones-night" -> shoot(dark = true, night = true, Tab.TONES) { TonesScreen(tones.copy(playing = true), ListenActions()) }
         "listen-tones-day" -> shoot(dark = false, night = false, Tab.TONES) { TonesScreen(tones, ListenActions()) }
-        "balance-listen-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(playing.copy(balance = -0.3f, output = Output(OutputKind.BLUETOOTH, "WH-1000XM4")), ListenActions()) }
-        "balance-listen-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(idle.copy(balance = 1f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
+        "balance-listen-night" -> shoot(dark = true, night = true, Tab.HOME) { ListenComfort(playing.copy(balance = -0.3f, output = Output(OutputKind.BLUETOOTH, "WH-1000XM4")), ListenActions()) }
+        "balance-listen-day" -> shoot(dark = false, night = false, Tab.HOME) { ListenComfort(idle.copy(balance = 1f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
         "balance-tones-night" -> shoot(dark = true, night = true, Tab.TONES) { TonesScreen(tones.copy(playing = true, balance = 0.6f, output = Output(OutputKind.BLUETOOTH, "Sleep Buds")), ListenActions()) }
         "balance-tones-day" -> shoot(dark = false, night = false, Tab.TONES) { TonesScreen(tones.copy(output = Output(OutputKind.SPEAKER, null)), ListenActions()) }
         "journal-day" -> shoot(dark = false, night = false, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-night" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-empty-dark" -> shoot(dark = true, night = false, Tab.JOURNAL) { JournalScreen(emptyList(), 0, today, null, { _, _, _ -> }, {}) }
         "about-night" -> shoot(dark = true, night = true, Tab.ABOUT) { AboutScreen("0.1.0") }
-        "listen-playing-open-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
+        "listen-playing-open-day" -> shoot(dark = false, night = false, Tab.HOME) { ListenComfort(playing, ListenActions()) }
         "about-day" -> shoot(dark = false, night = false, Tab.ABOUT) { AboutScreen("0.1.0") }
         "about-language-night" -> shoot(dark = true, night = true, Tab.ABOUT) { Column(Modifier.padding(horizontal = 20.dp)) { LanguageSettings(LanguageChoice("en") {}) } }
         "about-language-day" -> shoot(dark = false, night = false, Tab.ABOUT) { Column(Modifier.padding(horizontal = 20.dp)) { LanguageSettings(LanguageChoice("") {}) } }
-        "balance-centre-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(playing.copy(balance = 0f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
+        "balance-centre-night" -> shoot(dark = true, night = true, Tab.HOME) { ListenComfort(playing.copy(balance = 0f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
         "sync-night" -> shoot(dark = true, night = true, Tab.ABOUT) { syncShot() }
         "sync-day" -> shoot(dark = false, night = false, Tab.ABOUT) { syncShot() }
         "sync-off-day" -> shoot(dark = false, night = false, Tab.ABOUT) { Column(Modifier.padding(horizontal = 20.dp)) { SyncSettings(SyncState(), null, SyncActions()) } }
         "sync-problem-night" -> shoot(dark = true, night = true, Tab.ABOUT) {
             Column(Modifier.padding(horizontal = 20.dp)) { SyncSettings(SyncState("Brume", true, true, null, SyncProblem.UNREACHABLE), null, SyncActions()) }
         }
-        "screens-listen" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
+        "screens-listen" -> shoot(dark = true, night = true, Tab.HOME) { ListenComfort(idle, ListenActions()) }
         "screens-breath" -> shoot(dark = true, night = true, Tab.CALM) { calm(BreathSetup(), soundName = "Pink noise") }
         "screens-tones" -> shoot(dark = true, night = true, Tab.TONES) { TonesScreen(tones, ListenActions()) }
         "screens-journal" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }

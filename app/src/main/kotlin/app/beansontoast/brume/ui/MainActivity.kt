@@ -37,6 +37,10 @@ import app.beansontoast.brume.BuildConfig
 import app.beansontoast.brume.R
 import app.beansontoast.brume.core.NightHours
 import app.beansontoast.brume.core.learn.Learn
+import app.beansontoast.brume.core.home.LastSound
+import app.beansontoast.brume.core.home.Suggest
+import app.beansontoast.brume.core.home.Suggestion
+import app.beansontoast.brume.core.sound.SoundEngine.Mode
 import androidx.compose.ui.res.stringResource
 import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.journal.EndedBy
@@ -75,11 +79,11 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     val scope = rememberCoroutineScope()
     val nightHours by graph.settings.nightHours.collectAsStateWithLifecycle()
     val night = nightHours && NightHours.contains(LocalTime.now().hour)
-    // At night Brume always opens on Listen: Listen is the first tab, and nothing else asks for effort.
-    var tab by rememberSaveable { mutableStateOf(Tab.LISTEN) }
+    // Brume always opens on the home tab: one suggestion, nothing that asks for effort at night.
+    var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
     val modules by graph.settings.modules.collectAsStateWithLifecycle()
-    // A tab whose module was just switched off, here or on the other phone, falls back to Listen.
-    LaunchedEffect(modules) { if (!modules.shows(tab)) tab = Tab.LISTEN }
+    // A tab whose module was just switched off, here or on the other phone, falls back to the home tab.
+    LaunchedEffect(modules) { if (!modules.shows(tab)) tab = Tab.HOME }
     var breath by remember {
         mutableStateOf(BreathSetup(
             pattern = Pattern.entries.firstOrNull { it.name == graph.settings.breathPattern } ?: Pattern.LONG_OUT,
@@ -189,6 +193,18 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
         showPlaying = false
     }
 
+    // The home's suggestion plays through the player as any start does: the person's levels, the fade-in.
+    // The non-empty layer goes first so the player never sees silence and pauses in between.
+    fun playSuggestion(s: Suggestion) {
+        if (player.mode != Mode.SOUNDS) graph.player.selectMode(Mode.SOUNDS)
+        if (s.noise != null) { graph.player.selectNoise(s.noise); graph.player.selectAmbience(s.ambience) }
+        else { graph.player.selectAmbience(s.ambience); graph.player.selectNoise(null) }
+        graph.player.setTimer(s.timerMinutes)
+        if (!graph.player.ui.value.playing) graph.player.play()
+    }
+    val learnStep = remember { Learn.step(graph.settings.learnStartDay(LocalDate.now().toEpochDay()), LocalDate.now().toEpochDay()) }
+    var tonesStep by remember { mutableStateOf(graph.settings.tonesStep) }
+
     val anchors = remember { LaunchAnchors() }
     // Read once: the launch intro lands on the introduction only on the launch that shows it.
     val firstLaunch = remember { showIntro }
@@ -199,7 +215,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                     Onboarding(onFinish = { setPitch ->
                         graph.settings.setIntroSeen()
                         showIntro = false
-                        // Replayed from About, Later returns there; on first launch the tab is still Listen.
+                        // Replayed from About, Later returns there; on first launch the tab is still the home tab.
                         // Setting the pitch from the intro turns Tones back on if it was off.
                         if (setPitch) { if (!modules.tones) graph.settings.setModules(modules.copy(tones = true)); tab = Tab.TONES }
                     })
@@ -212,7 +228,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                 } else if (showPlaying && player.hasSound) {
                     BackHandler { showPlaying = false }
                     PlayingView(player, night, onPause = graph.player::toggle, onBack = { showPlaying = false })
-                } else BrumeScaffold(tab = tab, onTab = { tab = it; pages = "" }, modules = modules) {
+                } else BrumeScaffold(tab = tab, onTab = { tab = it; pages = "" }, modules = modules, night = night) {
                     val page = stack.lastOrNull()
                     if (page != null) BackHandler { pop() }
                     when {
@@ -221,14 +237,25 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                             modules = modules, onModules = graph.settings::setModules,
                             language = if (Build.VERSION.SDK_INT >= 33) remember { LanguageChoice(currentLanguage(context)) { applyLanguage(context, it) } } else null)
                         page?.startsWith("topic:") == true -> LearnTopicScreen(page.removePrefix("topic:").toInt(), onBack = ::pop, onCard = { push("card:$it") })
+                        page == "controls" -> ListenComfort(player, actions, onBack = ::pop)
                         page?.startsWith("card:") == true -> {
-                            val card = Learn.card(page.removePrefix("card:"))
+                            // "card:c3_1" from the library or a tag walks on; "card:c3_1@4" is the home's step 4 of the path.
+                            val (id, step) = page.removePrefix("card:").split('@').let { it[0] to it.getOrNull(1)?.toIntOrNull() }
+                            val card = Learn.card(id)
+                            val walkOn: (String) -> Unit = { next -> pages = (stack.dropLast(1) + "card:$next").joinToString("/") }
                             if (card == null) LaunchedEffect(page) { pop() }
-                            else LearnCardScreen(card, backLabel = stringResource(R.string.learn_back), onBack = ::pop,
-                                onNext = { pages = (stack.dropLast(1) + "card:$it").joinToString("/") })
+                            else LearnCardScreen(card, backLabel = stringResource(R.string.learn_back), onBack = ::pop, step = step,
+                                onNext = walkOn.takeIf { step == null })
                         }
                         else -> when (tab) {
-                        Tab.LISTEN -> ListenComfort(player, actions)
+                        Tab.HOME -> HomeScreen(
+                            night = night, ui = player, suggestion = Suggest.of(night, LastSound(player.noise, player.ambience, player.timerMinutes)),
+                            step = learnStep, actions = actions,
+                            onPlay = { playSuggestion(Suggest.of(night, LastSound(player.noise, player.ambience, player.timerMinutes))) },
+                            onOtherSound = { push("controls") },
+                            onCard = { id, step -> push(if (step != null) "card:$id@$step" else "card:$id") },
+                            modules = modules, tonesStep = tonesStep, onTones = { tab = Tab.TONES; pages = "" },
+                        )
                         Tab.CALM -> CalmScreen(
                             modules = modules,
                             practice = practice,

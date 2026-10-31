@@ -99,7 +99,22 @@ class Settings(context: Context) {
         get() = prefs.getBoolean(MEDITATION_SOUND, false)
         set(v) = prefs.edit().putBoolean(MEDITATION_SOUND, v).apply()
 
+    /** The day the Learn path started (epoch day), set the first time the home shows it. This phone only. */
+    fun learnStartDay(today: Long): Long {
+        val start = prefs.getLong(LEARN_START, -1L)
+        if (start >= 0) return start
+        prefs.edit().putLong(LEARN_START, today).apply()
+        return today
+    }
+
+    /** The Tones path's current step, 1 to 4. This phone only. */
+    var tonesStep: Int
+        get() = prefs.getInt(TONES_STEP, 1).coerceIn(1, 4)
+        set(v) = prefs.edit().putInt(TONES_STEP, v.coerceIn(1, 4)).apply()
+
     internal companion object {
+        const val LEARN_START = "learn_start"
+        const val TONES_STEP = "tones_step"
         const val MODULE_TONES = "module_tones"
         const val MODULE_BREATH = "module_breath"
         const val MODULE_MEDITATION = "module_meditation"

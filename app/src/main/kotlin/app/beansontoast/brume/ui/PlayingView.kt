@@ -93,7 +93,7 @@ fun PlayingView(ui: PlayerUi, night: Boolean, onPause: () -> Unit, onBack: () ->
             val back = stringResource(R.string.play_back)
             TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = back }) {
                 Icon(painterResource(R.drawable.ic_back), null, tint = muted, modifier = Modifier.size(20.dp))
-                Text(stringResource(R.string.tab_listen), style = MaterialTheme.typography.labelLarge, color = muted,
+                Text(stringResource(R.string.learn_back), style = MaterialTheme.typography.labelLarge, color = muted,
                     modifier = Modifier.padding(start = 4.dp))
             }
             Text(
