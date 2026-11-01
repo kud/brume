@@ -29,6 +29,8 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.res.colorResource
 import androidx.core.splashscreen.SplashScreenViewProvider
 import app.beansontoast.brume.R
+import kotlinx.coroutines.flow.first
+import androidx.compose.ui.graphics.graphicsLayer
 import app.beansontoast.design.rememberReducedMotion
 
 /*
@@ -108,37 +110,29 @@ private fun android.view.View.centreInWindow(): Offset? {
  * frame to lay out its anchor, then plays.
  */
 @Composable
-fun LaunchIntroOverlay(intro: LaunchIntro, firstLaunch: Boolean) {
-    val icon = intro.icon ?: return
-    val anchors = LocalLaunchAnchors.current
+fun LaunchIntroOverlay(intro: LaunchIntro, @Suppress("UNUSED_PARAMETER") firstLaunch: Boolean) {
+    intro.icon ?: return
+    // The board's first screen (Iris, phase 2): the title card covers the splash on its first frame,
+    // holds, then fades into whatever is underneath (home, or the introduction) on SLOW.
     val reduced = rememberReducedMotion()
-    var elapsed by remember { mutableFloatStateOf(0f) }
-    var script by remember { mutableStateOf<Choreography?>(null) }
+    var alpha by remember { mutableFloatStateOf(1f) }
+    var skipped by remember { mutableStateOf(false) }
     LaunchedEffect(intro) {
         withFrameNanos { }
         withFrameNanos { }
         intro.covered()
-        withFrameNanos { }
-        val landing = when {
-            firstLaunch && anchors?.welcome != null -> Landing.WELCOME
-            !firstLaunch && anchors?.mist != null -> Landing.MIST
-            else -> Landing.NOWHERE
-        }
-        val chosen = choreographyFor(intro.kind, reduced, landing)
-        if (chosen != null) {
-            script = chosen
-            val start = withFrameNanos { it }
-            while (elapsed < chosen.durationMs) withFrameNanos { now -> elapsed = (now - start) / 1_000_000f }
-        }
+        val hold = when { intro.kind == IntroKind.COLD && !reduced -> 1100L; intro.kind == IntroKind.COLD -> 700L; else -> 250L }
+        // A tap only shortens the hold: the card still fades, it never cuts.
+        kotlinx.coroutines.withTimeoutOrNull(hold) { androidx.compose.runtime.snapshotFlow { skipped }.first { it } }
+        androidx.compose.animation.core.animate(1f, 0f, animationSpec = app.beansontoast.design.Motion.tween(app.beansontoast.design.Motion.SLOW)) { v, _ -> alpha = v }
         intro.finish()
     }
-    LaunchCanvas(
-        script, elapsed, icon,
-        Modifier.pointerInput(intro) {
-            // A tap skips; nothing reaches the screen underneath while the intro is up.
+    TitleCard(
+        Modifier.graphicsLayer { this.alpha = alpha }.pointerInput(intro) {
+            // A tap skips to the fade; nothing reaches the screen underneath while the card is up.
             awaitEachGesture {
                 awaitFirstDown(requireUnconsumed = false).consume()
-                intro.finish()
+                skipped = true
             }
         },
     )

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -36,8 +35,6 @@ import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -48,8 +45,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.beansontoast.brume.Modules
 import app.beansontoast.brume.R
-import app.beansontoast.brume.ui.launch.LocalLaunchAnchors
-import app.beansontoast.brume.ui.launch.MistAnchor
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -86,12 +81,8 @@ fun Modules.allows(fn: Fn) = fn == Fn.SETTINGS || fn in fns()
 @Composable
 fun HomeScreen(fns: List<Fn>, onOpen: (Fn) -> Unit, mini: (@Composable () -> Unit)? = null) {
     val scheme = MaterialTheme.colorScheme
-    val anchors = LocalLaunchAnchors.current
     Box(Modifier.fillMaxSize().background(scheme.background)) {
         Landscape(Land.HOME)
-        // The launch intro still lands its lines on the lower haze, where Listen's mist was.
-        Box(Modifier.fillMaxWidth().fillMaxHeight(0.62f).align(Alignment.BottomCenter)
-            .onGloballyPositioned { anchors?.mist = MistAnchor(it.boundsInWindow(), 0.35f, scheme.onSurfaceVariant) })
         Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 16.dp)) {
             Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.Top) {
                 Column(Modifier.weight(1f).padding(start = 8.dp, top = 12.dp)) {

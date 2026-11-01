@@ -84,6 +84,7 @@ class DirectionRenders(private val shot: String) {
             "settings" -> capture(night) { FnFrame(onClose = {}, title = "Réglages", land = Land.SKY) { app.beansontoast.brume.ui.SettingsScreen(true, {}, {}, language = app.beansontoast.brume.ui.LanguageChoice("fr") {}) } }
             "settings-sheet" -> capture(night) { FnFrame(onClose = {}, title = "Réglages", land = Land.SKY) { app.beansontoast.brume.ui.SettingsScreen(true, {}, {}, language = app.beansontoast.brume.ui.LanguageChoice("fr") {}, sheet = app.beansontoast.brume.ui.SettingsSheet.MODULES) } }
             "finder" -> capture(night) { FnFrame(onClose = {}, title = "Mon acouphène", land = Land.SKY) { app.beansontoast.brume.ui.FinderScreen(emptyList(), app.beansontoast.brume.ui.FinderActions(), onBack = {}) } }
+            "intro-card" -> capture(night) { app.beansontoast.brume.ui.launch.TitleCard() }
             else -> error(shot)
         }
     }
@@ -105,7 +106,7 @@ class DirectionRenders(private val shot: String) {
             "home-day", "home-night", "home-mini-day", "home-mini-night", "home-modules-off-day",
             "breathe-day", "breathe-night", "breath-in-day", "breath-hold-day", "breath-out-day", "breath-hold-night",
             "settle-day", "settle-playing-night", "journal-day",
-        ) + listOf("mixer", "mixer-add", "learn", "topic", "card", "about", "meditate", "tones", "settings", "settings-sheet", "finder", "journal")
+        ) + listOf("intro-card", "mixer", "mixer-add", "learn", "topic", "card", "about", "meditate", "tones", "settings", "settings-sheet", "finder", "journal")
             .flatMap { listOf("$it-day", "$it-night") }.filter { it != "journal-day" }
     }
 }
