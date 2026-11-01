@@ -46,6 +46,8 @@ import app.beansontoast.brume.ui.ModuleSettings
 import app.beansontoast.brume.Modules
 import app.beansontoast.brume.core.breath.BreathPlan
 import app.beansontoast.brume.core.breath.Pattern
+import app.beansontoast.brume.core.breath.Technique
+import app.beansontoast.brume.core.breath.Variant
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -134,15 +136,15 @@ class Renders(private val shot: String) {
         "modules-night" -> shoot(dark = true, night = true, Tab.LEARN) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(), {}) } }
         "modules-day" -> shoot(dark = false, night = false, Tab.LEARN, Modules(tones = false)) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(tones = false), {}) } }
         "breath-setup-night" -> shoot(dark = true, night = true, Tab.CALM) { calm(BreathSetup(), soundName = "Pink noise") }
-        "breath-setup-day" -> shoot(dark = false, night = false, Tab.CALM) { calm(BreathSetup(Pattern.FOUR_SEVEN_EIGHT, 2, sound = true), soundName = "Rain") }
-        "breath-setup-nosound-day" -> shoot(dark = false, night = false, Tab.CALM, Modules(tones = false, meditation = false)) { calm(BreathSetup(Pattern.BOX, 10), Modules(tones = false, meditation = false)) }
-        "breath-in-night" -> bare(dark = true, night = true) { session(Pattern.LONG_OUT, 5, 2.6) }
-        "breath-hold-night" -> bare(dark = true, night = true) { session(Pattern.FOUR_SEVEN_EIGHT, 5, 7.0) }
-        "breath-out-night" -> bare(dark = true, night = true) { session(Pattern.LONG_OUT, 5, 7.5) }
-        "breath-in-day" -> bare(dark = false, night = false) { session(Pattern.BOX, 2, 3.4, night = false) }
-        "breath-out-day" -> bare(dark = false, night = false) { session(Pattern.BOX, 2, 61.0 + 5.0 + 2.5, night = false) }
-        "breath-still-night" -> bare(dark = true, night = true) { session(Pattern.LONG_OUT, 5, 2.6, still = true) }
-        "breath-done-night" -> bare(dark = true, night = true) { session(Pattern.LONG_OUT, 2, 120.0) }
+        "breath-setup-day" -> shoot(dark = false, night = false, Tab.CALM) { calm(BreathSetup(Technique.FOUR_SEVEN_EIGHT, minutes = 2, sound = true), soundName = "Rain") }
+        "breath-setup-nosound-day" -> shoot(dark = false, night = false, Tab.CALM, Modules(tones = false, meditation = false)) { calm(BreathSetup(Technique.BOX, minutes = 10), Modules(tones = false, meditation = false)) }
+        "breath-in-night" -> bare(dark = true, night = true) { session(Technique.LONG_OUT.pattern(), 5, 2.6) }
+        "breath-hold-night" -> bare(dark = true, night = true) { session(Technique.FOUR_SEVEN_EIGHT.pattern(Variant.STANDARD), 4, 7.0) }
+        "breath-out-night" -> bare(dark = true, night = true) { session(Technique.LONG_OUT.pattern(), 5, 7.5) }
+        "breath-in-day" -> bare(dark = false, night = false) { session(Technique.BOX.pattern(Variant.STANDARD), 3, 3.4, night = false) }
+        "breath-out-day" -> bare(dark = false, night = false) { session(Technique.BOX.pattern(Variant.STANDARD), 3, 61.0 + 5.0 + 2.5, night = false) }
+        "breath-still-night" -> bare(dark = true, night = true) { session(Technique.LONG_OUT.pattern(), 5, 2.6, still = true) }
+        "breath-done-night" -> bare(dark = true, night = true) { session(Technique.LONG_OUT.pattern(), 3, 180.0) }
         "calm-meditate-night" -> shoot(dark = true, night = true, Tab.CALM) { calm(practice = Practice.MEDITATE, soundName = "Pink noise") }
         "calm-meditate-day" -> shoot(dark = false, night = false, Tab.CALM) { calm(practice = Practice.MEDITATE, med = MeditationSetup(Meditation.TIMER, 15, sound = true), soundName = "Rain") }
         "calm-only-meditate-day" -> shoot(dark = false, night = false, Tab.CALM, Modules(breath = false)) { calm(modules = Modules(breath = false), med = MeditationSetup(Meditation.BODY), soundName = null) }
@@ -157,7 +159,7 @@ class Renders(private val shot: String) {
         "modules-calm-night" -> shoot(dark = true, night = true, Tab.LEARN) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(), {}) } }
         "modules-calm-day" -> shoot(dark = false, night = false, Tab.LEARN, Modules(breath = false)) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(breath = false), {}) } }
         else -> if (shot.startsWith("breath-frame-")) bare(dark = true, night = true) {
-            session(Pattern.LONG_OUT, 2, shot.removePrefix("breath-frame-").toInt() * 0.5)
+            session(Technique.LONG_OUT.pattern(), 3, shot.removePrefix("breath-frame-").toInt() * 0.5)
         } else error(shot)
     }
 
@@ -173,8 +175,8 @@ class Renders(private val shot: String) {
     @Composable private fun med(setup: MeditationSetup, at: Double, still: Boolean = false, night: Boolean = true) =
         MeditationSession(setup.copy(haptics = false), 0L, night, onEnd = {}, elapsed = at, still = still)
 
-    @Composable private fun session(pattern: Pattern, minutes: Int, at: Double, still: Boolean = false, night: Boolean = true) =
-        BreathSession(BreathPlan(pattern, minutes), 0L, night, haptics = false, onEnd = {}, elapsed = at, still = still)
+    @Composable private fun session(pattern: Pattern, length: Int, at: Double, still: Boolean = false, night: Boolean = true) =
+        BreathSession(BreathPlan.of(pattern, length), 0L, night, haptics = false, onEnd = {}, elapsed = at, still = still)
 
     private fun bare(dark: Boolean, night: Boolean, content: @Composable () -> Unit) = capture { BrumeTheme(dark = dark, night = night) { content() } }
 

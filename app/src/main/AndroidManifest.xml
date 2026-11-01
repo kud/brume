@@ -9,6 +9,14 @@
     <!-- Souffle: a light tap at each change of breath, optional. Normal permission, granted at install. -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- The guide's voice: lets the app see the phone's text-to-speech engine (package visibility,
+         Android 11+). Not a permission; the engine is a local system service. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:name=".BrumeApp"
         android:allowBackup="true"

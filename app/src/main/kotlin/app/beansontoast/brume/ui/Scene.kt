@@ -10,6 +10,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import app.beansontoast.brume.core.breath.Pattern
+import app.beansontoast.brume.core.breath.Technique
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
@@ -157,10 +158,12 @@ class BreatheScene(
     val practice: Practice = Practice.BREATHE,
     val onPractice: (Practice) -> Unit = {},
     val minutes: Int = 5,
-    /** Set when the rhythm runs by count (4-7-8), shown instead of the minutes. */
+    /** Set when the technique runs by rounds (Bourdonnement, 4-7-8), shown instead of the minutes. */
     val cycles: Int? = null,
-    val pattern: Pattern = Pattern.DEFAULT,
-    val onPattern: (Pattern) -> Unit = {},
+    val technique: Technique = Technique.DEFAULT,
+    /** The technique at its chosen pace: its phases are the scene's line, its breath the art's. */
+    val pattern: Pattern = technique.pattern(),
+    val onTechnique: (Technique) -> Unit = {},
     val soundName: String? = null,
     val onStart: () -> Unit = {},
     val onSetup: () -> Unit = {},
@@ -329,9 +332,9 @@ private fun ScenePage(
         Scene.BREATHE -> {
             // The rhythm is the title: « Breathing » already sits on its own toggle below.
             val breathing = breathe.practice == Practice.BREATHE
-            title = stringResource(if (breathing) breathe.pattern.title() else breathe.practice.label())
+            title = stringResource(if (breathing) breathe.technique.title() else breathe.practice.label())
             line = listOfNotNull(
-                if (breathing) stringResource(breathe.pattern.phases()) else null,
+                if (breathing) breathe.pattern.phasesText() else null,
                 breathe.soundName?.let { stringResource(R.string.scene_with, it) },
             ).joinToString(" · ").ifEmpty { stringResource(R.string.scene_breathe_quiet) }
         }
@@ -401,9 +404,9 @@ private fun ScenePage(
                         FlowRow(Modifier.fillMaxWidth().padding(top = 6.dp).alpha(calmAlpha(rhythms))
                             .then(if (rhythms) Modifier.selectableGroup() else Modifier.clearAndSetSemantics { }),
                             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Pattern.entries.forEach { p ->
-                                Pill(stringResource(p.title()), on = p == breathe.pattern, thumb = null, role = Role.RadioButton, label = null,
-                                    enabled = rhythms) { breathe.onPattern(p) }
+                            Technique.entries.forEach { t ->
+                                Pill(stringResource(t.title()), on = t == breathe.technique, thumb = null, role = Role.RadioButton, label = null,
+                                    enabled = rhythms) { breathe.onTechnique(t) }
                             }
                         }
                     }

@@ -84,7 +84,10 @@ class Settings(context: Context) {
         _country.value = name
     }
 
-    /** The last breathing choices, this phone only: how to breathe is not worth a sync conflict. */
+    /**
+     * The last breathing choices, this phone only: how to breathe is not worth a sync conflict.
+     * [breathPattern] holds the technique's id (the old pattern names, kept: see Technique.fromStored).
+     */
     var breathPattern: String?
         get() = prefs.getString(BREATH_PATTERN, null)
         set(v) = prefs.edit().putString(BREATH_PATTERN, v).apply()
@@ -97,6 +100,24 @@ class Settings(context: Context) {
     var breathSound: Boolean
         get() = prefs.getBoolean(BREATH_SOUND, false)
         set(v) = prefs.edit().putBoolean(BREATH_SOUND, v).apply()
+
+    /** The pace per technique (`Variants.encode`); null until one is changed, so each starts at its default. */
+    var breathVariants: String?
+        get() = prefs.getString(BREATH_VARIANTS, null)
+        set(v) = prefs.edit().putString(BREATH_VARIANTS, v).apply()
+    var breathRounds: Int
+        get() = prefs.getInt(BREATH_ROUNDS, 7)
+        set(v) = prefs.edit().putInt(BREATH_ROUNDS, v).apply()
+    var breathVoice: Boolean
+        get() = prefs.getBoolean(BREATH_VOICE, true)
+        set(v) = prefs.edit().putBoolean(BREATH_VOICE, v).apply()
+    var meditationVoice: Boolean
+        get() = prefs.getBoolean(MEDITATION_VOICE, true)
+        set(v) = prefs.edit().putBoolean(MEDITATION_VOICE, v).apply()
+    /** True once the note on holding the breath has been read, before the first technique with a hold. */
+    var holdNoteSeen: Boolean
+        get() = prefs.getBoolean(HOLD_NOTE_SEEN, false)
+        set(v) = prefs.edit().putBoolean(HOLD_NOTE_SEEN, v).apply()
 
     /** Which practice Calm opens on, and the last meditation choices: this phone only, like Breathe's. */
     var calmPractice: String?
@@ -150,6 +171,11 @@ class Settings(context: Context) {
         const val BREATH_MINUTES = "breath_minutes"
         const val BREATH_HAPTICS = "breath_haptics"
         const val BREATH_SOUND = "breath_sound"
+        const val BREATH_VARIANTS = "breath_variants"
+        const val BREATH_ROUNDS = "breath_rounds"
+        const val BREATH_VOICE = "breath_voice"
+        const val MEDITATION_VOICE = "meditation_voice"
+        const val HOLD_NOTE_SEEN = "hold_note_seen"
         const val NIGHT_HOURS = "night_hours"
         const val NIGHT_HOURS_AT = "night_hours_at"
         const val INTRO_SEEN = "intro_seen"

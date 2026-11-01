@@ -48,8 +48,12 @@ import app.beansontoast.brume.core.learn.Learn
 import androidx.compose.ui.res.stringResource
 import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.journal.EndedBy
-import app.beansontoast.brume.core.breath.BreathPlan
-import app.beansontoast.brume.core.breath.Pattern
+import app.beansontoast.brume.core.breath.Cue
+import app.beansontoast.brume.core.breath.Technique
+import app.beansontoast.brume.core.guide.Line
+import app.beansontoast.brume.core.breath.Variants
+import app.beansontoast.brume.voice.Voice
+import androidx.compose.runtime.DisposableEffect
 import app.beansontoast.brume.core.sound.SoundEngine
 import app.beansontoast.brume.sync.ImportResult
 import app.beansontoast.brume.sync.SyncProblem
@@ -100,15 +104,19 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     LaunchedEffect(modules) { if (scene !in modules.scenes()) scene = Scene.SETTLE }
     var breath by remember {
         mutableStateOf(BreathSetup(
-            // 5-5 left the set (2026-11-01): a stored 5-5 becomes Souffle long, and is saved so.
-            pattern = Pattern.fromStored(graph.settings.breathPattern).also { graph.settings.breathPattern = it.name },
-            minutes = graph.settings.breathMinutes, haptics = graph.settings.breathHaptics, sound = graph.settings.breathSound,
+            // The ids are the old pattern names. 5-5 left the set (2026-11-01): a stored 5-5 becomes
+            // Souffle long, and is saved so. A length from the older set finds the nearest offered.
+            technique = Technique.fromStored(graph.settings.breathPattern).also { graph.settings.breathPattern = it.name },
+            variants = Variants.decode(graph.settings.breathVariants),
+            minutes = graph.settings.breathMinutes, rounds = graph.settings.breathRounds,
+            haptics = graph.settings.breathHaptics, sound = graph.settings.breathSound, voice = graph.settings.breathVoice,
         ))
     }
     var meditation by remember {
         mutableStateOf(MeditationSetup(
             meditation = Meditation.fromStored(graph.settings.meditationChoice).also { graph.settings.meditationChoice = it.name },
             minutes = graph.settings.meditationMinutes, haptics = graph.settings.meditationHaptics, sound = graph.settings.meditationSound,
+            voice = graph.settings.meditationVoice,
         ))
     }
     var practice by remember { mutableStateOf(Practice.entries.firstOrNull { it.name == graph.settings.calmPractice } ?: Practice.BREATHE) }
@@ -116,7 +124,13 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     var breathStartedAt by rememberSaveable { mutableStateOf<Long?>(null) }
     var meditationStartedAt by rememberSaveable { mutableStateOf<Long?>(null) }
     var breathStartedSound by rememberSaveable { mutableStateOf(false) }
+    // What to read before a breathing session (how to sit, the hold note the first time), shown in its place.
+    var breathPrelude by rememberSaveable { mutableStateOf(false) }
     val bells = remember { Bells() }
+    // The guide's voice: the phone's offline text-to-speech, woken only when Breathe or a session is near.
+    val voice = remember { Voice(context) }
+    DisposableEffect(voice) { onDispose { voice.shutdown() } }
+    val voiceState by voice.state.collectAsStateWithLifecycle()
     val pickerHint = remember { !graph.settings.pickerHintSeen }
     val player by graph.player.ui.collectAsStateWithLifecycle()
     // Tones is a practice, not a background: leaving its scene, or Listen, pauses it. The comfort
@@ -219,15 +233,36 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
         breathStartedSound = wanted && player.hasSound && !player.playing
         if (breathStartedSound) graph.player.play()
     }
-    fun startBreath() { startUnderneath(breath.sound); breathStartedAt = System.currentTimeMillis() }
-    fun startMeditation() { startUnderneath(meditation.sound); meditationStartedAt = System.currentTimeMillis() }
+    fun beginBreath() {
+        if (breath.pattern.holds) graph.settings.holdNoteSeen = true
+        breathPrelude = false
+        startUnderneath(breath.sound); breathStartedAt = System.currentTimeMillis()
+    }
+    fun startBreath() {
+        if (breath.voice) voice.prepare()
+        if (breath.prelude(graph.settings.holdNoteSeen)) breathPrelude = true else beginBreath()
+    }
+    fun startMeditation() {
+        if (meditation.voice && meditation.meditation.guided != null) voice.prepare()
+        startUnderneath(meditation.sound); meditationStartedAt = System.currentTimeMillis()
+    }
+    // « Respirer normalement », End or Back: the session gives way by the route's slow cross-fade, no question asked.
     fun endBreath() {
         if (breathStartedSound) graph.player.pause(EndedBy.USER)
         breathStartedSound = false
         bells.stop()
+        voice.hush()
+        breathPrelude = false
         breathStartedAt = null
         meditationStartedAt = null
     }
+
+    // Bells and voice follow the session's level: the sound under it, or the listening level when none
+    // plays, so neither is ever louder than the session.
+    val sessionLevel = player.levels.values.maxOrNull() ?: LevelRules.DEFAULT_LEVEL
+    // The voice wakes when its setup or the Breathe scene is in view, so its row can say if it is missing.
+    val voiceNear = stack.lastOrNull() == "calm" || (stack.isEmpty() && tab == Tab.LISTEN && scene == Scene.BREATHE)
+    LaunchedEffect(voiceNear) { if (voiceNear) voice.prepare() }
 
     val anchors = remember { LaunchAnchors() }
     // Read once: the launch intro lands on the introduction only on the launch that shows it.
@@ -240,6 +275,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                 val route = when {
                     showIntro -> Route(Route.INTRO)
                     breathStartedAt != null -> Route(Route.BREATH, breathStartedAt)
+                    breathPrelude -> Route(Route.PRELUDE)
                     meditationStartedAt != null -> Route(Route.MEDITATION, meditationStartedAt)
                     else -> Route(Route.HOME)
                 }
@@ -252,16 +288,19 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                         // Setting the pitch from the intro turns Tones back on if it was off.
                         if (setPitch) { if (!modules.tones) graph.settings.setModules(modules.copy(tones = true)); tab = Tab.LISTEN; goScene(Scene.TONES); pages = "tones" }
                     })
+                } else if (r.kind == Route.PRELUDE) {
+                    BackHandler { endBreath() }
+                    BreathPrelude(breath, safety = breath.pattern.holds && !graph.settings.holdNoteSeen, onStart = ::beginBreath, onBack = ::endBreath)
                 } else if (r.kind == Route.BREATH) {
                     BackHandler { endBreath() }
-                    BreathSession(BreathPlan(breath.pattern, breath.minutes), r.at!!, night, breath.haptics, onEnd = ::endBreath)
+                    val gain = Bell.gain(sessionLevel, 1f)
+                    BreathSession(breath.plan(), r.at!!, night, breath.haptics, onEnd = ::endBreath,
+                        speak = { cue: Cue -> voice.say(context.getString(cue.spoken()), gain, flush = true) }.takeIf { breath.voice })
                 } else if (r.kind == Route.MEDITATION) {
                     BackHandler { endBreath() }
-                    // The bell follows the session's level: the sound under it, or the listening level when none plays.
-                    val sessionLevel = if (player.playing && player.mode == SoundEngine.Mode.SOUNDS)
-                        player.levels.values.maxOrNull() ?: LevelRules.DEFAULT_LEVEL
-                    else player.levels.values.maxOrNull() ?: LevelRules.DEFAULT_LEVEL
-                    MeditationSession(meditation, r.at!!, night, onEnd = ::endBreath, onBell = { bells.ring(Bell.gain(sessionLevel, it.strength)) })
+                    val gain = Bell.gain(sessionLevel, 1f)
+                    MeditationSession(meditation, r.at!!, night, onEnd = ::endBreath, onBell = { bells.ring(Bell.gain(sessionLevel, it.strength)) },
+                        speak = { line: Line -> voice.say(context.getString(line.text()), gain, flush = false) }.takeIf { meditation.voice })
                 } else BrumeScaffold(tab = tab, onTab = { tab = it; pages = "" }, modules = modules,
                     mini = if (tab != Tab.LISTEN && player.playing && player.mode == SoundEngine.Mode.SOUNDS) {
                         { MiniPlayer(chosenSound(context, player)) { graph.player.pause(EndedBy.USER) } }
@@ -298,16 +337,19 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                             soundName = chosenSound(context, player).ifEmpty { null },
                             onBreath = {
                                 breath = it
-                                graph.settings.breathPattern = it.pattern.name; graph.settings.breathMinutes = it.minutes
-                                graph.settings.breathHaptics = it.haptics; graph.settings.breathSound = it.sound
+                                graph.settings.breathPattern = it.technique.name; graph.settings.breathMinutes = it.minutes
+                                graph.settings.breathRounds = it.rounds; graph.settings.breathVariants = it.variants.encode()
+                                graph.settings.breathHaptics = it.haptics; graph.settings.breathSound = it.sound; graph.settings.breathVoice = it.voice
                             },
                             onMeditation = {
                                 meditation = it
                                 graph.settings.meditationChoice = it.meditation.name; graph.settings.meditationMinutes = it.minutes
                                 graph.settings.meditationHaptics = it.haptics; graph.settings.meditationSound = it.sound
+                                graph.settings.meditationVoice = it.voice
                             },
                             onStartBreath = ::startBreath,
                             onStartMeditation = ::startMeditation,
+                            voice = voiceState,
                         )
                         page?.startsWith("card:") == true -> {
                             // "card:c3_1" from the library or a Journal tag; Next walks the reading order in place.
@@ -331,10 +373,11 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                                 practices = listOfNotNull(Practice.BREATHE.takeIf { modules.breath }, Practice.MEDITATE.takeIf { modules.meditation }),
                                 practice = if (!modules.breath) Practice.MEDITATE else if (!modules.meditation) Practice.BREATHE else practice,
                                 onPractice = { practice = it; graph.settings.calmPractice = it.name },
-                                minutes = if (practice == Practice.MEDITATE && modules.meditation || !modules.breath) meditation.length else breath.minutes,
-                                cycles = breath.pattern.cycles.takeUnless { practice == Practice.MEDITATE && modules.meditation || !modules.breath },
+                                minutes = if (practice == Practice.MEDITATE && modules.meditation || !modules.breath) meditation.length else breath.length,
+                                cycles = breath.length.takeIf { breath.byRounds }.takeUnless { practice == Practice.MEDITATE && modules.meditation || !modules.breath },
+                                technique = breath.technique,
                                 pattern = breath.pattern,
-                                onPattern = { breath = breath.copy(pattern = it); graph.settings.breathPattern = it.name },
+                                onTechnique = { breath = breath.copy(technique = it); graph.settings.breathPattern = it.name },
                                 soundName = chosenSound(context, player).ifEmpty { null }
                                     ?.takeIf { if (practice == Practice.MEDITATE && modules.meditation || !modules.breath) meditation.sound else breath.sound },
                                 onStart = { if (practice == Practice.MEDITATE && modules.meditation || !modules.breath) startMeditation() else startBreath() },
@@ -364,7 +407,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                 }
                 LaunchIntroOverlay(intro, firstLaunch)
                 // A newer build found on opening offers itself once, never over the introduction or a session.
-                UpdatesOnOpen(canAnnounce = { !showIntro && breathStartedAt == null && meditationStartedAt == null }, onFound = { showUpdate = true })
+                UpdatesOnOpen(canAnnounce = { !showIntro && !breathPrelude && breathStartedAt == null && meditationStartedAt == null }, onFound = { showUpdate = true })
                 if (showUpdate) UpdateSheet(onDismiss = { showUpdate = false })
             }
         }
@@ -373,5 +416,5 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
 
 /** Where the app stands: the introduction, a session started at [at], or home. */
 private data class Route(val kind: Int, val at: Long? = null) {
-    companion object { const val INTRO = 0; const val BREATH = 1; const val MEDITATION = 2; const val HOME = 3 }
+    companion object { const val INTRO = 0; const val BREATH = 1; const val MEDITATION = 2; const val HOME = 3; const val PRELUDE = 4 }
 }

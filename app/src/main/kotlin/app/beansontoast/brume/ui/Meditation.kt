@@ -9,6 +9,12 @@ import app.beansontoast.brume.core.calm.GUIDED_MINUTES
 import app.beansontoast.brume.core.calm.Part
 import app.beansontoast.brume.core.calm.Ring
 import app.beansontoast.brume.core.calm.guided
+import app.beansontoast.brume.core.guide.Line
+import app.beansontoast.brume.core.guide.MeditationGuide
+import app.beansontoast.brume.voice.Voice
+import app.beansontoast.design.calmAlpha
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -74,7 +80,7 @@ import kotlinx.coroutines.delay
 enum class Practice { BREATHE, MEDITATE }
 
 /**
- * What a meditation is: one of three bell-only guided sessions (Respiration, Corps, Sons), or the
+ * What a meditation is: one of three guided sessions, with bells and, if chosen, a voice (Respiration, Corps, Sons), or the
  * unguided timer. Sons follows MBCT-T's "Sounds and Thoughts" (practice-research.md).
  */
 enum class Meditation(val guided: Guided?) {
@@ -94,10 +100,49 @@ data class MeditationSetup(
     val minutes: Int = 5,
     val haptics: Boolean = false,
     val sound: Boolean = false,
+    /** A few spoken lines over a guided session (Erwann, 2026-11-01); the bells stay either way. */
+    val voice: Boolean = true,
 ) {
     /** The chosen minutes if this meditation offers them, else the nearest it does. */
     val length: Int get() = meditation.lengths.minBy { kotlin.math.abs(it - minutes) }
     fun timeline(): Timeline = if (meditation.guided != null) guided(length) else sit(length)
+
+    /** What is said, and when; none for the unguided timer. */
+    fun guide(): MeditationGuide? = meditation.guided?.let { MeditationGuide(it, length) }
+}
+
+/** The words of each meditation line, FR and EN in `med_say_*`. */
+@StringRes internal fun Line.text() = when (this) {
+    Line.ARRIVE_POSTURE -> R.string.med_say_arrive_posture
+    Line.ARRIVE_EYES -> R.string.med_say_arrive_eyes
+    Line.ARRIVE_BREATHS -> R.string.med_say_arrive_breaths
+    Line.BREATH_ANCHOR -> R.string.med_say_breath_anchor
+    Line.BREATH_NOTICE -> R.string.med_say_breath_notice
+    Line.BREATH_WANDER_1 -> R.string.med_say_breath_wander_1
+    Line.BREATH_WANDER_2 -> R.string.med_say_breath_wander_2
+    Line.BREATH_WANDER_3 -> R.string.med_say_breath_wander_3
+    Line.BREATH_WANDER_4 -> R.string.med_say_breath_wander_4
+    Line.BREATH_WANDER_5 -> R.string.med_say_breath_wander_5
+    Line.BODY_ANCHOR -> R.string.med_say_body_anchor
+    Line.BODY_NOTICE -> R.string.med_say_body_notice
+    Line.BODY_LOWER -> R.string.med_say_body_lower
+    Line.BODY_UPPER -> R.string.med_say_body_upper
+    Line.BODY_LEGS -> R.string.med_say_body_legs
+    Line.BODY_TORSO -> R.string.med_say_body_torso
+    Line.BODY_TOP -> R.string.med_say_body_top
+    Line.BODY_BACK -> R.string.med_say_body_back
+    Line.BODY_CHEST -> R.string.med_say_body_chest
+    Line.BODY_ARMS -> R.string.med_say_body_arms
+    Line.BODY_FACE -> R.string.med_say_body_face
+    Line.SOUNDS_ANCHOR -> R.string.med_say_sounds_anchor
+    Line.SOUNDS_NOTICE -> R.string.med_say_sounds_notice
+    Line.SOUNDS_WANDER_1 -> R.string.med_say_sounds_wander_1
+    Line.SOUNDS_WANDER_2 -> R.string.med_say_sounds_wander_2
+    Line.SOUNDS_WANDER_3 -> R.string.med_say_sounds_wander_3
+    Line.SOUNDS_WANDER_4 -> R.string.med_say_sounds_wander_4
+    Line.SOUNDS_WANDER_5 -> R.string.med_say_sounds_wander_5
+    Line.CLOSE_RETURN -> R.string.med_say_close_return
+    Line.CLOSE_OPEN -> R.string.med_say_close_open
 }
 
 @StringRes private fun Meditation.title() = when (this) {
@@ -141,6 +186,7 @@ fun CalmScreen(
     onMeditation: (MeditationSetup) -> Unit,
     onStartBreath: () -> Unit,
     onStartMeditation: () -> Unit,
+    voice: Voice.State = Voice.State.IDLE,
 ) {
     val shown = when {
         !modules.breath -> Practice.MEDITATE
@@ -156,8 +202,8 @@ fun CalmScreen(
                 SelectChip(stringResource(R.string.practice_meditation), shown == Practice.MEDITATE, { onPractice(Practice.MEDITATE) })
             }
             when (shown) {
-                Practice.BREATHE -> BreathPanel(breath, soundName, onBreath, onStartBreath)
-                Practice.MEDITATE -> MeditationPanel(meditation, soundName, onMeditation, onStartMeditation)
+                Practice.BREATHE -> BreathPanel(breath, soundName, voice, onBreath, onStartBreath)
+                Practice.MEDITATE -> MeditationPanel(meditation, soundName, voice, onMeditation, onStartMeditation)
             }
         }
     }
@@ -165,7 +211,7 @@ fun CalmScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun MeditationPanel(setup: MeditationSetup, soundName: String?, onChange: (MeditationSetup) -> Unit, onStart: () -> Unit) {
+fun MeditationPanel(setup: MeditationSetup, soundName: String?, voice: Voice.State, onChange: (MeditationSetup) -> Unit, onStart: () -> Unit) {
     Column {
         SectionTitle(stringResource(R.string.med_choose), Modifier.padding(top = 4.dp))
         Meditation.entries.forEach { m -> ChoiceRow(stringResource(m.title()), stringResource(m.hint()), setup.meditation == m) { onChange(setup.copy(meditation = m)) } }
@@ -178,6 +224,11 @@ fun MeditationPanel(setup: MeditationSetup, soundName: String?, onChange: (Medit
             modifier = Modifier.padding(top = 8.dp))
 
         SettingsGroup(stringResource(R.string.med_options), Modifier.padding(top = 12.dp)) {
+            // The unguided timer has no words: the row keeps its place, faded and out of reach.
+            val guided = setup.meditation.guided != null
+            Box(Modifier.alpha(calmAlpha(guided)).then(if (guided) Modifier else Modifier.clearAndSetSemantics { })) {
+                VoiceRow(setup.voice, voice, R.string.voice_med_summary) { if (guided) onChange(setup.copy(voice = it)) }
+            }
             SwitchRow(stringResource(R.string.med_haptics_guided), stringResource(R.string.med_haptics_guided_summary), setup.haptics) { onChange(setup.copy(haptics = it)) }
             if (soundName != null) SwitchRow(stringResource(R.string.breath_sound), stringResource(R.string.breath_sound_summary, soundName), setup.sound) {
                 onChange(setup.copy(sound = it))
@@ -212,8 +263,10 @@ internal fun ChoiceRow(title: String, hint: String, selected: Boolean, onClick: 
 
 /**
  * A meditation, full screen, eyes closed (Erwann, 2026-10-31: « la méditation, c'est pas vraiment
- * la méditation »). No voice and no reading: a bell at the start, at each step (guided) and at the
- * end, at the session's level and never above it. The screen is bright for a few seconds so the
+ * la méditation »). A bell at the start, at each step (guided) and at the end, at the session's
+ * level and never above it. A guided session is also spoken, sparsely ([speak], from
+ * `MeditationGuide`; Erwann, 2026-11-01), and each line is written under the part's word for a
+ * few seconds, so a phone without a voice still guides; the timer says nothing. The screen is bright for a few seconds so the
  * start is seen, then dims nearly to black and stays there; it lifts again just before the end.
  * One quiet word names the part, for a glance; nothing needs reading. End and the time left stay
  * at the top, dimmed with the rest.
@@ -224,11 +277,13 @@ internal fun ChoiceRow(title: String, hint: String, selected: Boolean, onClick: 
 @Composable
 fun MeditationSession(
     setup: MeditationSetup, startedAt: Long, night: Boolean, onEnd: () -> Unit,
-    elapsed: Double? = null, still: Boolean? = null, onBell: (Ring) -> Unit = {},
+    elapsed: Double? = null, still: Boolean? = null, onBell: (Ring) -> Unit = {}, speak: ((Line) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val reduced = still ?: rememberReducedMotion()
     val timeline = remember(setup) { setup.timeline() }
+    val guide = remember(setup) { setup.guide() }
+    val say by rememberUpdatedState(speak)
     var clock by remember { mutableDoubleStateOf(((System.currentTimeMillis() - startedAt) / 1000.0).coerceAtLeast(0.0)) }
     val tapper = remember { if (elapsed == null && setup.haptics) Tapper(context) else null }
     val bell by rememberUpdatedState(onBell)
@@ -239,6 +294,7 @@ fun MeditationSession(
         while (true) {
             clock = (System.currentTimeMillis() - startedAt) / 1000.0
             timeline.bellsBetween(heard, clock).forEach { bell(it); tapper?.tap() }
+            guide?.between(heard, clock)?.lastOrNull()?.let { say?.invoke(it.what) }
             heard = clock
             if (clock >= timeline.totalSeconds) break
             delay(250)
@@ -284,8 +340,18 @@ fun MeditationSession(
                     if (id != null) Text(stringResource(id), style = MaterialTheme.typography.titleMedium, color = muted, textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth())
                 }
+                // The line being said, written below the word for a while, then gone; it never moves the word.
+                val line = guide?.current(elapsed ?: clock, CAPTION_SECONDS)?.what
+                Crossfade(line, Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp, start = 8.dp, end = 8.dp),
+                    animationSpec = tween(if (reduced) 0 else 1500), label = "line") { l ->
+                    if (l != null) Text(stringResource(l.text()), style = MaterialTheme.typography.bodyLarge, color = muted, textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite })
+                }
             }
             Spacer(Modifier.height(56.dp))
         }
     }
 }
+
+/** How long a spoken line stays written on screen, in seconds. */
+private const val CAPTION_SECONDS = 14.0

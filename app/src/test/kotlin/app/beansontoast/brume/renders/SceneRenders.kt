@@ -1,6 +1,6 @@
 package app.beansontoast.brume.renders
 
-import app.beansontoast.brume.core.breath.Pattern
+import app.beansontoast.brume.core.breath.Technique
 import app.beansontoast.brume.core.breath.BreathPlan
 import app.beansontoast.brume.ui.Meditation
 import app.beansontoast.brume.ui.MeditationSession
@@ -94,16 +94,17 @@ class SceneRenders(private val shot: String) {
             name == "sounds" -> tab(dark, night, Tab.LISTEN) { SoundsScreen(playing, ListenActions(), onBack = {}, hint = true) }
             name == "tones-setup" -> tab(dark, night, Tab.LISTEN) { TonesScreen(tones, ListenActions()) }
             name == "breathe-setup" -> tab(dark, night, Tab.LISTEN) { CalmScreen(Modules(), Practice.BREATHE, {}, BreathSetup(), MeditationSetup(), "Bruit brun", {}, {}, {}, {}) }
-            name.startsWith("breathe-") && name.removePrefix("breathe-").uppercase() in Pattern.entries.map { it.name } -> {
-                val p = Pattern.valueOf(name.removePrefix("breathe-").uppercase())
-                tab(dark, night, Tab.LISTEN) { SceneScreen(scenes, Scene.BREATHE, {}, idle, ListenActions(), breathe = BreatheScene(minutes = 5, cycles = p.cycles, pattern = p, soundName = "Brun + Pluie"), night = night) }
+            name.startsWith("breathe-") && name.removePrefix("breathe-").uppercase() in Technique.entries.map { it.name } -> {
+                val t = Technique.valueOf(name.removePrefix("breathe-").uppercase())
+                val cycles = t.length.default.takeIf { t.length.unit == app.beansontoast.brume.core.breath.LengthUnit.ROUNDS }
+                tab(dark, night, Tab.LISTEN) { SceneScreen(scenes, Scene.BREATHE, {}, idle, ListenActions(), breathe = BreatheScene(minutes = 5, cycles = cycles, technique = t, soundName = "Brun + Pluie"), night = night) }
             }
             name == "meditate-setup" -> tab(dark, night, Tab.LISTEN) { CalmScreen(Modules(), Practice.MEDITATE, {}, BreathSetup(), MeditationSetup(Meditation.SOUNDS, 10), "Brun + Pluie", {}, {}, {}, {}) }
             name == "timer-setup" -> tab(dark, night, Tab.LISTEN) { CalmScreen(Modules(), Practice.MEDITATE, {}, BreathSetup(), MeditationSetup(Meditation.TIMER, 15, sound = true), "Brun + Pluie", {}, {}, {}, {}) }
             name == "meditate-start" -> bare(dark, night) { MeditationSession(MeditationSetup(Meditation.SOUNDS, 5), 0L, night, {}, elapsed = 2.0) }
             name == "meditate-dimmed" -> bare(dark, night) { MeditationSession(MeditationSetup(Meditation.SOUNDS, 5), 0L, night, {}, elapsed = 140.0) }
             name == "timer-dimmed" -> bare(dark, night) { MeditationSession(MeditationSetup(Meditation.TIMER, 10), 0L, night, {}, elapsed = 260.0) }
-            name == "sigh-top" -> bare(dark, night) { BreathSession(BreathPlan(Pattern.SIGH, 2), 0L, night, haptics = false, onEnd = {}, elapsed = 2.5) }
+            name == "sigh-top" -> bare(dark, night) { BreathSession(BreathPlan.of(Technique.SIGH.pattern(), 3), 0L, night, haptics = false, onEnd = {}, elapsed = 2.5) }
             name == "mini-journal" -> tab(dark, night, Tab.JOURNAL, mini = true) { JournalScreen(week, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
             name == "mini-learn" -> tab(dark, night, Tab.LEARN, mini = true) { LearnScreen() }
             name == "journal" -> tab(dark, night, Tab.JOURNAL) { JournalScreen(week, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
@@ -142,7 +143,7 @@ class SceneRenders(private val shot: String) {
         fun shots() = (listOf(
             "sleep-playing", "settle", "settle-empty", "breathe", "tones", "volume",
             "sounds", "tones-setup", "breathe-setup", "journal", "learn", "settings", "about",
-            "breathe-long_out", "breathe-sigh", "breathe-box", "breathe-four_seven_eight", "sigh-top",
+            "breathe-long_out", "breathe-sigh", "breathe-hum", "breathe-box", "breathe-four_seven_eight", "sigh-top",
             "meditate-setup", "meditate-start", "meditate-dimmed", "timer-setup", "timer-dimmed", "mini-journal", "mini-learn",
         ).flatMap { listOf("$it-night", "$it-day") } + listOf(0, 1, 2, 3, 6).map { "swipe$it-night" }).map { arrayOf<Any>(it) }
     }

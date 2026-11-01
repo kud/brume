@@ -1,9 +1,10 @@
 package app.beansontoast.brume.core.calm
 
 /**
- * Meditation timing (practice-research.md, Erwann 2026-10-31). No voice yet: a bell marks each
- * edge, and the screen dims, so a session is followed with the eyes closed. `:core` holds when
- * each part starts and ends and when a bell rings; the app holds the words.
+ * Meditation timing (practice-research.md, Erwann 2026-10-31). A bell marks each edge and the
+ * screen dims, so a session is followed with the eyes closed; since 2026-11-01 a guided session is
+ * also spoken (`guide/MeditationGuide`), over these same parts. `:core` holds when each part starts
+ * and ends and when a bell rings; the app holds the words.
  *
  * Every guided session, whatever its anchor, has the same shape: arrive, the anchor, then
  * wander-and-return stretches whose silences grow, then close. Respiration, Corps and Sons share

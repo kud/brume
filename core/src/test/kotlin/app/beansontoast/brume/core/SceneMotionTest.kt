@@ -1,6 +1,8 @@
 package app.beansontoast.brume.core
 
 import app.beansontoast.brume.core.breath.Pattern
+import app.beansontoast.brume.core.breath.Technique
+import app.beansontoast.brume.core.breath.Variant
 import app.beansontoast.brume.core.scene.MiddleMotion
 import app.beansontoast.brume.core.scene.SceneMotion
 import org.junit.Assert.assertEquals
@@ -48,15 +50,15 @@ class SceneMotionTest {
 
     @Test fun `Breathe follows the chosen rhythm`() {
         // Souffle long: in for 4, out for 6.
-        assertEquals(0f, SceneMotion.breath(0.0, Pattern.LONG_OUT), 0.01f)
-        assertEquals(1f, SceneMotion.breath(4.0, Pattern.LONG_OUT), 0.01f)
-        assertEquals(0f, SceneMotion.breath(10.0, Pattern.LONG_OUT), 0.01f)
-        assertEquals(1f, SceneMotion.breath(24.0, Pattern.LONG_OUT), 0.01f) // the third breath, at its top
+        assertEquals(0f, SceneMotion.breath(0.0, Technique.LONG_OUT.pattern()), 0.01f)
+        assertEquals(1f, SceneMotion.breath(4.0, Technique.LONG_OUT.pattern()), 0.01f)
+        assertEquals(0f, SceneMotion.breath(10.0, Technique.LONG_OUT.pattern()), 0.01f)
+        assertEquals(1f, SceneMotion.breath(24.0, Technique.LONG_OUT.pattern()), 0.01f) // the third breath, at its top
         // Carré holds: full from 4 s to 8 s.
-        assertEquals(1f, SceneMotion.breath(6.0, Pattern.BOX), 0.01f)
-        assertEquals(0f, SceneMotion.breath(14.0, Pattern.BOX), 0.01f)
+        assertEquals(1f, SceneMotion.breath(6.0, Technique.BOX.pattern(Variant.STANDARD)), 0.01f)
+        assertEquals(0f, SceneMotion.breath(14.0, Technique.BOX.pattern(Variant.STANDARD)), 0.01f)
         // 4-7-8 runs by count, yet the preview keeps breathing past its fourth breath.
-        assertEquals(1f, SceneMotion.breath(19.0 * 9 + 6.0, Pattern.FOUR_SEVEN_EIGHT), 0.01f)
+        assertEquals(1f, SceneMotion.breath(19.0 * 9 + 6.0, Technique.FOUR_SEVEN_EIGHT.pattern(Variant.STANDARD)), 0.01f)
     }
 
     @Test fun `the middle layer moves only its light, and Sleep and Settle barely`() {
@@ -64,7 +66,7 @@ class SceneMotionTest {
         fun range(m: MiddleMotion, p: Pattern? = null) = minute.map { SceneMotion.middleAlpha(it, m, 1, p) }.let { it.min() to it.max() }
         val still = range(MiddleMotion.STILL)
         assertTrue("$still", still.first >= 0.94f && still.second <= 1f)
-        val breath = range(MiddleMotion.BREATH, Pattern.LONG_OUT)
+        val breath = range(MiddleMotion.BREATH, Technique.LONG_OUT.pattern())
         assertEquals(0.55f, breath.first, 0.01f)
         assertEquals(1f, breath.second, 0.01f)
         val tones = range(MiddleMotion.DISSOLVE)
