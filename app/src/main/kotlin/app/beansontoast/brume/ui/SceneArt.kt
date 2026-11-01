@@ -142,6 +142,8 @@ internal fun SceneBackdrop(
     offset: () -> Float,
     breathe: Pattern?,
     modifier: Modifier = Modifier,
+    /** Off Listen, the art sits further back behind a reading page ([READING_VEIL]). */
+    veil: Float = 1f,
 ) {
     val sky by rememberLayer(layers.background, sample = 2)
     val mist by rememberLayer(layers.mist)
@@ -152,7 +154,7 @@ internal fun SceneBackdrop(
     val ready = sky != null && mist != null && middle != null
     // A scene decoded late fades in rather than popping.
     val shown by animateFloatAsState(if (ready) 1f else 0f, if (still) snap() else tween(600), label = "art")
-    val dim = if (night) 0.35f else 0.7f
+    val dim = (if (night) 0.35f else 0.7f) * veil
     val seed = scene.ordinal
     val motion = when (scene) {
         Scene.BREATHE -> MiddleMotion.BREATH

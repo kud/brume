@@ -68,7 +68,7 @@ class SceneArtRenders(private val shot: String) {
         val ui = if (scene == Scene.TONES) tones else playing
         compose.setContent {
             BrumeTheme(dark = dark, night = night) {
-                BrumeScaffold(Tab.LISTEN, {}, Modules()) {
+                BrumeScaffold(Tab.LISTEN, {}, Modules(), bleed = true) {
                     SceneScreen(Modules().scenes(), scene, {}, ui, ListenActions(), breathe = breathe, night = night, peek = peek,
                         swipeHint = false, sceneClock = { clock })
                 }

@@ -278,7 +278,7 @@ private fun ChoiceCard(label: String, selected: Boolean, onClick: () -> Unit, mo
 fun SoundsScreen(all: PlayerUi, allActions: ListenActions, onBack: () -> Unit, hint: Boolean = false, onHintSeen: () -> Unit = {}) {
     val (ui, actions) = forMode(all, allActions, Mode.SOUNDS)
     val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
         TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) {
             Icon(painterResource(R.drawable.ic_back), null, modifier = Modifier.size(20.dp))
             Text(stringResource(R.string.learn_back), modifier = Modifier.padding(start = 4.dp))

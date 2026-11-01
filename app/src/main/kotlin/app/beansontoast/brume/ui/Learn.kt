@@ -131,7 +131,7 @@ fun LearnTopics(onTopic: (Int) -> Unit) {
 fun LearnTopicScreen(topic: Int, onBack: () -> Unit, onCard: (String) -> Unit) {
     val context = LocalContext.current
     val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
         BackRow(stringResource(R.string.tab_learn), onBack)
         Text(topicName(context, topic), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
         Spacer(Modifier.height(8.dp))
@@ -158,7 +158,7 @@ fun LearnTopicScreen(topic: Int, onBack: () -> Unit, onCard: (String) -> Unit) {
 fun LearnCardScreen(card: LearnCard, backLabel: String, onBack: () -> Unit, onNext: ((String) -> Unit)? = null) {
     val context = LocalContext.current
     val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
         BackRow(backLabel, onBack)
         Text(
             topicName(context, card.topic),
@@ -199,7 +199,7 @@ fun LearnCardScreen(card: LearnCard, backLabel: String, onBack: () -> Unit, onNe
 @Composable
 fun TonesHowScreen(onBack: () -> Unit) {
     val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
         BackRow(stringResource(R.string.tab_tones), onBack)
         Text(stringResource(R.string.tab_tones), style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))

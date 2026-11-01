@@ -28,7 +28,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -217,24 +222,33 @@ fun SceneScreen(
             .onGloballyPositioned { anchors?.mist = MistAnchor(it.boundsInWindow(), strength, mistInk) }
         // The drawn mist stands in only where a scene has no art; the intro keeps its landing place.
         if (shown.art() == null) Mist(mistArea, strength = strength, color = mistInk) else Box(mistArea)
-        Column(Modifier.fillMaxSize()) {
+        // The art runs edge to edge, under the status and navigation bars (Erwann, dev.19: « pas
+        // coupé en haut et en bas »): the pager fills the screen, and the names above and the
+        // timer row below float over it on transparent ground. Each page is padded by both.
+        val density = LocalDensity.current
+        var headPx by remember { mutableIntStateOf(0) }
+        var footPx by remember { mutableIntStateOf(0) }
+        val insets = with(density) { PaddingValues(top = headPx.toDp(), bottom = footPx.toDp()) }
+        HorizontalPager(pager, Modifier.fillMaxSize(), key = { scenes[it].name }) { page ->
+            val offset = { (pager.currentPage - page) + pager.currentPageOffsetFraction }
+            ScenePage(scenes[page], ui, actions, onSounds, onTonesSetup, breathe, night, onSuggest, still, clock, offset, insets)
+        }
+        Column(Modifier.fillMaxWidth().onSizeChanged { headPx = it.height }.statusBarsPadding()) {
             SceneNames(scenes, shown) { onScene(it) }
             // What the scene is for, so Sleep and Settle read apart before anything is chosen.
             Text(stringResource(shown.purpose), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 20.dp))
             if (swipeHint) Text(stringResource(R.string.scene_swipe), style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant.copy(alpha = 0.75f), modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp))
-            HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { scenes[it].name }) { page ->
-                val offset = { (pager.currentPage - page) + pager.currentPageOffsetFraction }
-                ScenePage(scenes[page], ui, actions, onSounds, onTonesSetup, breathe, night, onSuggest, still, clock, offset)
-            }
-            val (view, mine) = forMode(ui, actions, if (shown == Scene.TONES) Mode.TONES else Mode.SOUNDS)
-            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                // Every scene has its length bottom left: the timer, or Breathe's minutes, which open its setup.
-                if (shown != Scene.BREATHE) TimerWord(view, mine.timer) else LengthWord(breathe)
-                Spacer(Modifier.weight(1f))
-                TooLoudWord(actions.tooLoud)
-            }
+        }
+        // Right above the floating bar: the length bottom left, Too loud bottom right, always one tap away.
+        val (view, mine) = forMode(ui, actions, if (shown == Scene.TONES) Mode.TONES else Mode.SOUNDS)
+        Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().onSizeChanged { footPx = it.height }
+            .padding(bottom = LocalChromeBottom.current).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Every scene has its length bottom left: the timer, or Breathe's minutes, which open its setup.
+            if (shown != Scene.BREATHE) TimerWord(view, mine.timer) else LengthWord(breathe)
+            Spacer(Modifier.weight(1f))
+            TooLoudWord(actions.tooLoud)
         }
     }
 }
@@ -244,11 +258,19 @@ fun SceneScreen(
 @Composable
 private fun SceneNames(scenes: List<Scene>, shown: Scene, onScene: (Scene) -> Unit) {
     val scroll = rememberScrollState()
-    // Keep the shown name in view as the swipe moves on, scrolling no further than it needs: a fixed
-    // step per name cut « Dormir » in half on « Se poser » in French (Iris, 2026-11-01).
-    val requesters = remember(scenes) { scenes.associateWith { androidx.compose.foundation.relocation.BringIntoViewRequester() } }
-    LaunchedEffect(shown) { requesters[shown]?.bringIntoView() }
-    Row(Modifier.fillMaxWidth().horizontalScroll(scroll).padding(horizontal = 12.dp).selectableGroup(),
+    // Keep the shown name whole, with the row's margin beside it, scrolling no further than it
+    // needs: a fixed step per name cut « Dormir » in half on « Se poser » in French, and asking
+    // for the name alone left Tones flush against the edge, or cut on a first frame (Iris,
+    // 2026-11-01). The names' widths are measured, so the target is plain arithmetic.
+    val margin = with(LocalDensity.current) { 12.dp.toPx() }
+    var viewport by remember { mutableIntStateOf(0) }
+    val widths = remember(scenes) { mutableStateMapOf<Scene, Int>() }
+    LaunchedEffect(shown, scenes, viewport, widths.size == scenes.size) {
+        if (viewport == 0 || widths.size < scenes.size) return@LaunchedEffect
+        val target = nameScroll(scenes.map { widths.getValue(it) }, scenes.indexOf(shown), margin, viewport, scroll.value)
+        if (target != scroll.value) scroll.animateScrollTo(target)
+    }
+    Row(Modifier.fillMaxWidth().onSizeChanged { viewport = it.width }.horizontalScroll(scroll).padding(horizontal = 12.dp).selectableGroup(),
         verticalAlignment = Alignment.Bottom) {
         scenes.forEach { s ->
             val on = s == shown
@@ -256,7 +278,7 @@ private fun SceneNames(scenes: List<Scene>, shown: Scene, onScene: (Scene) -> Un
                 style = if (on) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineSmall,
                 color = if (on) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = if (on) FontWeight.Normal else FontWeight.Light, maxLines = 1,
-                modifier = Modifier.bringIntoViewRequester(requesters.getValue(s)).heightIn(min = 48.dp).selectable(on, role = Role.Tab) { onScene(s) }.padding(horizontal = 8.dp, vertical = 6.dp))
+                modifier = Modifier.onSizeChanged { widths[s] = it.width }.heightIn(min = 48.dp).selectable(on, role = Role.Tab) { onScene(s) }.padding(horizontal = 8.dp, vertical = 6.dp))
         }
     }
 }
@@ -270,6 +292,7 @@ private fun ScenePage(
     still: Boolean = true,
     clock: () -> Long = { 0L },
     offset: () -> Float = { 0f },
+    insets: PaddingValues = PaddingValues(),
 ) {
     val (ui, actions) = forMode(all, allActions, if (scene == Scene.TONES) Mode.TONES else Mode.SOUNDS)
     val context = LocalContext.current
@@ -317,7 +340,7 @@ private fun ScenePage(
                 modifier = Modifier.fillMaxSize())
         }
         Column(
-            Modifier.fillMaxSize().volumeSlide(levels, set).padding(horizontal = 20.dp),
+            Modifier.fillMaxSize().volumeSlide(levels, set).padding(insets).padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.weight(0.5f))
@@ -374,6 +397,25 @@ private fun ScenePage(
             Spacer(Modifier.height(16.dp))
         }
     }
+}
+
+/**
+ * Where the scene names' row should scroll so name [i] is whole with [margin] on either side,
+ * moving as little as it can from [current]. [widths] are the names' widths in the row, which
+ * starts with [margin] of its own; [viewport] is the row's visible width.
+ */
+internal fun nameScroll(widths: List<Int>, i: Int, margin: Float, viewport: Int, current: Int): Int {
+    if (i !in widths.indices) return current
+    val content = (margin * 2 + widths.sum()).toInt()
+    val max = (content - viewport).coerceAtLeast(0)
+    val left = margin + widths.take(i).sum()
+    val right = left + widths[i]
+    val target = when {
+        left - margin < current -> (left - margin).toInt()
+        right + margin > current + viewport -> (right + margin - viewport).toInt()
+        else -> current
+    }
+    return target.coerceIn(0, max)
 }
 
 /** « Brun + Pluie »: both rows of the picker, background first. */

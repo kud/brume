@@ -23,9 +23,11 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun Modifier.scrollCue(state: ScrollState, depth: Dp = 40.dp): Modifier {
     val ground = MaterialTheme.colorScheme.background
+    // The fade rises above the floating bar, so it reads where the page visibly ends.
+    val above = LocalChromeBottom.current
     return drawWithContent {
         drawContent()
-        val band = depth.toPx().coerceAtMost(size.height / 3f)
+        val band = (depth + above).toPx().coerceAtMost(size.height / 2f)
         val strength = ((state.maxValue - state.value) / band).coerceIn(0f, 1f)
         if (strength > 0f) {
             drawRect(

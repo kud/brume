@@ -250,7 +250,12 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                 } else BrumeScaffold(tab = tab, onTab = { tab = it; pages = "" }, modules = modules,
                     mini = if (tab != Tab.LISTEN && player.playing && player.mode == SoundEngine.Mode.SOUNDS) {
                         { MiniPlayer(chosenSound(context, player)) { graph.player.pause(EndedBy.USER) } }
-                    } else null) {
+                    } else null,
+                    // Listen's scenes draw their own art, edge to edge; every other page reads over the
+                    // scene last used, still and further back (Erwann, dev.19: « le fond d'écran partout »).
+                    bleed = stack.isEmpty() && tab in listOf(Tab.LISTEN, Tab.CALM, Tab.TONES),
+                    backdrop = scene.takeUnless { stack.isEmpty() && tab in listOf(Tab.LISTEN, Tab.CALM, Tab.TONES) },
+                    night = night) {
                     val page = stack.lastOrNull()
                     if (page != null) BackHandler { pop() }
                     when {

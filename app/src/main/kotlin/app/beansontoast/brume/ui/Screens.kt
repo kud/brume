@@ -108,67 +108,6 @@ enum class Tab { LISTEN, CALM, TONES, JOURNAL, LEARN }
 /** Listen, Journal and Learn are always there; the others follow their module switch, Calm while Breathe or Meditation is on (ADR 0003). */
 fun Modules.shows(tab: Tab) = when (tab) { Tab.TONES -> tones; Tab.CALM -> calm; else -> true }
 
-@Composable
-fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), mini: (@Composable () -> Unit)? = null, content: @Composable () -> Unit) {
-    // A few words across the top (Erwann chose A's shape, 2026-10-31): Listen, Journal, Learn.
-    // Breathe and Tones are scenes inside Listen, so they are not here twice; [modules] only
-    // decides which scenes Listen shows.
-    val here = when (tab) { Tab.CALM, Tab.TONES -> Tab.LISTEN; else -> tab }
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 12.dp).selectableGroup(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                listOf(Tab.LISTEN to R.string.tab_listen, Tab.JOURNAL to R.string.tab_journal, Tab.LEARN to R.string.tab_learn).forEach { (t, label) ->
-                    TopWord(label, here == t) { onTab(t) }
-                }
-            }
-        },
-        bottomBar = { mini?.invoke() },
-    ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) { content() }
-    }
-}
-
-/**
- * The page you are on is told by weight and an underline, never by a hue (Erwann, 2026-10-31: the
- * words were hard to see). The others stay in the full ink, a little lighter, and every word has a
- * 48 dp target at least.
- */
-@Composable
-private fun TopWord(@StringRes text: Int, selected: Boolean, onClick: () -> Unit) {
-    val ink = MaterialTheme.colorScheme.onSurface
-    Box(
-        Modifier.heightIn(min = 56.dp).widthIn(min = 48.dp).selectable(selected = selected, role = Role.Tab, onClick = onClick).padding(horizontal = 12.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(stringResource(text), style = MaterialTheme.typography.titleMedium, color = if (selected) ink else ink.copy(alpha = 0.8f), maxLines = 1,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            textDecoration = if (selected) TextDecoration.Underline else null)
-    }
-}
-
-/**
- * The sound playing, on every tab but Listen (Erwann, 2026-10-31): its name and Pause, under a hair
- * line, in the ink of the top words. Nothing else; Listen has the rest.
- */
-@Composable
-fun MiniPlayer(name: String, onPause: () -> Unit) {
-    val scheme = MaterialTheme.colorScheme
-    val pause = stringResource(R.string.action_pause)
-    Column(Modifier.fillMaxWidth().background(scheme.background).navigationBarsPadding()) {
-        Box(Modifier.fillMaxWidth().height(1.dp).background(scheme.outlineVariant))
-        Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-            Row(Modifier.heightIn(min = 48.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onPause).padding(horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                Icon(painterResource(R.drawable.ic_pause), null, modifier = Modifier.size(20.dp))
-                Text(pause, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
-            }
-        }
-    }
-}
-
 @StringRes fun NoiseColour.label() = when (this) {
     NoiseColour.WHITE -> R.string.noise_white
     NoiseColour.PINK -> R.string.noise_pink
@@ -281,7 +220,8 @@ internal fun Dock(ui: PlayerUi, actions: ListenActions, @StringRes timerTitle: I
         ui.mode == Mode.TONES && ui.tones.match -> stringResource(R.string.listen_state_ready, stringResource(R.string.tones_match))
         else -> stringResource(R.string.listen_state_ready, sound)
     }
-    Box(Modifier.fillMaxWidth()) {
+    // Pinned at the page's foot, so it stands clear of the floating bar.
+    Box(Modifier.fillMaxWidth().padding(bottom = chromeBottom())) {
         // The launch intro lands Horizon's lines on this mist (ui/launch).
         val anchors = LocalLaunchAnchors.current
         val strength = if (ui.playing) 1f else 0.35f
@@ -404,7 +344,7 @@ fun JournalScreen(
     val shortFormat = remember { DateTimeFormatter.ofPattern("EEE d MMM") }
 
     val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
         ScreenTitle(R.string.tab_journal, stringResource(R.string.journal_listened, duration(weekSeconds)))
 
         SectionTitle(stringResource(R.string.journal_today) + " · " + today.format(dayFormat))
@@ -596,7 +536,7 @@ fun LearnScreen(
     still: Boolean? = null,
 ) {
     val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
         ScreenTitle(R.string.tab_learn, stringResource(R.string.learn_intro))
         Spacer(Modifier.height(12.dp))
         DecibelExplorer(still = still, onCard = onCard)
@@ -645,7 +585,7 @@ fun AboutScreen(
     onBack: () -> Unit = {},
 ) {
     val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
         BackRow(stringResource(R.string.tab_learn), onBack)
         Text(stringResource(R.string.about_brume), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
         Text(stringResource(R.string.about_what), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
@@ -698,7 +638,7 @@ fun SettingsScreen(
     onOutput: () -> Unit = {},
 ) {
     val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
         BackRow(stringResource(R.string.tab_learn), onBack)
         Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
         SettingsGroup(stringResource(R.string.settings_display), Modifier.padding(top = 8.dp)) {

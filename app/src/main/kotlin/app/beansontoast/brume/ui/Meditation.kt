@@ -148,7 +148,7 @@ fun CalmScreen(
         else -> practice
     }
     val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll)) {
+    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).underChrome()) {
         Column(gutter) {
             ScreenTitle(R.string.tab_calm, stringResource(R.string.calm_intro))
             if (modules.breath && modules.meditation) Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
