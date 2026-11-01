@@ -4,9 +4,8 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import app.beansontoast.brume.Modules
 import app.beansontoast.brume.Settings
-import app.beansontoast.brume.core.calm.Guided
+import app.beansontoast.brume.ui.Meditation
 import app.beansontoast.brume.ui.Tab
-import app.beansontoast.brume.ui.lines
 import app.beansontoast.brume.ui.shows
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -64,16 +63,10 @@ class CalmModulesTest {
         assertEquals(Modules(breath = false, meditation = false), Modules.fromWire(now))
     }
 
-    @Test fun `every guided step has its line, and the first says it can stop`() {
-        Guided.entries.forEach { g ->
-            val lines = g.lines()
-            assertEquals("$g", g.steps.size, lines.size)
-            assertEquals("$g lines are distinct", lines.size, lines.toSet().size)
-            listOf("End", "Terminer").zip(listOf(context, localized("fr"))).forEach { (word, c) ->
-                val first = c.getString(lines.first())
-                assertTrue("$g: \"$first\"", first.contains(word))
-            }
-        }
+    @Test fun `stored meditations from before the bells still open`() {
+        assertEquals(Meditation.BODY, Meditation.fromStored("BODY_SCAN"))
+        assertEquals(Meditation.BREATH, Meditation.fromStored(null))
+        Meditation.entries.forEach { assertEquals(it, Meditation.fromStored(it.name)) }
     }
 
     private fun localized(tag: String): Context {

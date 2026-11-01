@@ -120,20 +120,20 @@ class Renders(private val shot: String) {
         "modules-day" -> shoot(dark = false, night = false, Tab.LEARN, Modules(tones = false)) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(tones = false), {}) } }
         "breath-setup-night" -> shoot(dark = true, night = true, Tab.CALM) { calm(BreathSetup(), soundName = "Pink noise") }
         "breath-setup-day" -> shoot(dark = false, night = false, Tab.CALM) { calm(BreathSetup(Pattern.FOUR_SEVEN_EIGHT, 2, sound = true), soundName = "Rain") }
-        "breath-setup-nosound-day" -> shoot(dark = false, night = false, Tab.CALM, Modules(tones = false, meditation = false)) { calm(BreathSetup(Pattern.EVEN, 10), Modules(tones = false, meditation = false)) }
+        "breath-setup-nosound-day" -> shoot(dark = false, night = false, Tab.CALM, Modules(tones = false, meditation = false)) { calm(BreathSetup(Pattern.BOX, 10), Modules(tones = false, meditation = false)) }
         "breath-in-night" -> bare(dark = true, night = true) { session(Pattern.LONG_OUT, 5, 2.6) }
         "breath-hold-night" -> bare(dark = true, night = true) { session(Pattern.FOUR_SEVEN_EIGHT, 5, 7.0) }
         "breath-out-night" -> bare(dark = true, night = true) { session(Pattern.LONG_OUT, 5, 7.5) }
-        "breath-in-day" -> bare(dark = false, night = false) { session(Pattern.EVEN, 2, 3.4, night = false) }
-        "breath-out-day" -> bare(dark = false, night = false) { session(Pattern.EVEN, 2, 61.0 + 5.0 + 2.5, night = false) }
+        "breath-in-day" -> bare(dark = false, night = false) { session(Pattern.BOX, 2, 3.4, night = false) }
+        "breath-out-day" -> bare(dark = false, night = false) { session(Pattern.BOX, 2, 61.0 + 5.0 + 2.5, night = false) }
         "breath-still-night" -> bare(dark = true, night = true) { session(Pattern.LONG_OUT, 5, 2.6, still = true) }
         "breath-done-night" -> bare(dark = true, night = true) { session(Pattern.LONG_OUT, 2, 120.0) }
         "calm-meditate-night" -> shoot(dark = true, night = true, Tab.CALM) { calm(practice = Practice.MEDITATE, soundName = "Pink noise") }
         "calm-meditate-day" -> shoot(dark = false, night = false, Tab.CALM) { calm(practice = Practice.MEDITATE, med = MeditationSetup(Meditation.TIMER, 15, sound = true), soundName = "Rain") }
-        "calm-only-meditate-day" -> shoot(dark = false, night = false, Tab.CALM, Modules(breath = false)) { calm(modules = Modules(breath = false), med = MeditationSetup(Meditation.BODY_SCAN), soundName = null) }
+        "calm-only-meditate-day" -> shoot(dark = false, night = false, Tab.CALM, Modules(breath = false)) { calm(modules = Modules(breath = false), med = MeditationSetup(Meditation.BODY), soundName = null) }
         "med-sounds-night" -> bare(dark = true, night = true) { med(MeditationSetup(Meditation.SOUNDS), 80.0) }
         "med-sounds-day" -> bare(dark = false, night = false) { med(MeditationSetup(Meditation.SOUNDS), 80.0, night = false) }
-        "med-body-first-night" -> bare(dark = true, night = true) { med(MeditationSetup(Meditation.BODY_SCAN), 12.0) }
+        "med-body-first-night" -> bare(dark = true, night = true) { med(MeditationSetup(Meditation.BODY), 12.0) }
         "med-breath-still-night" -> bare(dark = true, night = true) { med(MeditationSetup(Meditation.BREATH), 140.0, still = true) }
         "med-timer-settle-night" -> bare(dark = true, night = true) { med(MeditationSetup(Meditation.TIMER, 10), 12.0) }
         "med-timer-middle-night" -> bare(dark = true, night = true) { med(MeditationSetup(Meditation.TIMER, 10), 260.0) }
