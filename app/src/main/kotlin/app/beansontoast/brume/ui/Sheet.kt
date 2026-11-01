@@ -53,13 +53,13 @@ import kotlinx.coroutines.launch
  * « un truc vraiment carré, un peu snap », no free scroll). A sheet is drawn in the page's own
  * window rather than as Material's ModalBottomSheet: that one slides up from the edge on its own
  * spring and lives in a separate window, so it could neither follow the motion spec (a fade on
- * CALM, nothing flying in) nor stand above the floating bar. This one fades in place, rests on
+ * CALM, nothing flying in) nor stand above the floating bar. This one fades and rises a little, rests on
  * the bar's top edge, closes on the scrim, the back gesture or its own ✕, and keeps no room when shut.
  */
 
 /**
  * A quiet sheet over the page: a scrim, and one card resting just above the floating bar. [open]
- * fades it on [Motion.CALM]; its content is laid out at its final size from the first frame.
+ * fades it on [Motion.CALM], the card rising 32 dp; its content is laid out at its final size from the first frame.
  */
 @Composable
 internal fun QuietSheet(open: Boolean, onClose: () -> Unit, title: String, content: @Composable ColumnScope.() -> Unit) {
@@ -73,8 +73,12 @@ internal fun QuietSheet(open: Boolean, onClose: () -> Unit, title: String, conte
             Modifier.fillMaxSize().background(scheme.scrim.copy(alpha = 0.24f))
                 .clickable(remember { MutableInteractionSource() }, indication = null, enabled = open, onClick = onClose),
         )
+        // The card rises a short way as it fades (Erwann, 2026-11-01: « on ouvre la fenêtre »);
+        // with reduced motion it only fades.
+        val rise = if (app.beansontoast.design.rememberReducedMotion()) 0.dp else 32.dp
         Column(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                .graphicsLayer { translationY = (1f - shown) * rise.toPx() }
                 .padding(bottom = chromeBottom() + 8.dp).padding(horizontal = 12.dp)
                 .clip(MaterialTheme.shapes.medium)
                 .background(scheme.surfaceContainerLowest.copy(alpha = 0.97f))

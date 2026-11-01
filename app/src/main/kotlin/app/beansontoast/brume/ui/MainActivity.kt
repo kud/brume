@@ -2,6 +2,7 @@ package app.beansontoast.brume.ui
 
 import androidx.compose.foundation.layout.statusBarsPadding
 import app.beansontoast.design.Motion
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import app.beansontoast.brume.playback.Bells
 import app.beansontoast.brume.core.sound.Mix
@@ -348,16 +349,20 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                     MeditationSession(meditation, r.at!!, night, onEnd = ::endBreath, onBell = { bells.ring(Bell.gain(sessionLevel, it.strength)) },
                         speak = { line: Line -> voice.say(context.getString(line.text()), gain, flush = false) }.takeIf { meditation.voice })
                 } else {
-                    // Home, a function's own screen, or a page inside it: each gives way to the next by
-                    // the slow cross-fade, in place (docs/motion.md). Back pops a page, then comes home.
-                    Crossfade(fn to stack.lastOrNull(), Modifier.fillMaxSize(), animationSpec = Motion.tween(Motion.SLOW), label = "place") { (shownFn, page) ->
+                    // Home, a function's own screen, or a page inside it: the next one slides in from the
+                    // right over the last, which moves a quarter left; ✕, ‹ and Back slide it out to the
+                    // right (Erwann, 2026-11-01: « je préfère un slide »; docs/motion.md). Reduced
+                    // motion cross-fades. Back pops a page, then comes home.
+                    val reducedNav = app.beansontoast.design.rememberReducedMotion()
+                    AnimatedContent(Place(fn, stack.lastOrNull(), stack.size), Modifier.fillMaxSize(), label = "place",
+                        transitionSpec = { Motion.push(reducedNav, forward = targetState.depth >= initialState.depth) }) { (shownFn, page, _) ->
                     if (shownFn == null) {
                         HomeScreen(modules.fns(), onOpen = ::open,
                             mini = if (player.playing && player.mode == SoundEngine.Mode.SOUNDS) {
                                 { MiniPlayer(chosenSound(context, player), onPause = { graph.player.pause(EndedBy.USER) },
                                     onOpen = { open(if (scene.sounds) Fn.entries.first { it.name == scene.name } else Fn.SETTLE) }) }
                             } else null)
-                        return@Crossfade
+                        return@AnimatedContent
                     }
                     BackHandler { if (page != null) pop() else home() }
                     // The frame owns the title (Iris, phase 2): ✕ at a function's root, ‹ on a page inside it,
@@ -449,6 +454,11 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     }
 }
 
+
+/** Where navigation stands: home ([fn] null), a function, or a page [depth] deep inside it. */
+private data class Place(val fn: Fn?, val page: String?, val pages: Int) {
+    val depth get() = if (fn == null) 0 else 1 + pages
+}
 /** Where the app stands: the introduction, a session started at [at], or home. */
 private data class Route(val kind: Int, val at: Long? = null) {
     companion object { const val INTRO = 0; const val BREATH = 1; const val MEDITATION = 2; const val HOME = 3; const val PRELUDE = 4 }

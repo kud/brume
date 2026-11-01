@@ -35,7 +35,9 @@ import androidx.compose.ui.text.style.TextOverflow
  *  - One curve: a slow, symmetric ease-in-out ([Ease]). No spring, no overshoot, nothing bounces.
  *  - Three lengths: [QUICK] for a word or a mark changing, [CALM] for content swapping or a row
  *    growing, [SLOW] for a whole screen or scene giving way to another.
- *  - Things cross-fade in place; nothing slides in from an edge, nothing pops in scale.
+ *  - Navigation slides (Erwann, 2026-11-01: « je préfère un slide »): a screen opened comes in
+ *    from the right while the one under it moves a quarter left, and leaves the same way ([push]).
+ *    Everything else cross-fades in place; nothing pops in scale.
  *  - Space is reserved: a state that comes and goes keeps its room, so nothing around it moves.
  *    Where room really has to change (the mini player joining the bar), it grows over [CALM].
  *  - Ticking numbers use tabular figures ([tabular]), so their width never wobbles.
@@ -53,6 +55,22 @@ object Motion {
 
     /** A size or a place: eased, or snapped with reduced motion (opacity is the only thing that moves then). */
     fun <T> travel(reduced: Boolean, ms: Int = CALM): FiniteAnimationSpec<T> = if (reduced) snap() else tween(ms)
+
+    /** A screen pushed or popped: long enough to follow, short enough not to wait on. */
+    const val PUSH = 700
+
+    /**
+     * Opening a screen ([forward]) slides it in from the right over the one before, which moves a
+     * quarter of the width left; going back reverses it, the leaving screen on top. Eased, never a
+     * spring. With reduced motion it is a cross-fade: nothing travels.
+     */
+    fun push(reduced: Boolean, forward: Boolean): ContentTransform = when {
+        reduced -> crossfade(CALM)
+        forward -> (androidx.compose.animation.slideInHorizontally(tween(PUSH)) { it } togetherWith
+            androidx.compose.animation.slideOutHorizontally(tween(PUSH)) { -it / 4 }).apply { targetContentZIndex = 1f }
+        else -> (androidx.compose.animation.slideInHorizontally(tween(PUSH)) { -it / 4 } togetherWith
+            androidx.compose.animation.slideOutHorizontally(tween(PUSH)) { it }).apply { targetContentZIndex = -1f }
+    }
 
     /** A cross-fade, the same with reduced motion: it is opacity alone. */
     fun crossfade(ms: Int = CALM): ContentTransform = fadeIn(tween(ms)) togetherWith fadeOut(tween(ms))
