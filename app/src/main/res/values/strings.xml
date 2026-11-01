@@ -712,4 +712,8 @@
     <string name="finder_repeat">Search again</string>
     <string name="finder_delete">Remove</string>
     <string name="finder_delete_confirm">Remove for good?</string>
+    <string name="sheet_close">Close</string>
+    <string name="page_previous">Previous page</string>
+    <string name="page_next">Next page</string>
+    <string name="page_of">%1$d / %2$d</string>
 </resources>

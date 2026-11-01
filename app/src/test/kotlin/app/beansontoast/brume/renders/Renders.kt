@@ -11,6 +11,7 @@ import app.beansontoast.brume.core.sound.MixLayer
 import app.beansontoast.brume.core.sound.NoiseColour
 import app.beansontoast.brume.core.sound.Sound
 import app.beansontoast.brume.ui.SoundsScreen
+import app.beansontoast.brume.ui.SoundsSheet
 import app.beansontoast.brume.core.sound.SoundEngine
 import app.beansontoast.brume.core.sound.ToneSettings
 import app.beansontoast.brume.playback.Output
@@ -95,10 +96,20 @@ class Renders(private val shot: String) {
         playing = true, timerMinutes = 45, timerRemainingMinutes = 38,
     )
 
+    // Six layers, so the mixer pages (invented).
+    private val many = PlayerUi(
+        mix = listOf(Sound.Noise(NoiseColour.BROWN), Sound.Recorded(Ambience.RAIN), Sound.Recorded(Ambience.SEA), Sound.Recorded(Ambience.WIND),
+            Sound.Recorded(Ambience.BIRDS), Sound.Recorded(Ambience.FIRE)).map { MixLayer(it) },
+        levels = emptyMap(),
+    )
+
     @Test fun render() = when (shot) {
         "mixer-night" -> shoot(dark = true, night = true, Tab.LISTEN) { SoundsScreen(mixed, ListenActions(), onBack = {}) }
         "mixer-day" -> shoot(dark = false, night = false, Tab.LISTEN) { SoundsScreen(mixed, ListenActions(), onBack = {}) }
         "mixer-first-visit-day" -> shoot(dark = false, night = false, Tab.LISTEN) { SoundsScreen(idle, ListenActions(), onBack = {}, hint = true) }
+        "mixer-add-sheet-night" -> shoot(dark = true, night = true, Tab.LISTEN) { SoundsScreen(mixed, ListenActions(), onBack = {}, sheet = SoundsSheet.ADD) }
+        "mixer-ears-sheet-day" -> shoot(dark = false, night = false, Tab.LISTEN) { SoundsScreen(mixed, ListenActions(), onBack = {}, sheet = SoundsSheet.EARS) }
+        "mixer-many-day" -> shoot(dark = false, night = false, Tab.LISTEN) { SoundsScreen(many, ListenActions(), onBack = {}) }
         "mixer-empty-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { SoundsScreen(PlayerUi(mix = emptyList()), ListenActions(), onBack = {}) }
         "listen-mix-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(mixed, ListenActions()) }
         "listen-idle-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
@@ -197,7 +208,7 @@ class Renders(private val shot: String) {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun shots() = listOf(
-            "mixer-night", "mixer-day", "mixer-first-visit-day", "mixer-empty-dark", "listen-mix-day",
+            "mixer-night", "mixer-day", "mixer-first-visit-day", "mixer-empty-dark", "mixer-add-sheet-night", "mixer-ears-sheet-day", "mixer-many-day", "listen-mix-day",
             "listen-idle-night", "listen-playing-night", "listen-idle-day", "listen-playing-day", "listen-empty-dark", "listen-stopped-dark", "listen-tones-night", "listen-tones-day",
             "journal-day", "journal-night", "journal-empty-dark", "about-night", "about-day", "listen-playing-open-day",
             "sync-night", "sync-day", "sync-off-day", "sync-problem-night",

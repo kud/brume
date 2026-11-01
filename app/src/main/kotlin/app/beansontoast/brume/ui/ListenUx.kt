@@ -3,6 +3,17 @@ package app.beansontoast.brume.ui
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import app.beansontoast.design.Motion
+import kotlinx.coroutines.launch
 import app.beansontoast.design.SelectChip
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
@@ -270,9 +281,9 @@ private fun toneWords(tone: Float): String {
  * noise its tone, from soft to bright. Rows keep their height whatever the values say.
  */
 @Composable
-private fun MixerLayer(ui: PlayerUi, sound: Sound, actions: ListenActions) {
+private fun MixerLayer(ui: PlayerUi, sound: Sound, actions: ListenActions, modifier: Modifier = Modifier) {
     val name = stringResource(sound.label())
-    Column(Modifier.padding(top = 8.dp)) {
+    Column(modifier) {
         Slot(stringResource(sound.kind()), name, ui.level(sound), { actions.level(sound, it) }, { actions.remove(sound) })
         if (sound is Sound.Noise) {
             val tone = ui.tone(sound)
@@ -318,29 +329,112 @@ private fun ChoiceCard(label: String, selected: Boolean, onClick: () -> Unit, mo
 
 
 /**
- * The sounds (« + » on the scene; Iris, 2026-10-31, B's tiles inside A): every sound as a tile,
- * two by two, a check and weight on the ones in the mix; one noise and one nature sound at most.
- * Under them, each sound's own level and, once, the listening settings kept per headphones
- * (balance and output), so they live in this one place and nowhere on the scene.
+ * The sounds (« + » on the scene): the mixer as one frame, never a scroll (Iris, 2026-11-01, garden
+ * second pass; Erwann: « un truc vraiment carré, un peu snap »). The layers in the mix stand as
+ * rows of a fixed height, as many as the frame holds (four at most), and further ones on the next
+ * page, reached by a swipe or ‹ ›. Every sound to add lives in a sheet with two pages, noises and
+ * recordings; the listening settings kept per headphones (output, balance) in a second sheet.
+ * Nothing sits under the floating bar.
  */
 @Composable
-fun SoundsScreen(all: PlayerUi, allActions: ListenActions, onBack: () -> Unit, hint: Boolean = false, onHintSeen: () -> Unit = {}) {
+fun SoundsScreen(
+    all: PlayerUi, allActions: ListenActions, onBack: () -> Unit, hint: Boolean = false, onHintSeen: () -> Unit = {},
+    sheet: SoundsSheet? = null,
+) {
     val (ui, actions) = forMode(all, allActions, Mode.SOUNDS)
-    val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
-        TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) {
-            Icon(painterResource(R.drawable.ic_back), null, modifier = Modifier.size(20.dp))
-            Text(stringResource(R.string.learn_back), modifier = Modifier.padding(start = 4.dp))
+    var open by rememberSaveable { mutableStateOf(sheet) }
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().then(gutter).padding(bottom = chromeBottom() + 8.dp)) {
+            TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) {
+                Icon(painterResource(R.drawable.ic_back), null, modifier = Modifier.size(20.dp))
+                Text(stringResource(R.string.learn_back), modifier = Modifier.padding(start = 4.dp))
+            }
+            // The mixer (Erwann, 2026-11-01: « jouer plusieurs sons en même temps avec des volumes
+            // différents pour chaque son »): the layers in the mix, each with its level.
+            ScreenTitle(R.string.scene_sounds, stringResource(if (hint) R.string.picker_hint else R.string.scene_sounds_hint))
+            if (hint) LaunchedEffect(Unit) { onHintSeen() }
+            MixPages(ui, actions, Modifier.weight(1f))
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedButton({ open = SoundsSheet.ADD }, Modifier.heightIn(min = 48.dp)) {
+                    Icon(painterResource(R.drawable.ic_plus), null, modifier = Modifier.size(18.dp))
+                    Text(stringResource(R.string.mixer_add), modifier = Modifier.padding(start = 8.dp))
+                }
+                Spacer(Modifier.weight(1f))
+                // The ears in words (« Balance · Centre »), one tap from their sheet.
+                TextButton({ open = SoundsSheet.EARS }, Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.balance_title) + " · " + balanceText(ui.balance) + "  ›", maxLines = 1,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
-        // The mixer (Erwann, 2026-11-01: « jouer plusieurs sons en même temps avec des volumes
-        // différents pour chaque son »): the layers in the mix, each with its level, then every sound to add.
-        ScreenTitle(R.string.scene_sounds, stringResource(if (hint) R.string.picker_hint else R.string.scene_sounds_hint))
-        if (hint) LaunchedEffect(Unit) { onHintSeen() }
-        SectionTitle(stringResource(R.string.mixer_in_mix))
-        ui.sounds.forEach { MixerLayer(ui, it, actions) }
-        if (ui.mix.isEmpty()) Empty(R.string.mixer_empty)
-        AddSounds(ui, actions)
-        EarsRows(ui.balance, ui.output, actions.balance, actions.output)
-        Spacer(Modifier.height(32.dp))
+        QuietSheet(open == SoundsSheet.ADD, { open = null }, stringResource(R.string.mixer_add)) { AddSoundsPager(ui, actions) }
+        QuietSheet(open == SoundsSheet.EARS, { open = null }, stringResource(R.string.balance_title)) {
+            EarsRows(ui.balance, ui.output, actions.balance, actions.output)
+        }
     }
+}
+
+/** Which sheet is over the mixer: the sounds to add, or the ears. */
+enum class SoundsSheet { ADD, EARS }
+
+/** A recording's row: its line (48 dp and a little air) and its level slider. */
+private val LAYER = 100.dp
+/** A noise adds its tone line and slider. */
+private val LAYER_NOISE = 176.dp
+
+/**
+ * The layers in pages that fit the frame left between the title and the buttons: a heading with
+ * ‹ n / m ›, then a pager whose pages hold whole rows only. Pages settle on CALM, never a spring.
+ */
+@Composable
+private fun MixPages(ui: PlayerUi, actions: ListenActions, modifier: Modifier) {
+    val scope = rememberCoroutineScope()
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        val headRow = 56.dp
+        val sounds = ui.sounds
+        val pages = pagesOf(sounds.map { (if (it is Sound.Noise) LAYER_NOISE else LAYER).value.roundToInt() }, (maxHeight - headRow).value.toInt())
+        val pager = rememberPagerState { pages.size.coerceAtLeast(1) }
+        Column(Modifier.fillMaxSize()) {
+            Row(Modifier.fillMaxWidth().height(headRow), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.mixer_in_mix), style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f).semantics { heading() })
+                PageStepper(pager.targetPage.coerceAtMost(pages.size - 1).coerceAtLeast(0), pages.size, { p ->
+                    scope.launch { pager.animateScrollToPage(p, animationSpec = Motion.tween(Motion.CALM)) }
+                })
+            }
+            if (sounds.isEmpty()) Empty(R.string.mixer_empty)
+            else HorizontalPager(pager, Modifier.fillMaxWidth().weight(1f), verticalAlignment = Alignment.Top, pageSpacing = 24.dp,
+                flingBehavior = PagerDefaults.flingBehavior(pager, snapAnimationSpec = Motion.tween(Motion.CALM))) { page ->
+                Column(Modifier.fillMaxSize()) {
+                    pages.getOrNull(page)?.forEach { i ->
+                        val s = sounds[i]
+                        MixerLayer(ui, s, actions, Modifier.height(if (s is Sound.Noise) LAYER_NOISE else LAYER))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Every sound to add, in two pages (noises, recordings) named above them: a check and weight on the
+ * ones in the mix. A tap adds the sound as a new layer, or takes it out. Both pages keep one height.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AddSoundsPager(ui: PlayerUi, actions: ListenActions) {
+    val groups = listOf(R.string.mixer_noises to NOISES, R.string.mixer_recordings to RECORDINGS)
+    val pager = rememberPagerState { groups.size }
+    PagerWords(pager, groups.map { stringResource(it.first) })
+    HorizontalPager(pager, Modifier.fillMaxWidth().height(232.dp).padding(top = 8.dp), verticalAlignment = Alignment.Top, pageSpacing = 24.dp,
+        flingBehavior = PagerDefaults.flingBehavior(pager, snapAnimationSpec = Motion.tween(Motion.CALM))) { page ->
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            groups[page].second.forEach { s ->
+                val on = s in ui.sounds
+                SelectChip(stringResource(s.label()), on, { if (on) actions.remove(s) else actions.add(s) })
+            }
+        }
+    }
+    Text(stringResource(R.string.listen_guide), style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
 }
