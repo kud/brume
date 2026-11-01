@@ -30,3 +30,11 @@ class SettleTickerTest {
         assertEquals(true, t.settled(0))
     }
 }
+
+class StatusLineTest {
+    @Test fun shortPartsHoldTogether() =
+        assertEquals("En lecture · encore 12 min · moyen", statusLine(listOf("En lecture", "encore 12 min", "moyen")))
+
+    @Test fun aSentenceStillWraps() =
+        assertEquals("Arrêté. Le prochain départ sera plus doux. · moyen", statusLine(listOf("Arrêté. Le prochain départ sera plus doux.", "moyen")))
+}

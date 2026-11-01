@@ -56,7 +56,8 @@ class DirectionRenders(private val shot: String) {
 
     @Test fun render() {
         val night = shot.endsWith("-night")
-        when (shot.removeSuffix("-night").removeSuffix("-day")) {
+        big = shot.removeSuffix("-night").removeSuffix("-day").endsWith("-big")
+        when (shot.removeSuffix("-night").removeSuffix("-day").removeSuffix("-big")) {
             "home" -> capture(night) { HomeScreen(Modules().fns(), onOpen = {}) }
             "home-mini" -> capture(night) { HomeScreen(Modules().fns(), onOpen = {}, mini = { MiniPlayer("Bruit brun et pluie", onPause = {}) }) }
             "home-modules-off" -> capture(night) { HomeScreen(Modules(tones = false, meditation = false).fns(), onOpen = {}) }
@@ -121,15 +122,26 @@ class DirectionRenders(private val shot: String) {
             }
             "tones-how" -> capture(night) { FnFrame(null, "Comment ça marche", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.TonesHowScreen {} } }
             "prelude-478" -> capture(night) { app.beansontoast.brume.ui.BreathPrelude(BreathSetup(Technique.FOUR_SEVEN_EIGHT), safety = true, onStart = {}, onBack = {}) }
+            "learn-doctor" -> capture(night) { FnFrame(onClose = {}, title = "Comprendre", land = Land.SKY) { app.beansontoast.brume.ui.LearnScreen(doctorOpen = true) } }
+            "intro-tinnitus" -> capture(night) { app.beansontoast.brume.ui.Onboarding(onFinish = {}, startPage = 2) }
             "intro-doctor" -> capture(night) { app.beansontoast.brume.ui.Onboarding(onFinish = {}, startPage = 3) }
             "intro-help" -> capture(night) { app.beansontoast.brume.ui.Onboarding(onFinish = {}, startPage = 4) }
+            "tones-dock" -> capture(night) { FnFrame(onClose = {}, title = "Tons") { app.beansontoast.brume.ui.SoloScene(Scene.TONES, tonesUi, ListenActions()) } }
             "intro-card" -> capture(night) { app.beansontoast.brume.ui.launch.TitleCard() }
             else -> error(shot)
         }
     }
 
+    /** A `-big` shot is drawn at font scale 1.3, the size FitTest also holds the screens to. */
+    private var big = false
+
     private fun capture(night: Boolean, content: @Composable () -> Unit) {
-        compose.setContent { BrumeTheme(dark = night, night = night) { content() } }
+        compose.setContent {
+            val d = androidx.compose.ui.platform.LocalDensity.current
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(d.density, if (big) 1.3f else d.fontScale),
+            ) { BrumeTheme(dark = night, night = night) { content() } }
+        }
         compose.waitForIdle()
         val bitmap = compose.runOnUiThread {
             val v = compose.activity.window.decorView
@@ -146,7 +158,10 @@ class DirectionRenders(private val shot: String) {
             "breathe-day", "breathe-night", "breath-in-day", "breath-hold-day", "breath-out-day", "breath-hold-night",
             "settle-day", "settle-playing-night", "journal-day",
         ) + listOf("intro-card", "mixer", "mixer-add", "learn", "topic", "card", "about", "meditate", "meditate-options", "breathe-options", "med-session", "tones", "settings", "settings-sheet", "finder", "finder-profile", "journal", "loudness", "finder-step1", "finder-step3",
-            "about-privacy", "about-sources", "tones-session", "tones-pitch", "tones-balance", "tones-how", "prelude-478", "intro-doctor", "intro-help")
-            .flatMap { listOf("$it-day", "$it-night") }.filter { it != "journal-day" }
+            "about-privacy", "about-sources", "tones-session", "tones-pitch", "tones-balance", "tones-how", "prelude-478", "intro-doctor", "intro-help", "tones-dock")
+            .flatMap { listOf("$it-day", "$it-night") }.filter { it != "journal-day" } +
+            // Font scale 1.3, day only: the screens the large-text pass reworked.
+            listOf("tones-dock", "home", "breathe-options", "loudness", "learn-doctor", "intro-tinnitus", "intro-doctor", "intro-help", "prelude-478", "tones-how", "settle-playing")
+                .map { "$it-big-day" }
     }
 }

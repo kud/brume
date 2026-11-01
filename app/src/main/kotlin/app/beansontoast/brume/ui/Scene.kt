@@ -199,14 +199,16 @@ private fun ScenePage(
     when (scene) {
         Scene.TONES -> {
             title = stringResource(R.string.ux_tone_kind)
-            line = listOfNotNull(stateWord(ui), stringResource(R.string.tones_at, ui.tones.pitch), word).joinToString(" · ")
+            // What it is doing over what it is: « En lecture · encore 12 min » / « À 6 200 Hz · doux ».
+            line = listOf(statusLine(stateWords(ui)), statusLine(listOf(stringResource(R.string.tones_at, ui.tones.pitch), word)))
+                .filter { it.isNotEmpty() }.joinToString("\n")
         }
         else -> if (suggestion != null) {
             title = mixName(context, PlayerUi(mix = suggestion.layers)) ?: ""
             line = suggestion.timer?.let { stringResource(R.string.scene_suggest_timer, it) } ?: stringResource(R.string.scene_suggest_open)
         } else {
             title = mixName(context, ui) ?: stringResource(R.string.scene_no_sound)
-            line = listOfNotNull(stateWord(ui), word).joinToString(" · ")
+            line = statusLine(stateWords(ui) + word)
         }
     }
     Box(Modifier.fillMaxSize()) {
@@ -225,7 +227,8 @@ private fun ScenePage(
                 }
             }
             Crossfade(line, Modifier.fillMaxWidth().padding(top = 6.dp), animationSpec = Motion.tween(Motion.CALM), label = "line") { l ->
-                Text(l, style = MaterialTheme.typography.bodyLarge.tabular(), color = muted, textAlign = TextAlign.Center, maxLines = 1,
+                // Two lines kept for it, so « encore 12 min » is never cut and the disc never moves.
+                Text(l, style = MaterialTheme.typography.bodyLarge.tabular(), color = muted, textAlign = TextAlign.Center, minLines = 2, maxLines = 2,
                     overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite })
             }
             Row(Modifier.fillMaxWidth().padding(top = 28.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -280,12 +283,20 @@ internal fun mixName(context: android.content.Context, ui: PlayerUi): String? {
 }
 
 @Composable
-private fun stateWord(ui: PlayerUi): String? = when {
-    ui.status != null && !ui.playing -> stringResource(ui.status.message())
-    ui.playing && ui.timerRemainingMinutes != null -> stringResource(R.string.play_state_playing) + " · " + stringResource(R.string.timer_left, ui.timerRemainingMinutes)
-    ui.playing -> stringResource(R.string.play_state_playing)
-    else -> null
+private fun stateWords(ui: PlayerUi): List<String> = when {
+    ui.status != null && !ui.playing -> listOf(stringResource(ui.status.message()))
+    ui.playing && ui.timerRemainingMinutes != null -> listOf(stringResource(R.string.play_state_playing), stringResource(R.string.timer_left, ui.timerRemainingMinutes))
+    ui.playing -> listOf(stringResource(R.string.play_state_playing))
+    else -> emptyList()
 }
+
+/**
+ * The scene's status parts joined by « · », each held together by no-break spaces, so a line
+ * that wraps breaks between parts, never inside « encore 12 min » or « À 6 200 Hz ». A status
+ * sentence (a pause, the end of the timer) is longer than a part and wraps as prose.
+ */
+internal fun statusLine(parts: List<String>): String =
+    parts.joinToString(" · ") { if (it.length <= 24) it.replace(' ', '\u00A0') else it }
 
 @StringRes private fun volumeWord(band: Int) = when (band) {
     0 -> R.string.volume_0
