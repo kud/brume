@@ -106,21 +106,17 @@ import app.beansontoast.design.tabular
 import java.util.Locale
 
 /*
- * The scene (Erwann chose « A avec les scènes de C », 2026-10-31; Iris built it the same day).
- * Listen is one now-playing screen: full-bleed mist, what plays in a large serif, one disc. The
- * scenes Sleep, Settle, Breathe and Tones lie side by side and change with a sideways swipe, or a
- * tap on their name. Breathe and Tones are scenes, not top-level pages, so nothing is there twice.
- *  - Nothing chosen for him: Brume reopens on the scene last used; never one picked by the clock.
+ * A sound scene (Erwann, 2026-10-31; one screen each since 2026-11-01): Dormir, Se poser and Tons
+ * each open from home in their own frame, over the landscape. What plays is the title, one light
+ * disc plays or pauses it.
  *  - Volume is a slide up or down anywhere on the page, told in words, never a number.
  *  - Too loud is always on screen.
- *  - Sacha's art lies behind each scene ([art], ui/SceneArt), slowly alive; the drawn mist stands in
- *    only for a scene without art. His sound thumbnails wait for a redo ([thumb]).
+ *  - Sacha's sound thumbnails wait for a redo ([thumb]).
  */
 
 enum class Scene(@StringRes val title: Int, val sounds: Boolean, @StringRes val purpose: Int) {
     SLEEP(R.string.scene_sleep, true, R.string.scene_sleep_purpose),
     SETTLE(R.string.scene_settle, true, R.string.scene_settle_purpose),
-    BREATHE(R.string.scene_breathe, false, R.string.scene_breathe_purpose),
     TONES(R.string.scene_tones, false, R.string.scene_tones_purpose),
 }
 
@@ -136,10 +132,8 @@ fun Scene.suggestion(): Mix? = when (this) {
     else -> null
 }
 
-/** The scenes the modules leave on: Breathe while Breathe or Meditation is on, Tones while Tones is. */
-fun Modules.scenes(): List<Scene> = Scene.entries.filter {
-    when (it) { Scene.BREATHE -> calm; Scene.TONES -> tones; else -> true }
-}
+/** The scenes the modules leave on: Tones while Tones is. */
+fun Modules.scenes(): List<Scene> = Scene.entries.filter { it != Scene.TONES || tones }
 
 
 /**
@@ -153,140 +147,31 @@ fun Modules.scenes(): List<Scene> = Scene.entries.filter {
 /** The mix a sound scene remembers: its layers and its timer. Levels stay per headphones. */
 fun Mix.Companion.of(ui: PlayerUi) = Mix(ui.mix, ui.timerMinutes)
 
-/** What the Breathe scene needs: the practices left on, the one chosen, its length and the sound under it. */
-class BreatheScene(
-    val practices: List<Practice> = Practice.entries,
-    val practice: Practice = Practice.BREATHE,
-    val onPractice: (Practice) -> Unit = {},
-    val minutes: Int = 5,
-    /** Set when the technique runs by rounds (Bourdonnement, 4-7-8), shown instead of the minutes. */
-    val cycles: Int? = null,
-    val technique: Technique = Technique.DEFAULT,
-    /** The technique at its chosen pace: its phases are the scene's line, its breath the art's. */
-    val pattern: Pattern = technique.pattern(),
-    val onTechnique: (Technique) -> Unit = {},
-    val soundName: String? = null,
-    val onStart: () -> Unit = {},
-    val onSetup: () -> Unit = {},
-)
-
 /**
- * The Listen page. [peek] offsets the pager by a fraction of a page, for the swipe renders only.
+ * One sound scene as its own screen (Iris, 2026-11-01, from Erwann's second screens): Dormir, Se
+ * poser or Tons, over the landscape its frame draws. The page fills the screen; its length bottom
+ * left and Too loud bottom right sit just above the navigation bar, one tap away.
  */
 @Composable
-fun SceneScreen(
-    scenes: List<Scene>,
+fun SoloScene(
     scene: Scene,
-    onScene: (Scene) -> Unit,
     ui: PlayerUi,
     actions: ListenActions,
     onSounds: () -> Unit = {},
     onTonesSetup: () -> Unit = {},
-    breathe: BreatheScene = BreatheScene(),
-    night: Boolean = false,
-    peek: Float = 0f,
     /** Plays an empty scene's [suggestion]: the disc's one tap on a first visit. */
     onSuggest: (Mix) -> Unit = {},
-    /** The swipe hint shows until the scenes have been changed once, then never again. */
-    swipeHint: Boolean = true,
-    /** A fixed scene clock in milliseconds, for the drift renders only; the app runs its own. */
-    sceneClock: (() -> Long)? = null,
 ) {
-    val scheme = MaterialTheme.colorScheme
-    val start = scenes.indexOf(scene).coerceAtLeast(0)
-    val pager = rememberPagerState(initialPage = start, initialPageOffsetFraction = peek) { scenes.size }
-    val current by rememberUpdatedState(scene)
-    val change by rememberUpdatedState(onScene)
-    // A swipe that settles on another scene makes it the scene; a tap on a name scrolls there.
-    LaunchedEffect(pager, scenes) {
-        snapshotFlow { pager.settledPage }.collect { i -> scenes.getOrNull(i)?.let { if (it != current) change(it) } }
-    }
-    LaunchedEffect(scene, scenes) {
-        val i = scenes.indexOf(scene)
-        if (i >= 0 && i != pager.currentPage && peek == 0f) pager.animateScrollToPage(i, animationSpec = Motion.tween(Motion.SLOW))
-    }
-    val shown = scenes.getOrElse(pager.currentPage) { scene }
-    val still = sceneClock == null && rememberReducedMotion()
-    val clock = sceneClock ?: rememberSceneClock(still)
-
+    val density = LocalDensity.current
+    var footPx by remember { mutableIntStateOf(0) }
     Box(Modifier.fillMaxSize()) {
-        // The launch intro lands Horizon's lines on this mist (ui/launch), as it did on the old dock.
-        val anchors = LocalLaunchAnchors.current
-        val strength = if (ui.playing) 1f else 0.35f
-        val mistInk = scheme.onSurfaceVariant
-        val mistArea = Modifier.fillMaxWidth().fillMaxHeight(0.62f).align(Alignment.BottomCenter)
-            .onGloballyPositioned { anchors?.mist = MistAnchor(it.boundsInWindow(), strength, mistInk) }
-        // The garden replaces the drawn mist; the intro keeps its landing place.
-        Box(mistArea)
-        // The art runs edge to edge, under the status and navigation bars (Erwann, dev.19: « pas
-        // coupé en haut et en bas »): the pager fills the screen, and the names above and the
-        // timer row below float over it on transparent ground. Each page is padded by both.
-        val density = LocalDensity.current
-        var headPx by remember { mutableIntStateOf(0) }
-        var footPx by remember { mutableIntStateOf(0) }
-        val insets = with(density) { PaddingValues(top = headPx.toDp(), bottom = footPx.toDp()) }
-        HorizontalPager(pager, Modifier.fillMaxSize(), key = { scenes[it].name },
-            flingBehavior = PagerDefaults.flingBehavior(pager, snapAnimationSpec = Motion.tween(Motion.CALM))) { page ->
-            val offset = { (pager.currentPage - page) + pager.currentPageOffsetFraction }
-            ScenePage(scenes[page], ui, actions, onSounds, onTonesSetup, breathe, night, onSuggest, still, clock, offset, insets)
-        }
-        Column(Modifier.fillMaxWidth().onSizeChanged { headPx = it.height }.statusBarsPadding()) {
-            SceneNames(scenes, shown) { onScene(it) }
-            // What the scene is for, so Sleep and Settle read apart before anything is chosen.
-            // Two lines kept for every purpose and the hint's line kept once shown, so the header's height
-            // never changes with the scene and the pages under it never move (Iris, 2026-11-01).
-            Crossfade(shown.purpose, animationSpec = Motion.tween(Motion.CALM), label = "purpose") { purpose ->
-                Text(stringResource(purpose), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant, minLines = 2,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp))
-            }
-            val hintRoom = remember { swipeHint }
-            if (hintRoom) Text(stringResource(R.string.scene_swipe), style = MaterialTheme.typography.bodySmall,
-                color = scheme.onSurfaceVariant.copy(alpha = 0.75f),
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp).alpha(calmAlpha(swipeHint))
-                    .then(if (swipeHint) Modifier else Modifier.clearAndSetSemantics { }))
-        }
-        // Right above the floating bar: the length bottom left, Too loud bottom right, always one tap away.
-        val (view, mine) = forMode(ui, actions, if (shown == Scene.TONES) Mode.TONES else Mode.SOUNDS)
+        ScenePage(scene, ui, actions, onSounds, onTonesSetup, onSuggest, with(density) { PaddingValues(bottom = footPx.toDp()) })
+        val (view, mine) = forMode(ui, actions, if (scene == Scene.TONES) Mode.TONES else Mode.SOUNDS)
         Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().onSizeChanged { footPx = it.height }
             .padding(bottom = LocalChromeBottom.current).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Every scene has its length bottom left: the timer, or Breathe's minutes, which open its setup.
-            Crossfade(shown == Scene.BREATHE, animationSpec = Motion.tween(Motion.CALM), label = "length") { breathing ->
-                if (!breathing) TimerWord(view, mine.timer) else LengthWord(breathe)
-            }
+            TimerWord(view, mine.timer)
             Spacer(Modifier.weight(1f))
             TooLoudWord(actions.tooLoud)
-        }
-    }
-}
-
-/** The scenes by name, in the serif: the one you are on larger and heavier, the others there to tap. */
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun SceneNames(scenes: List<Scene>, shown: Scene, onScene: (Scene) -> Unit) {
-    val scroll = rememberScrollState()
-    // Keep the shown name whole, with the row's margin beside it, scrolling no further than it
-    // needs: a fixed step per name cut « Dormir » in half on « Se poser » in French, and asking
-    // for the name alone left Tones flush against the edge, or cut on a first frame (Iris,
-    // 2026-11-01). The names' widths are measured, so the target is plain arithmetic.
-    val margin = with(LocalDensity.current) { 12.dp.toPx() }
-    var viewport by remember { mutableIntStateOf(0) }
-    val widths = remember(scenes) { mutableStateMapOf<Scene, Int>() }
-    LaunchedEffect(shown, scenes, viewport, widths.size == scenes.size) {
-        if (viewport == 0 || widths.size < scenes.size) return@LaunchedEffect
-        val target = nameScroll(scenes.map { widths.getValue(it) }, scenes.indexOf(shown), margin, viewport, scroll.value)
-        if (target != scroll.value) scroll.animateScrollTo(target, Motion.tween(Motion.CALM))
-    }
-    Row(Modifier.fillMaxWidth().onSizeChanged { viewport = it.width }.horizontalScroll(scroll).padding(horizontal = 12.dp).selectableGroup(),
-        verticalAlignment = Alignment.Bottom) {
-        scenes.forEach { s ->
-            val on = s == shown
-            // Each name holds the room of its larger look, both looks cross-faded on its foot, so
-            // changing scene never pushes the other names along (Iris, 2026-11-01).
-            WeightSwap(stringResource(s.title), on,
-                onStyle = MaterialTheme.typography.headlineMedium, offStyle = MaterialTheme.typography.headlineSmall,
-                onColor = MaterialTheme.colorScheme.onSurface, offColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                onWeight = FontWeight.Normal, offWeight = FontWeight.Light, align = Alignment.BottomStart,
-                modifier = Modifier.onSizeChanged { widths[s] = it.width }.heightIn(min = 48.dp).selectable(on, role = Role.Tab) { onScene(s) }.padding(horizontal = 8.dp, vertical = 6.dp))
         }
     }
 }
@@ -295,11 +180,8 @@ private fun SceneNames(scenes: List<Scene>, shown: Scene, onScene: (Scene) -> Un
 @Composable
 private fun ScenePage(
     scene: Scene, all: PlayerUi, allActions: ListenActions,
-    onSounds: () -> Unit, onTonesSetup: () -> Unit, breathe: BreatheScene, night: Boolean,
+    onSounds: () -> Unit, onTonesSetup: () -> Unit,
     onSuggest: (Mix) -> Unit,
-    still: Boolean = true,
-    clock: () -> Long = { 0L },
-    offset: () -> Float = { 0f },
     insets: PaddingValues = PaddingValues(),
 ) {
     val (ui, actions) = forMode(all, allActions, if (scene == Scene.TONES) Mode.TONES else Mode.SOUNDS)
@@ -323,15 +205,6 @@ private fun ScenePage(
             title = stringResource(R.string.ux_tone_kind)
             line = listOfNotNull(stateWord(ui), stringResource(R.string.tones_at, ui.tones.pitch), word).joinToString(" · ")
         }
-        Scene.BREATHE -> {
-            // The rhythm is the title: « Breathing » already sits on its own toggle below.
-            val breathing = breathe.practice == Practice.BREATHE
-            title = stringResource(if (breathing) breathe.technique.title() else breathe.practice.label())
-            line = listOfNotNull(
-                if (breathing) breathe.pattern.phasesText() else null,
-                breathe.soundName?.let { stringResource(R.string.scene_with, it) },
-            ).joinToString(" · ").ifEmpty { stringResource(R.string.scene_breathe_quiet) }
-        }
         else -> if (suggestion != null) {
             title = mixName(context, PlayerUi(mix = suggestion.layers)) ?: ""
             line = suggestion.timer?.let { stringResource(R.string.scene_suggest_timer, it) } ?: stringResource(R.string.scene_suggest_open)
@@ -340,18 +213,7 @@ private fun ScenePage(
             line = listOfNotNull(stateWord(ui), word).joinToString(" · ")
         }
     }
-    // The garden (Iris, 2026-11-01): the stone is the play control, the rakes are drawn around it.
-    // Its centre is measured in the page, read only while drawing, so a swipe never recomposes.
-    var pageAt by remember { mutableStateOf(Offset.Zero) }
-    var stoneAt by remember { mutableStateOf(Offset(Float.NaN, Float.NaN)) }
-    val rhythm = if (scene == Scene.BREATHE && breathe.practice == Practice.BREATHE) breathe.pattern else null
-    val rakes = remember(scene, all.tones.pitch) { scene.rakes(all.tones.pitch) }
-    Box(Modifier.fillMaxSize().onGloballyPositioned { pageAt = it.positionInRoot() }) {
-        Ground(Modifier.fillMaxSize())
-        RakedGravel(rakes, stone = { stoneAt - pageAt }, swell = {
-            // Breathe's rings preview the rhythm chosen for the session; the others breathe with the sound.
-            gardenSwell(clock() / 1000.0, still, rhythm, ui.playing && scene != Scene.BREATHE, levels.maxOrNull() ?: 0f, scene.ordinal)
-        }, modifier = Modifier.fillMaxSize())
+    Box(Modifier.fillMaxSize()) {
         Column(
             Modifier.fillMaxSize().volumeSlide(levels, set).padding(insets).padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -373,9 +235,8 @@ private fun ScenePage(
             Row(Modifier.fillMaxWidth().padding(top = 28.dp), verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.weight(1f).height(1.dp))
                 Spacer(Modifier.width(56.dp))
-                Box(Modifier.onGloballyPositioned { stoneAt = it.boundsInRoot().center }) {
-                if (scene == Scene.BREATHE) Disc(ui.copy(playing = false), ring = null, word = R.string.scene_start, onClick = breathe.onStart, always = true)
-                else if (suggestion != null) Disc(ui, ring = suggestion.timer?.let { 1f }, word = R.string.scene_suggest_play,
+                Box {
+                if (suggestion != null) Disc(ui, ring = suggestion.timer?.let { 1f }, word = R.string.scene_suggest_play,
                     onClick = { onSuggest(suggestion) }, always = true)
                 else Disc(ui, ring(ui), word = null, onClick = if (ui.hasSound) actions.toggle else onSounds)
                 }
@@ -391,27 +252,6 @@ private fun ScenePage(
             Box(Modifier.fillMaxWidth().heightIn(min = 56.dp), contentAlignment = Alignment.Center) { Column(horizontalAlignment = Alignment.CenterHorizontally) {
             when (scene) {
                 Scene.TONES -> QuietMore(stringResource(R.string.scene_tones_setup), onTonesSetup)
-                Scene.BREATHE -> {
-                    // Two levels, two looks (Iris, 2026-11-01): the practice is a pair of words, like
-                    // the scene names; only the rhythms are pills. Selection is a check and weight.
-                    if (breathe.practices.size > 1) Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        breathe.practices.forEach { p -> PracticeWord(stringResource(p.label()), on = p == breathe.practice) { breathe.onPractice(p) } }
-                    }
-                    // The rhythm is chosen here, on the scene, not behind the link (Erwann, 2026-10-31).
-                    // Under Meditate the rhythms keep their room, faded out and out of reach, so the
-                    // practice words and the disc above never move (Iris, 2026-11-01).
-                    val rhythms = breathe.practice == Practice.BREATHE
-                    run {
-                        FlowRow(Modifier.fillMaxWidth().padding(top = 6.dp).alpha(calmAlpha(rhythms))
-                            .then(if (rhythms) Modifier.selectableGroup() else Modifier.clearAndSetSemantics { }),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Technique.entries.forEach { t ->
-                                Pill(stringResource(t.title()), on = t == breathe.technique, thumb = null, role = Role.RadioButton, label = null,
-                                    enabled = rhythms) { breathe.onTechnique(t) }
-                            }
-                        }
-                    }
-                }
                 else -> if (suggestion != null) QuietMore(stringResource(R.string.scene_choose_other), onSounds)
                 else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically) {
@@ -431,25 +271,6 @@ private fun ScenePage(
             Spacer(Modifier.height(16.dp))
         }
     }
-}
-
-/**
- * Where the scene names' row should scroll so name [i] is whole with [margin] on either side,
- * moving as little as it can from [current]. [widths] are the names' widths in the row, which
- * starts with [margin] of its own; [viewport] is the row's visible width.
- */
-internal fun nameScroll(widths: List<Int>, i: Int, margin: Float, viewport: Int, current: Int): Int {
-    if (i !in widths.indices) return current
-    val content = (margin * 2 + widths.sum()).toInt()
-    val max = (content - viewport).coerceAtLeast(0)
-    val left = margin + widths.take(i).sum()
-    val right = left + widths[i]
-    val target = when {
-        left - margin < current -> (left - margin).toInt()
-        right + margin > current + viewport -> (right + margin - viewport).toInt()
-        else -> current
-    }
-    return target.coerceIn(0, max)
 }
 
 /** « Brun + Pluie »: both rows of the picker, background first. */
@@ -512,6 +333,9 @@ private fun Modifier.volumeSlide(levels: List<Float>, set: (List<Float>) -> Unit
         onDragStopped = { base.clear() })
 }
 
+/** The play disc's face: lighter than the old stone, still a 120 dp target. */
+private val DISC = 120.dp
+
 /** The disc: play or pause, in a ring that empties as the timer runs. The ring is shape, never a colour. */
 @Composable
 private fun Disc(ui: PlayerUi, ring: Float?, @StringRes word: Int?, onClick: () -> Unit, always: Boolean = false) {
@@ -523,7 +347,7 @@ private fun Disc(ui: PlayerUi, ring: Float?, @StringRes word: Int?, onClick: () 
         else -> R.string.action_play
     })
     Box(Modifier.size(196.dp), contentAlignment = Alignment.Center) {
-        // The raked rings are the track; the timer is the one firmer line, emptying (weight, not colour).
+        // The timer is the one firmer line around the disc, emptying (weight, not colour).
         val ink = scheme.onSurface.copy(alpha = 0.8f)
         Canvas(Modifier.fillMaxSize()) {
             val stroke = 2.dp.toPx()
@@ -531,18 +355,18 @@ private fun Disc(ui: PlayerUi, ring: Float?, @StringRes word: Int?, onClick: () 
             val box = Size(size.width - stroke, size.height - stroke)
             if (ring != null) drawArc(ink, -90f, 360f * ring, false, Offset(inset, inset), box, style = Stroke(stroke, cap = StrokeCap.Round))
         }
-        // With a sound, the stone; without, its place, a quiet circle in the gravel.
-        if (has) Stone(Modifier.size(STONE_RADIUS * 2 + 24.dp))
+        // With a sound, a light disc with a hairline and the ink mark; without, only its outline and a +.
         Box(
-            Modifier.size(STONE_RADIUS * 2).clip(CircleShape)
-                .then(if (has) Modifier else Modifier.border(1.dp, scheme.outline, CircleShape))
+            Modifier.size(DISC).clip(CircleShape)
+                .then(if (has) Modifier.background(scheme.surfaceContainerLowest.copy(alpha = 0.85f)).border(1.dp, scheme.outlineVariant, CircleShape)
+                    else Modifier.border(1.dp, scheme.outline, CircleShape))
                 .clickable(role = Role.Button, onClickLabel = label, onClick = onClick).semantics { contentDescription = label },
             contentAlignment = Alignment.Center,
         ) {
             when {
                 !has -> Icon(painterResource(R.drawable.ic_plus), null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
-                ui.playing -> Icon(painterResource(R.drawable.ic_pause), null, tint = scheme.inverseOnSurface, modifier = Modifier.size(40.dp))
-                else -> Icon(painterResource(R.drawable.ic_play), null, tint = scheme.inverseOnSurface, modifier = Modifier.size(44.dp))
+                ui.playing -> Icon(painterResource(R.drawable.ic_pause), null, tint = scheme.onSurface, modifier = Modifier.size(36.dp))
+                else -> Icon(painterResource(R.drawable.ic_play), null, tint = scheme.onSurface, modifier = Modifier.size(40.dp))
             }
         }
     }
@@ -635,37 +459,6 @@ private fun TimerWord(ui: PlayerUi, onTimer: (Int?) -> Unit) {
     ) {
         Icon(painterResource(R.drawable.ic_timer), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
         Text(value, style = MaterialTheme.typography.labelLarge.tabular(), modifier = Modifier.padding(start = 8.dp))
-    }
-}
-
-/** Breathe's length where the other scenes keep their timer: the hourglass and the minutes (or cycles). It opens the setup. */
-@Composable
-private fun LengthWord(breathe: BreatheScene) {
-    val value = breathe.cycles?.let { stringResource(R.string.breath_cycles, it) } ?: stringResource(R.string.scene_minutes, breathe.minutes)
-    val title = stringResource(R.string.scene_breathe_setup)
-    Row(
-        Modifier.heightIn(min = 48.dp).clip(CircleShape)
-            .clickable(role = Role.Button, onClickLabel = title, onClick = breathe.onSetup)
-            .semantics(mergeDescendants = true) { contentDescription = title; stateDescription = value }
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(painterResource(R.drawable.ic_timer), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-        Text("$value  ›", style = MaterialTheme.typography.labelLarge.tabular(), modifier = Modifier.padding(start = 8.dp))
-    }
-}
-
-/** Breathing or Meditation, as words: the chosen one in ink with a check, the other muted. */
-@Composable
-private fun PracticeWord(text: String, on: Boolean, onClick: () -> Unit) {
-    val scheme = MaterialTheme.colorScheme
-    Row(
-        Modifier.heightIn(min = 48.dp).clip(CircleShape).selectable(on, role = Role.RadioButton, onClick = onClick).padding(horizontal = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = scheme.onSurface,
-            modifier = Modifier.padding(end = 6.dp).size(16.dp).alpha(calmAlpha(on, Motion.QUICK)))
-        WeightSwap(text, on, onStyle = MaterialTheme.typography.titleMedium, onColor = scheme.onSurface, offColor = scheme.onSurfaceVariant)
     }
 }
 

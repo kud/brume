@@ -729,7 +729,8 @@ fun SettingsScreen(
     val line = MaterialTheme.colorScheme.outlineVariant
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
-            BackRow(stringResource(R.string.tab_learn), onBack)
+            // The ✕ top-left, as on every screen that opens from home.
+            CloseBar(null, onBack)
             Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp).semantics { heading() })
             SwitchRow(stringResource(R.string.settings_night), stringResource(R.string.settings_night_summary), nightHours, onNightHours)
             HorizontalDivider(color = line)

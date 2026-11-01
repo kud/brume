@@ -143,7 +143,7 @@ fun FinderScreen(
 @Composable
 private fun FinderHome(profiles: List<TinnitusProfile>, onBack: () -> Unit, onStart: () -> Unit, onProfile: (String) -> Unit) {
     Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
-        BackRow(stringResource(R.string.learn_back), onBack)
+        CloseBar(null, onBack)
         ScreenTitle(R.string.finder_title, stringResource(R.string.finder_home_intro))
         Spacer(Modifier.height(12.dp))
         if (profiles.isEmpty()) Body(stringResource(R.string.finder_home_empty))

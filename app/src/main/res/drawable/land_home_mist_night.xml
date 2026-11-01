@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="360dp" android:height="780dp" android:viewportWidth="360" android:viewportHeight="780">
+    <!-- Placeholder: a mist band over the ridges. Replaced by Sacha's land_home_mist_night.png. -->
+    <path android:pathData="M0,540h360v150h-360z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="540" android:endX="0" android:endY="690">
+                <item android:offset="0" android:color="#003C3F62"/>
+                <item android:offset="0.5" android:color="#D93C3F62"/>
+                <item android:offset="1" android:color="#003C3F62"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

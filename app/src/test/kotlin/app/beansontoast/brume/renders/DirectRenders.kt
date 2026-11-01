@@ -15,7 +15,7 @@ import app.beansontoast.brume.core.sound.ToneSettings
 import app.beansontoast.brume.playback.PlayerUi
 import app.beansontoast.brume.ui.AboutScreen
 import app.beansontoast.brume.ui.BreathSetup
-import app.beansontoast.brume.ui.BrumeScaffold
+import app.beansontoast.brume.ui.FnFrame
 import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.CalmScreen
 import app.beansontoast.brume.ui.LanguageChoice
@@ -93,7 +93,7 @@ class DirectRenders(private val shot: String) {
     }
 
     private fun tab(dark: Boolean, night: Boolean, tab: Tab, content: @Composable () -> Unit) = capture {
-        BrumeTheme(dark = dark, night = night) { BrumeScaffold(tab, {}, Modules()) { content() } }
+        BrumeTheme(dark = dark, night = night) { FnFrame(onClose = {}) { content() } }
     }
 
     private fun capture(content: @Composable () -> Unit) {

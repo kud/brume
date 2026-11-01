@@ -29,7 +29,7 @@ import app.beansontoast.brume.ui.SyncSettings
 import app.beansontoast.brume.ui.LearnScreen
 import app.beansontoast.brume.ui.LanguageChoice
 import app.beansontoast.brume.ui.LanguageSettings
-import app.beansontoast.brume.ui.BrumeScaffold
+import app.beansontoast.brume.ui.FnFrame
 import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.JournalScreen
 import app.beansontoast.brume.ui.ListenActions
@@ -193,7 +193,7 @@ class Renders(private val shot: String) {
     private fun bare(dark: Boolean, night: Boolean, content: @Composable () -> Unit) = capture { BrumeTheme(dark = dark, night = night) { content() } }
 
     private fun shoot(dark: Boolean, night: Boolean, tab: Tab, modules: Modules = Modules(), content: @Composable () -> Unit) =
-        capture { BrumeTheme(dark = dark, night = night) { BrumeScaffold(tab, {}, modules) { content() } } }
+        capture { BrumeTheme(dark = dark, night = night) { FnFrame(onClose = {}) { content() } } }
 
     private fun capture(content: @Composable () -> Unit) {
         compose.setContent { content() }

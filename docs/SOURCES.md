@@ -114,3 +114,7 @@ The outer two tones agree with the 0.766× to 1.4× bounds reported for Tass et 
 ## 5. A note
 
 Brume is made by someone who lives with tinnitus, not by a doctor. It draws on the published research and clinical guidance above, read as carefully as we could, to offer some calm to anyone who wants to relax. It isn't a treatment or a medical device, and it doesn't replace a doctor, an ENT or an audiologist. If something here looks wrong or out of date, please open an issue.
+
+## Typeface
+
+- **Instrument Sans** (variable, wdth and wght), © 2022 The Instrument Sans Project Authors, under the SIL Open Font License 1.1: `app/src/main/res/font/instrument_sans.ttf`, licence text in `docs/fonts-instrument-sans-OFL.txt`. <https://github.com/Instrument/instrument-sans>

@@ -14,6 +14,11 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontVariation
+import app.beansontoast.brume.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import app.beansontoast.brume.core.sound.Ambience
@@ -26,62 +31,86 @@ import kotlin.math.PI
 import kotlin.math.sin
 
 /*
- * Brume's identity (Iris, 2026-11-01, direction A, karesansui): washi by day, graphite at night,
- * warm neutrals at very low chroma, meaning by line and weight. Earlier (2026-10-31): night mist. Cool blue-grey neutrals at low chroma carry
- * everything; the brand hue, a pale mist blue, lives only in `primary` (Gamme). The one strong
- * thing on Listen is the ink Play disc. The serif is the system's, kept for the wordmark and
- * screen titles; everything you read to act is the system sans.
+ * Brume's identity (Iris, 2026-11-01, the misty-landscape direction that replaces karesansui):
+ * soft neutrals with a breath of lavender, dusty blue for the one action, peach and lavender in
+ * the sky and the symbols only. Night is the same family at dusk, deep blue-lavender, never black.
+ * Meaning never rests on hue: every pair here was checked in greyscale (Erwann is colourblind).
+ * One typeface, Instrument Sans (OFL, res/font/instrument_sans.ttf, a variable font).
  */
-private val night = darkColorScheme(
-    primary = Color(0xFFCFC8BA), onPrimary = Color(0xFF23211C),
-    primaryContainer = Color(0xFF34322D), onPrimaryContainer = Color(0xFFE9E4DA),
-    secondary = Color(0xFFBDB8AF), onSecondary = Color(0xFF22201C),
-    secondaryContainer = Color(0xFF3E3C37), onSecondaryContainer = Color(0xFFF2EFE9),
-    tertiary = Color(0xFFC4C0B6), onTertiary = Color(0xFF26241F),
-    background = Color(0xFF0E0E0D), onBackground = Color(0xFFE6E2DA),
-    surface = Color(0xFF0E0E0D), onSurface = Color(0xFFE6E2DA),
-    surfaceVariant = Color(0xFF2A2926), onSurfaceVariant = Color(0xFFADA89F),
-    surfaceContainerLowest = Color(0xFF090908), surfaceContainerLow = Color(0xFF121211),
-    surfaceContainer = Color(0xFF181816), surfaceContainerHigh = Color(0xFF20201D),
-    surfaceContainerHighest = Color(0xFF2A2926),
-    inverseSurface = Color(0xFFE6E2DA), inverseOnSurface = Color(0xFF181816), inversePrimary = Color(0xFF4A463F),
-    outline = Color(0xFF807B73), outlineVariant = Color(0xFF3D3B37),
+private val dusk = darkColorScheme(
+    primary = Color(0xFFB8C9E8), onPrimary = Color(0xFF1A2740),
+    primaryContainer = Color(0xFF34405E), onPrimaryContainer = Color(0xFFDCE4F6),
+    secondary = Color(0xFFC9C2E6), onSecondary = Color(0xFF26223F),
+    secondaryContainer = Color(0xFF3A3657), onSecondaryContainer = Color(0xFFE8E3F8),
+    tertiary = Color(0xFFEBC3B3), onTertiary = Color(0xFF3F2A22),
+    tertiaryContainer = Color(0xFF5A4048), onTertiaryContainer = Color(0xFFF8E0D6),
+    background = Color(0xFF1B1E33), onBackground = Color(0xFFE9E7F3),
+    surface = Color(0xFF1B1E33), onSurface = Color(0xFFE9E7F3),
+    surfaceVariant = Color(0xFF353A55), onSurfaceVariant = Color(0xFFB9B8D0),
+    surfaceContainerLowest = Color(0xFF161829), surfaceContainerLow = Color(0xFF202339),
+    surfaceContainer = Color(0xFF262A42), surfaceContainerHigh = Color(0xFF2D314B),
+    surfaceContainerHighest = Color(0xFF353A55),
+    inverseSurface = Color(0xFFE9E7F3), inverseOnSurface = Color(0xFF1B1E33), inversePrimary = Color(0xFF4A6890),
+    outline = Color(0xFF8D8EA8), outlineVariant = Color(0xFF41456A),
     error = Color(0xFFF2B8B5), onError = Color(0xFF601410),
 )
 
-private val dawn = lightColorScheme(
-    primary = Color(0xFF4A463F), onPrimary = Color(0xFFFBF8F2),
-    primaryContainer = Color(0xFFDDD6C8), onPrimaryContainer = Color(0xFF23211D),
-    secondary = Color(0xFF5C5850), onSecondary = Color(0xFFFBF8F2),
-    secondaryContainer = Color(0xFFD8D1C3), onSecondaryContainer = Color(0xFF1E1C19),
-    tertiary = Color(0xFF5E5A52), onTertiary = Color(0xFFFBF8F2),
-    background = Color(0xFFF2EDE3), onBackground = Color(0xFF23211D),
-    surface = Color(0xFFF2EDE3), onSurface = Color(0xFF23211D),
-    surfaceVariant = Color(0xFFE0DACD), onSurfaceVariant = Color(0xFF5A564F),
-    surfaceContainerLowest = Color(0xFFFBF8F2), surfaceContainerLow = Color(0xFFEEE8DD),
-    surfaceContainer = Color(0xFFE8E2D6), surfaceContainerHigh = Color(0xFFE2DBCE),
-    surfaceContainerHighest = Color(0xFFDCD5C7),
-    inverseSurface = Color(0xFF2E2C28), inverseOnSurface = Color(0xFFF2EDE3), inversePrimary = Color(0xFFCFC8BA),
-    outline = Color(0xFF7A756C), outlineVariant = Color(0xFFCDC6B8),
+private val mist = lightColorScheme(
+    primary = Color(0xFF4A6890), onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFDCE4F1), onPrimaryContainer = Color(0xFF1C2A40),
+    secondary = Color(0xFF615B88), onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFE4E0F0), onSecondaryContainer = Color(0xFF24203A),
+    tertiary = Color(0xFF85584A), onTertiary = Color(0xFFFFFFFF),
+    tertiaryContainer = Color(0xFFF6DDD2), onTertiaryContainer = Color(0xFF3A2219),
+    background = Color(0xFFF3EFF3), onBackground = Color(0xFF23263A),
+    surface = Color(0xFFF3EFF3), onSurface = Color(0xFF23263A),
+    surfaceVariant = Color(0xFFE4E0EA), onSurfaceVariant = Color(0xFF555970),
+    surfaceContainerLowest = Color(0xFFFFFFFF), surfaceContainerLow = Color(0xFFF8F5F8),
+    surfaceContainer = Color(0xFFEEEAF0), surfaceContainerHigh = Color(0xFFE8E4EC),
+    surfaceContainerHighest = Color(0xFFE2DEE8),
+    inverseSurface = Color(0xFF2E3046), inverseOnSurface = Color(0xFFF3EFF3), inversePrimary = Color(0xFFB8C9E8),
+    outline = Color(0xFF74788E), outlineVariant = Color(0xFFD3CFDC),
     error = Color(0xFFB3261E), onError = Color(0xFFFFFFFF),
 )
 
-val BrumeColors = GammeColors(light = dawn, dark = night)
+val BrumeColors = GammeColors(light = mist, dark = dusk)
+
+@OptIn(ExperimentalTextApi::class)
+private fun instrument(weight: Int) = Font(
+    R.font.instrument_sans, FontWeight(weight),
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight)),
+)
+
+/** Instrument Sans at the four weights Brume uses, all from the one variable file. */
+val InstrumentSans = FontFamily(instrument(400), instrument(500), instrument(600), instrument(700))
 
 private fun brumeTypography(): Typography {
     val base = gammeTypography()
-    val serif = FontFamily.Serif
+    fun TextStyle.sans(weight: FontWeight? = null, tracking: Float? = null) =
+        copy(fontFamily = InstrumentSans, fontWeight = weight ?: fontWeight, letterSpacing = tracking?.sp ?: letterSpacing)
     return base.copy(
-        displaySmall = base.displaySmall.copy(fontFamily = serif, fontWeight = FontWeight.Light, letterSpacing = 0.5.sp),
-        headlineMedium = base.headlineMedium.copy(fontFamily = serif, fontWeight = FontWeight.Light),
-        headlineSmall = base.headlineSmall.copy(fontFamily = serif, fontWeight = FontWeight.Light),
+        displayLarge = base.displayLarge.sans(FontWeight.Medium, -0.5f),
+        displayMedium = base.displayMedium.sans(FontWeight.Medium, -0.5f),
+        displaySmall = base.displaySmall.sans(FontWeight.Medium, -0.25f),
+        headlineLarge = base.headlineLarge.sans(FontWeight.Medium, -0.25f),
+        headlineMedium = base.headlineMedium.sans(FontWeight.Medium, 0f),
+        headlineSmall = base.headlineSmall.sans(FontWeight.Medium, 0f),
+        titleLarge = base.titleLarge.sans(FontWeight.Medium),
+        titleMedium = base.titleMedium.sans(FontWeight.SemiBold),
+        titleSmall = base.titleSmall.sans(FontWeight.SemiBold),
+        bodyLarge = base.bodyLarge.sans(),
+        bodyMedium = base.bodyMedium.sans(),
+        bodySmall = base.bodySmall.sans(),
+        labelLarge = base.labelLarge.sans(FontWeight.Medium),
+        labelMedium = base.labelMedium.sans(FontWeight.Medium),
+        labelSmall = base.labelSmall.sans(FontWeight.Medium),
     )
 }
 
-/** Night forces dark, true black and the dim tier; otherwise the system decides. */
+/** Night forces the dusk scheme and the dim tier; otherwise the system decides. Never true black. */
 @Composable
 fun BrumeTheme(dark: Boolean, night: Boolean, content: @Composable () -> Unit) {
-    GammeTheme(colors = BrumeColors, darkTheme = dark || night, trueBlack = true, dim = night, typography = brumeTypography(), content = content)
+    GammeTheme(colors = BrumeColors, darkTheme = dark || night, trueBlack = false, dim = night, typography = brumeTypography(), content = content)
 }
 
 /** A tiny deterministic sequence for the textures, so a sound always looks the same. */

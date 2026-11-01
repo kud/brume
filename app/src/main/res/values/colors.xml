@@ -6,7 +6,7 @@
     <color name="launcher_horizon">#FF19222E</color>
     <!-- Splash: the mark in ink by day; at night a dim mist (values-night), never a bright mass. -->
     <color name="splash_mark">#FF3F5870</color>
-    <color name="dawn_ground">#FFF5F6F8</color>
+    <color name="dawn_ground">#FFF3EFF3</color>
     <!-- The splash ground and the launch intro's, the window's own colour. -->
-    <color name="splash_ground">#FFF5F6F8</color>
+    <color name="splash_ground">#FFF3EFF3</color>
 </resources>

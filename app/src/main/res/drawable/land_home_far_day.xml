@@ -1,0 +1,6 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="360dp" android:height="780dp" android:viewportWidth="360" android:viewportHeight="780">
+    <!-- Placeholder: two hazy ridges. Replaced by Sacha's land_home_far_day.png. -->
+    <path android:fillColor="#C9C3E0" android:fillAlpha="0.55" android:pathData="M0,560C40,520 70,500 110,510C150,520 170,470 215,455C255,442 290,480 360,470V780H0Z"/>
+    <path android:fillColor="#B7BCD9" android:fillAlpha="0.6" android:pathData="M0,600C50,575 90,560 140,575C190,590 230,545 280,548C315,550 340,565 360,560V780H0Z"/>
+</vector>

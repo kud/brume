@@ -20,7 +20,7 @@ import app.beansontoast.brume.ui.BreathPanel
 import app.beansontoast.brume.ui.BreathPrelude
 import app.beansontoast.brume.ui.BreathSession
 import app.beansontoast.brume.ui.BreathSetup
-import app.beansontoast.brume.ui.BrumeScaffold
+import app.beansontoast.brume.ui.FnFrame
 import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.CalmScreen
 import app.beansontoast.brume.ui.Meditation
@@ -89,7 +89,7 @@ class GuidanceRenders(private val shot: String) {
     }
 
     private fun tab(dark: Boolean, night: Boolean, content: @Composable () -> Unit) = capture {
-        BrumeTheme(dark = dark, night = night) { BrumeScaffold(Tab.CALM, {}, Modules()) { content() } }
+        BrumeTheme(dark = dark, night = night) { FnFrame(onClose = {}) { content() } }
     }
 
     private fun bare(dark: Boolean, night: Boolean, content: @Composable () -> Unit) = capture { BrumeTheme(dark = dark, night = night) { content() } }

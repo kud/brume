@@ -78,6 +78,23 @@ import kotlinx.coroutines.delay
 import java.text.NumberFormat
 import kotlin.math.ceil
 import kotlin.math.floor
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.text.style.TextOverflow
+import app.beansontoast.design.Motion
+import app.beansontoast.design.WeightSwap
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 /** The choices a Souffle session starts from. Kept per phone (ADR 0003). */
 data class BreathSetup(
@@ -226,7 +243,10 @@ fun BreathPrelude(setup: BreathSetup, safety: Boolean, onStart: () -> Unit, onBa
     val scheme = MaterialTheme.colorScheme
     val muted = scheme.onSurfaceVariant
     val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().background(scheme.background).safeDrawingPadding().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    // The session stands on the quiet landscape, sky and haze, the orb at its centre (Iris, 2026-11-01).
+    Box(Modifier.fillMaxSize().background(scheme.background)) {
+    Landscape(Land.QUIET)
+    Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             val back = stringResource(R.string.breath_back)
             TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = back }) {
@@ -254,6 +274,7 @@ fun BreathPrelude(setup: BreathSetup, safety: Boolean, onStart: () -> Unit, onBa
         FilledTonalButton(onStart, Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp).heightIn(min = 56.dp)) {
             Text(stringResource(R.string.prelude_start), style = MaterialTheme.typography.titleMedium)
         }
+    }
     }
 }
 
@@ -303,7 +324,10 @@ fun BreathSession(
     val scheme = MaterialTheme.colorScheme
     val muted = scheme.onSurfaceVariant
     val fade = if (night) 0.55f else 1f
-    Column(Modifier.fillMaxSize().background(scheme.background).safeDrawingPadding().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    // The session stands on the quiet landscape, sky and haze, the orb at its centre (Iris, 2026-11-01).
+    Box(Modifier.fillMaxSize().background(scheme.background)) {
+    Landscape(Land.QUIET)
+    Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             val stop = stringResource(R.string.breath_stop)
             TextButton(onClick = onEnd, modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = stop }) {
@@ -317,7 +341,19 @@ fun BreathSession(
             }
         }
         val fullness = if (reduced) 0.5f else moment.fullness
-        Canvas(Modifier.weight(1f).fillMaxWidth()) { mistBand(fullness, muted, fade) }
+        val holding = !moment.done && moment.phase == Phase.HOLD
+        // The orb carries the breath: it swells with the in-breath, rests still in a hold, settles with the out-breath.
+        // The cue and its count sit inside, at the orb's centre, so nothing moves as it breathes.
+        BreathOrb(fullness, holding, if (reduced) 0.0 else elapsed ?: clock, Modifier.weight(1f).fillMaxWidth()) {
+            if (!moment.done) Column(Modifier.padding(horizontal = 72.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                // Two lines kept for the cue, so a short one and a long one sit at the same height.
+                Text(stringResource(moment.cue.text()), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center, minLines = 2,
+                    modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite })
+                // The count is written, not drawn: it carries the rhythm when the orb is still. TalkBack hears only the cue.
+                Text(moment.count.toString(), style = MaterialTheme.typography.titleLarge.tabular(), color = muted, textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp).semantics { contentDescription = "" })
+            }
+        }
         if (moment.done) {
             Text(stringResource(R.string.breath_done), style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite })
@@ -327,14 +363,7 @@ fun BreathSession(
                 Text(stringResource(R.string.breath_back))
             }
         } else {
-            // Two lines kept for the cue, so a short one and a long one sit at the same height.
-            Text(stringResource(moment.cue.text()), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center, minLines = 2,
-                modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite })
-            // The count is written, not drawn: it carries the rhythm when the band is still. TalkBack hears only the cue.
-            Text(moment.count.toString(), style = MaterialTheme.typography.titleLarge.tabular(), color = muted, textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp).semantics { contentDescription = "" })
             // A hold's seconds as marks: filled for each second held, outlined for those to come. Room kept when not holding.
-            val holding = moment.phase == Phase.HOLD
             val marks = ceil(plan.pattern.steps[moment.step].seconds - 1e-9).toInt()
             val held = floor(moment.stepElapsed + 1e-9).toInt().coerceAtMost(marks)
             val marksLabel = stringResource(R.string.breath_hold_marks, held, marks)
@@ -343,6 +372,120 @@ fun BreathSession(
                 if (holding) holdMarks(marks, held, muted.copy(alpha = 0.8f * fade + 0.2f))
             }
         }
+    }
+    }
+}
+
+/**
+ * The breathing orb (Iris, 2026-11-01): a soft organic round, luminous mist by day and dusk
+ * lavender-blue at night, with a second, paler round behind it for depth. [fullness] 0..1 sets its
+ * size; its edge drifts slowly with [seconds], and drifts less in a hold. Lightness and size carry
+ * it, never hue. [content] sits at its centre and never moves.
+ */
+@Composable
+fun BreathOrb(fullness: Float, holding: Boolean, seconds: Double, modifier: Modifier = Modifier, content: @Composable () -> Unit = {}) {
+    val night = duskTheme()
+    val inner = if (night) Color(0xFF46507A) else Color(0xFFFBFCFF)
+    val edge = if (night) Color(0xFF2F3659) else Color(0xFFC5D2EA)
+    val back = if (night) Color(0xFF4B4574) else Color(0xFFDCD3EE)
+    val rim = MaterialTheme.colorScheme.primary
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val r = size.minDimension / 2 * 0.92f * (0.64f + 0.36f * fullness)
+            val t = seconds.toFloat()
+            val wob = if (holding) 0.35f else 1f
+            drawPath(blob(center + Offset(r * 0.07f, r * 0.05f), r * 0.98f, t + 2.3f, wob), back.copy(alpha = 0.75f))
+            val main = blob(center, r, t, wob)
+            drawPath(main, Brush.radialGradient(listOf(inner, edge), center = center - Offset(r * 0.28f, r * 0.32f), radius = r * 1.4f))
+            drawPath(main, rim.copy(alpha = 0.3f), style = Stroke(1.2.dp.toPx()))
+        }
+        content()
+    }
+}
+
+/** A closed round whose radius wanders a few percent, three slow harmonics, never a spike. */
+private fun blob(c: Offset, r: Float, t: Float, wob: Float): Path = Path().apply {
+    val n = 96
+    for (i in 0..n) {
+        val a = (i.toFloat() / n) * 2f * PI.toFloat()
+        val k = 1f + wob * (0.03f * sin(3 * a + t * 0.5f) + 0.022f * sin(5 * a - t * 0.37f) + 0.014f * sin(2 * a + t * 0.23f))
+        val x = c.x + r * k * cos(a); val y = c.y + r * k * sin(a)
+        if (i == 0) moveTo(x, y) else lineTo(x, y)
+    }
+    close()
+}
+
+/** Seconds since this first composed, frame by frame; 0 and no frames while [still]. */
+@Composable
+internal fun rememberSeconds(still: Boolean): Double {
+    var seconds by remember { mutableDoubleStateOf(0.0) }
+    LaunchedEffect(still) {
+        seconds = 0.0
+        if (still) return@LaunchedEffect
+        val start = withFrameNanos { it }
+        while (true) withFrameNanos { seconds = (it - start) / 1e9 }
+    }
+    return seconds
+}
+
+/**
+ * Respirer's own screen (Iris, 2026-11-01): the orb breathing the rhythm chosen, its length at
+ * the centre, the five rhythms as light rows (the chosen one has a ground, a hairline and a check,
+ * never colour alone), then a link to pace, length and voice, and Start. [previewAt] fixes the
+ * orb's clock for renders.
+ */
+@Composable
+fun BreatheScreen(setup: BreathSetup, onChange: (BreathSetup) -> Unit, onStart: () -> Unit, onMore: () -> Unit, previewAt: Double? = null) {
+    val scheme = MaterialTheme.colorScheme
+    val still = previewAt != null || rememberReducedMotion()
+    val clock = rememberSeconds(still)
+    val plan = remember(setup) { setup.plan() }
+    val cycle = setup.pattern.steps.sumOf { it.seconds }
+    val t = previewAt ?: clock
+    val moment = plan.at(t % cycle)
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp).padding(bottom = LocalChromeBottom.current + 12.dp)) {
+        BreathOrb(if (still && previewAt == null) 0.5f else moment.fullness, moment.phase == Phase.HOLD, if (still && previewAt == null) 0.0 else t,
+            Modifier.weight(1f).fillMaxWidth()) {
+            val length = if (setup.byRounds) stringResource(R.string.breath_cycles, setup.length) else stringResource(R.string.scene_minutes, setup.length)
+            Text(length, style = MaterialTheme.typography.titleLarge.tabular(), textAlign = TextAlign.Center)
+        }
+        Text(stringResource(R.string.breathe_rhythm), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 12.dp, top = 8.dp, bottom = 4.dp).semantics { heading() })
+        Column(Modifier.fillMaxWidth().selectableGroup()) {
+            Technique.entries.forEach { tech ->
+                RhythmRow(stringResource(tech.title()), setup.copy(technique = tech).pattern.phasesText(), tech == setup.technique) {
+                    onChange(setup.copy(technique = tech))
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClick = onMore)
+            .padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.breathe_more), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            Text("›", style = MaterialTheme.typography.titleMedium, color = scheme.onSurfaceVariant)
+        }
+        Button(onStart, Modifier.fillMaxWidth().padding(top = 4.dp).heightIn(min = 52.dp), shape = RoundedCornerShape(16.dp)) {
+            Icon(painterResource(R.drawable.ic_play), null, modifier = Modifier.size(20.dp))
+            Text(stringResource(R.string.scene_start), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 8.dp))
+        }
+    }
+}
+
+/** One rhythm: its name and phases; chosen, it gains a light ground, a hairline and a check. Both weights laid out at once. */
+@Composable
+private fun RhythmRow(name: String, phases: String, on: Boolean, onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(14.dp)
+    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).clip(shape)
+        .background(scheme.surfaceContainerLowest.copy(alpha = if (on) 0.85f else 0f))
+        .border(1.dp, if (on) scheme.outline.copy(alpha = 0.6f) else Color.Transparent, shape)
+        .selectable(on, role = Role.RadioButton, onClick = onClick).padding(horizontal = 12.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            WeightSwap(name, on, onStyle = MaterialTheme.typography.titleMedium, onColor = scheme.onSurface, offColor = scheme.onSurface)
+            Text(phases, style = MaterialTheme.typography.bodySmall.tabular(), color = scheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = scheme.onSurface,
+            modifier = Modifier.size(20.dp).alpha(calmAlpha(on, Motion.QUICK)))
     }
 }
 

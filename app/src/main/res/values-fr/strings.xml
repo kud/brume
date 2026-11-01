@@ -727,4 +727,19 @@
     <string name="learn_finder_tile">Trouver son son</string>
     <string name="modules_count">%1$d sur %2$d</string>
     <string name="sync_row_off">Pas encore configurée</string>
+    <!-- Accueil : chaque fonction ouvre son propre écran (Erwann, 2026-11-01). -->
+    <string name="home_moment">Choisissez votre moment</string>
+    <string name="home_close">Retour à l\'accueil</string>
+    <string name="home_playing">En cours</string>
+    <string name="fn_sleep_line">Pour s\'endormir, avec minuterie</string>
+    <string name="fn_settle_line">Votre mélange de sons, en journée</string>
+    <string name="fn_breathe_line">Un souffle guidé, cinq rythmes</string>
+    <string name="fn_meditate">Méditer</string>
+    <string name="fn_meditate_line">Une séance calme, guidée ou non</string>
+    <string name="fn_tones_line">Une suite de tons à votre fréquence</string>
+    <string name="fn_ear_line">Trouver sa fréquence, garder un profil</string>
+    <string name="fn_journal_line">Une note par jour, et votre semaine</string>
+    <string name="fn_learn_line">De courtes lectures sur l\'acouphène</string>
+    <string name="breathe_rhythm">Rythme</string>
+    <string name="breathe_more">Allure, durée et voix</string>
 </resources>

@@ -199,7 +199,7 @@ internal fun UpdateSheetContent(
     ) {
         Text(
             stringResource(R.string.update_title),
-            style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
+            style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.semantics { heading() },
         )
         Text(

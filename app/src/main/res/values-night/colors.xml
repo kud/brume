@@ -2,5 +2,5 @@
 <resources>
     <color name="splash_mark">#FF7F8A97</color>
     <!-- The splash ground and the launch intro's, the window's own colour. -->
-    <color name="splash_ground">#FF000000</color>
+    <color name="splash_ground">#FF1B1E33</color>
 </resources>

@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import app.beansontoast.brume.Modules
 import app.beansontoast.brume.core.learn.Learn
 import app.beansontoast.brume.core.region.Country
-import app.beansontoast.brume.ui.BrumeScaffold
+import app.beansontoast.brume.ui.FnFrame
 import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.CountryChoice
 import app.beansontoast.brume.ui.CountrySettings
@@ -55,7 +55,7 @@ class CountryRenders(private val shot: String) {
         compose.setContent {
             BrumeTheme(dark = false, night = false) {
                 CompositionLocalProvider(LocalCountry provides country) {
-                    BrumeScaffold(Tab.LEARN, {}, Modules()) {
+                    FnFrame(onClose = {}) {
                         when (screen) {
                             "setting" -> page { CountrySettings(CountryChoice(null, country) {}) }
                             "doctor" -> page { DoctorGroup(onSettings = {}) }

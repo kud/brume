@@ -23,7 +23,7 @@ import app.beansontoast.brume.core.sound.MixLayer
 import app.beansontoast.brume.core.sound.NoiseColour
 import app.beansontoast.brume.core.sound.Sound
 import app.beansontoast.brume.playback.PlayerUi
-import app.beansontoast.brume.ui.BrumeScaffold
+import app.beansontoast.brume.ui.FnFrame
 import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.FinderActions
 import app.beansontoast.brume.ui.FinderDraft
@@ -102,7 +102,7 @@ class FinderRenders(private val shot: String) {
     }
 
     private fun show(night: Boolean, content: @Composable () -> Unit) {
-        compose.setContent { BrumeTheme(dark = night, night = night) { BrumeScaffold(Tab.LEARN, {}, Modules()) { content() } } }
+        compose.setContent { BrumeTheme(dark = night, night = night) { FnFrame(onClose = {}) { content() } } }
         compose.waitForIdle()
         val bitmap = compose.runOnUiThread {
             val v = compose.activity.window.decorView

@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
 import app.beansontoast.brume.Modules
-import app.beansontoast.brume.ui.BrumeScaffold
+import app.beansontoast.brume.ui.FnFrame
 import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.DecibelExplorer
 import app.beansontoast.brume.ui.LearnScreen
@@ -60,7 +60,7 @@ class LearnPlayRenders(private val shot: String) {
     }
 
     private fun tab(night: Boolean, content: @Composable () -> Unit) {
-        compose.setContent { BrumeTheme(dark = night, night = night) { BrumeScaffold(Tab.LEARN, {}, Modules()) { content() } } }
+        compose.setContent { BrumeTheme(dark = night, night = night) { FnFrame(onClose = {}) { content() } } }
         compose.waitForIdle()
         val bitmap = compose.runOnUiThread {
             val v = compose.activity.window.decorView

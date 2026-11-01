@@ -729,4 +729,19 @@
     <string name="learn_finder_tile">Find your sound</string>
     <string name="modules_count">%1$d of %2$d</string>
     <string name="sync_row_off">Not set up</string>
+    <!-- Home: every function, each opening its own screen (Erwann, 2026-11-01). -->
+    <string name="home_moment">Choose your moment</string>
+    <string name="home_close">Back to home</string>
+    <string name="home_playing">Playing</string>
+    <string name="fn_sleep_line">To fall asleep, with a timer</string>
+    <string name="fn_settle_line">Your mix of sounds, during the day</string>
+    <string name="fn_breathe_line">A paced breath, five rhythms</string>
+    <string name="fn_meditate">Meditate</string>
+    <string name="fn_meditate_line">A quiet session, guided or not</string>
+    <string name="fn_tones_line">A tone pattern at your pitch</string>
+    <string name="fn_ear_line">Find its pitch, keep a profile</string>
+    <string name="fn_journal_line">A note a day, and your week</string>
+    <string name="fn_learn_line">Short reads on tinnitus</string>
+    <string name="breathe_rhythm">Rhythm</string>
+    <string name="breathe_more">Pace, length and voice</string>
 </resources>
