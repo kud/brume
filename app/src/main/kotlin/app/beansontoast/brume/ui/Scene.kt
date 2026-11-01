@@ -40,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import app.beansontoast.design.rememberReducedMotion
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -93,7 +94,8 @@ import java.util.Locale
  *  - Nothing chosen for him: Brume reopens on the scene last used; never one picked by the clock.
  *  - Volume is a slide up or down anywhere on the page, told in words, never a number.
  *  - Too loud is always on screen.
- *  - Sacha's art drops into [art] and [thumb]; until then the mist stands in.
+ *  - Sacha's art lies behind each scene ([art], ui/SceneArt), slowly alive; the drawn mist stands in
+ *    only for a scene without art. His sound thumbnails wait for a redo ([thumb]).
  */
 
 enum class Scene(@StringRes val title: Int, val sounds: Boolean, @StringRes val purpose: Int) {
@@ -120,13 +122,14 @@ fun Modules.scenes(): List<Scene> = Scene.entries.filter {
     when (it) { Scene.BREATHE -> calm; Scene.TONES -> tones; else -> true }
 }
 
-/**
- * Sacha's scene art: one image per scene, drawn full-bleed behind the page (cropped from the centre,
- * dimmed at night). Null until his images land; the mist stands in.
- */
-@DrawableRes internal fun Scene.art(): Int? = null
+/** Sacha's scene art: three layers per scene, drawn full-bleed behind the page ([SceneBackdrop]). */
+internal fun Scene.art(): SceneLayers? = sceneArt[this]
 
-/** Sacha's sound thumbnails: a square image per sound, in the pills and the tiles. Null until then. */
+/**
+ * Sacha's sound thumbnails: a square image per sound, in the pills and the tiles. His first set (PR
+ * #3) stays out (Iris, 2026-11-01): brown, pink, grey and wind are near-identical horizontal lines,
+ * so they fail "distinguishable without colour". The pills keep their drawn textures until a redo.
+ */
 @DrawableRes internal fun NoiseColour.thumb(): Int? = null
 @DrawableRes internal fun Ambience.thumb(): Int? = null
 
@@ -178,6 +181,8 @@ fun SceneScreen(
     onSuggest: (SceneMix) -> Unit = {},
     /** The swipe hint shows until the scenes have been changed once, then never again. */
     swipeHint: Boolean = true,
+    /** A fixed scene clock in milliseconds, for the drift renders only; the app runs its own. */
+    sceneClock: (() -> Long)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
     val start = scenes.indexOf(scene).coerceAtLeast(0)
@@ -193,14 +198,25 @@ fun SceneScreen(
         if (i >= 0 && i != pager.currentPage && peek == 0f) pager.animateScrollToPage(i)
     }
     val shown = scenes.getOrElse(pager.currentPage) { scene }
+    val still = sceneClock == null && rememberReducedMotion()
+    val clock = sceneClock ?: rememberSceneClock(still)
+    // Only the shown scene and its neighbours are decoded, ahead of the swipe that reaches them.
+    val context = LocalContext.current
+    LaunchedEffect(pager, scenes) {
+        snapshotFlow { pager.settledPage }.collect { i ->
+            listOf(i, i + 1, i - 1).forEach { scenes.getOrNull(it)?.let { s -> SceneArtCache.preload(context, s.art()) } }
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
         // The launch intro lands Horizon's lines on this mist (ui/launch), as it did on the old dock.
         val anchors = LocalLaunchAnchors.current
         val strength = if (ui.playing) 1f else 0.35f
         val mistInk = scheme.onSurfaceVariant
-        Mist(Modifier.fillMaxWidth().fillMaxHeight(0.62f).align(Alignment.BottomCenter)
-            .onGloballyPositioned { anchors?.mist = MistAnchor(it.boundsInWindow(), strength, mistInk) }, strength = strength, color = mistInk)
+        val mistArea = Modifier.fillMaxWidth().fillMaxHeight(0.62f).align(Alignment.BottomCenter)
+            .onGloballyPositioned { anchors?.mist = MistAnchor(it.boundsInWindow(), strength, mistInk) }
+        // The drawn mist stands in only where a scene has no art; the intro keeps its landing place.
+        if (shown.art() == null) Mist(mistArea, strength = strength, color = mistInk) else Box(mistArea)
         Column(Modifier.fillMaxSize()) {
             SceneNames(scenes, shown) { onScene(it) }
             // What the scene is for, so Sleep and Settle read apart before anything is chosen.
@@ -209,7 +225,8 @@ fun SceneScreen(
             if (swipeHint) Text(stringResource(R.string.scene_swipe), style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant.copy(alpha = 0.75f), modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp))
             HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { scenes[it].name }) { page ->
-                ScenePage(scenes[page], ui, actions, onSounds, onTonesSetup, breathe, night, onSuggest)
+                val offset = { (pager.currentPage - page) + pager.currentPageOffsetFraction }
+                ScenePage(scenes[page], ui, actions, onSounds, onTonesSetup, breathe, night, onSuggest, still, clock, offset)
             }
             val (view, mine) = forMode(ui, actions, if (shown == Scene.TONES) Mode.TONES else Mode.SOUNDS)
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -250,6 +267,9 @@ private fun ScenePage(
     scene: Scene, all: PlayerUi, allActions: ListenActions,
     onSounds: () -> Unit, onTonesSetup: () -> Unit, breathe: BreatheScene, night: Boolean,
     onSuggest: (SceneMix) -> Unit,
+    still: Boolean = true,
+    clock: () -> Long = { 0L },
+    offset: () -> Float = { 0f },
 ) {
     val (ui, actions) = forMode(all, allActions, if (scene == Scene.TONES) Mode.TONES else Mode.SOUNDS)
     val context = LocalContext.current
@@ -291,7 +311,10 @@ private fun ScenePage(
     }
     Box(Modifier.fillMaxSize()) {
         scene.art()?.let {
-            Image(painterResource(it), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alpha = if (night) 0.35f else 0.7f)
+            // Breathe's swell previews the rhythm chosen for the session; the others breathe at rest.
+            SceneBackdrop(scene, it, night, still, clock, offset,
+                breathe = if (scene == Scene.BREATHE && breathe.practice == Practice.BREATHE) breathe.pattern else null,
+                modifier = Modifier.fillMaxSize())
         }
         Column(
             Modifier.fillMaxSize().volumeSlide(levels, set).padding(horizontal = 20.dp),
