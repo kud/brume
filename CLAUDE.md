@@ -8,23 +8,24 @@ The name lives only in `gradle.properties` (`app.name`, `app.label`, `app.applic
 
 - `:core`: pure Kotlin/JVM, no Android. Every number the app makes: `rng/` (own SplitMix64 + PCG32, golden vectors; never `kotlin.random`), `dsp/` (biquads), `sound/` (noise colours, generated ambiences, `SoundEngine`, `LevelRules`), `journal/`, `export/` (versioned JSON), `NightHours`. New sound behaviour comes with a test here.
 - `:design`: Gamme-shaped Material 3 (`app.beansontoast.design`): `GammeTheme`, `SelectChip`, `SwitchRow`, `SettingsGroup`, `EmptyState`, `CentreSlider`. Replaced by Gamme's kit when it exists.
-- `:app`: Android. `playback/` (Player, foreground `PlaybackService` with AudioTrack and platform MediaSession), `data/` (Room), `ui/` (Compose). DI by hand in `AppGraph`.
+- `:app`: Android. `playback/` (Player, foreground `PlaybackService` with AudioTrack and platform MediaSession), `data/` (Room), `ui/` (Compose). DI by hand in `AppGraph`. Two flavours (`docs/updates.md`): `github` adds `src/github` (the in-app updater, `update/`, and its sheet), `fdroid` adds `src/fdroid` (stand-ins that draw nothing).
 
 ## Working here
 
-- Full check, offline: `export ANDROID_HOME=/root/android-sdk; ./gradlew --offline -q :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug`, then `grep -c 'severity="Error"' app/build/reports/lint-results-debug.xml` must print 0. Run it before every commit you'd push.
+- Full check, offline: `export ANDROID_HOME=/root/android-sdk; ./gradlew --offline -q :core:test :app:testGithubDebugUnitTest :app:testFdroidDebugUnitTest :app:lintGithubDebug :app:assembleGithubDebug :app:assembleFdroidDebug`, then `grep -c 'severity="Error"' app/build/reports/lint-results-githubDebug.xml` must print 0. Run it before every commit you'd push.
 - Versions are pastille's set (AGP 8.7.3, Gradle 8.10.2, Kotlin 2.0.21, KSP, Room 2.6.1, Compose BOM 2024.10.01, Robolectric 4.14.1) because it is the set the offline cache holds. `savedstate` and `kotlinx-coroutines-android` are pinned only to keep the graph inside the cache. A new or bumped dependency won't resolve offline; then CI is the compiler.
 - **Playback** uses the platform `MediaSession` and `Notification.MediaStyle`, not Media3: Media3 is not in the offline cache. Swap when a build can resolve it.
 - Room schemas are exported to `app/schemas` and committed; CI fails if they drift. Any schema change bumps the version and adds a migration test (`DatabaseTest`): stored data survives upgrades.
-- Renders: `BRUME_RENDERS=<dir> ./gradlew --offline :app:testDebugUnitTest --tests '*Renders*'` writes PNGs of each screen on invented data.
-- **Sync** (ADR `docs/adr/0001-folder-sync.md`): a user-chosen SAF folder holding `brume-sync.json`, merged by `:core` `sync/SyncMerge` (per-day later save wins, sessions union, settings per group). Levels never sync. The storage app uploads; Brume stays network-free.
-- Strings in English `values/` and French `values-fr/`, always both (`GuardsTest` checks).
+- Renders: `BRUME_RENDERS=<dir> ./gradlew --offline :app:testGithubDebugUnitTest --tests '*Renders*'` writes PNGs of each screen on invented data.
+- **Sync** (ADR `docs/adr/0001-folder-sync.md`): a user-chosen SAF folder holding `brume-sync.json`, merged by `:core` `sync/SyncMerge` (per-day later save wins, sessions union, settings per group). Levels never sync. The storage app uploads; sync never touches the network.
+- Strings in English `values/` and French `values-fr/`, always both, in `src/main/res` and `src/github/res` (`GuardsTest` checks).
+- **Updater** (`docs/updates.md`): pastille's, copied until Gamme's `kit/updates` exists; `update/Updates.kt` stays identical to pastille's but for its header and package, and the drift is listed in the doc. Each install follows its own variant: `.debug` takes `brume-<v>-debug.apk`, release `brume-<v>.apk`, so CI must keep those asset names. Never change the versionCode formula in `.github/workflows/android.yml`.
 
 ## Never
 
 - Put health data in the repo, fixtures, tests or screenshots: a user's readings live only on their phone and in their exports. Fixtures are invented.
 - Make a claim: no treats, cures, relieves, therapy, "reduces tinnitus", "clinically proven", in any string, the README or a commit. Use comfort, calm, sleep, cover, blend, track. `GuardsTest` scans the strings.
-- Add network access in v0.1: no `INTERNET` or other network permission (`checkNoNetwork*` fails the build), no `java.net`/HTTP client in sources (`GuardsTest`). The updater comes later in its own flavour, pastille's way.
+- Add network access outside the updater. Only the `github` flavour may use the network, and only to check and download its own releases from GitHub (`update/`, through `Hosts.ALLOWED`); `fdroid` and `src/main` stay network-free. `checkNoNetwork*` fails any `fdroid` variant asking for a network permission, and any `github` variant asking for more than `INTERNET` and `REQUEST_INSTALL_PACKAGES`; `GuardsTest` fails on `java.net`/HTTP code in `src/main` or `src/fdroid`, or in `src/github` outside `update/`.
 - Raise the system volume or a level without a user action. Every start fades in; "Too loud" cuts to silence.
 - Rest anything on colour alone: Erwann is colourblind. Selection is a check glyph and weight; values are written out.
 - Add AI attribution: no `Co-Authored-By`, no session trailer or link, no "Generated by" footer.
@@ -35,4 +36,4 @@ The name lives only in `gradle.properties` (`app.name`, `app.label`, `app.applic
 
 ## Releases
 
-A `vMAJOR.MINOR.PATCH-dev.N` tag (or the Android workflow run on `main` with that tag) publishes a pre-release; without signing secrets it ships the debug APK. A final release waits for Erwann's word.
+A `vMAJOR.MINOR.PATCH-dev.N` tag (or the Android workflow run on `main` with that tag) publishes a pre-release of the `github` build: always `brume-<v>-debug.apk` (committed debug key, stable across runs), plus `brume-<v>.apk` and its mapping when the signing secrets exist; without them a dev release ships the debug APK alone. A final release waits for Erwann's word.

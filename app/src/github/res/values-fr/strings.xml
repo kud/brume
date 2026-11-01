@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_title">Mettre à jour Brume</string>
+    <string name="update_installed">Installée : %1$s</string>
+    <string name="update_checking">Interrogation de GitHub…</string>
+    <string name="update_up_to_date">À jour : rien de plus récent sur GitHub</string>
+    <string name="update_ready">La version %1$s est prête</string>
+    <string name="update_downloading">Téléchargement de %1$s…</string>
+    <string name="update_downloading_percent">Téléchargement de %1$s · %2$d %%</string>
+    <string name="update_downloading_spoken">Téléchargement de %1$s, %2$d pour cent</string>
+    <string name="update_needs_permission">Téléchargée : autorisez l\'installation pour terminer</string>
+    <string name="update_installing">Installation de %1$s…</string>
+    <string name="update_fail_network">GitHub est injoignable : réessayez</string>
+    <string name="update_fail_feed">La réponse de GitHub est illisible : réessayez</string>
+    <string name="update_fail_download">Téléchargement interrompu : réessayez</string>
+    <string name="update_fail_digest">La somme de contrôle ne correspond pas : réessayez</string>
+    <string name="update_fail_package">Pas une version plus récente de Brume, supprimée : réessayez</string>
+    <string name="update_fail_install">Android ne l\'a pas installée : réessayez</string>
+    <string name="update_note_confirm">Android vous demande de confirmer avant d\'installer</string>
+    <string name="update_note_permission">Sur la page d\'Android, activez « Autoriser cette source », puis revenez</string>
+    <string name="update_later">Plus tard</string>
+    <string name="update_download">Télécharger</string>
+    <string name="update_not_now">Pas maintenant</string>
+    <string name="update_allow">Autoriser</string>
+    <string name="update_close">Fermer</string>
+    <string name="update_try_again">Réessayer</string>
+    <string name="update_done">OK</string>
+    <string name="about_updates_title">Mises à jour</string>
+    <string name="about_updates_idle">Brume cherche une version plus récente sur GitHub à son ouverture. Rien d\'autre ne quitte le téléphone.</string>
+    <string name="about_updates_found">La version %1$s est disponible</string>
+    <string name="about_updates_check">Rechercher une mise à jour</string>
+    <string name="about_updates_install">Mettre à jour vers %1$s</string>
+    <!-- Remplacent les lignes de src/main : la version github se connecte, uniquement pour ses mises à jour. -->
+    <string name="about_privacy">Tout reste sur ce téléphone. Brume n\'a ni compte, ni sauvegarde dans le cloud ; elle ne se connecte que pour chercher ses propres mises à jour sur GitHub, et n\'envoie rien sur vous. Les données ne sortent que dans un fichier que vous enregistrez vous-même, ou dans le dossier que vous choisissez de synchroniser.</string>
+    <string name="sync_off_body">Choisissez un dossier, dans Google Drive ou sur ce téléphone. Brume y garde un fichier, brume-sync.json, et le met à jour après chaque changement. Un autre téléphone qui choisit le même dossier garde le même journal. L\'app de stockage s\'occupe de l\'envoi : Brume ne se connecte que pour chercher ses propres mises à jour.</string>
+</resources>

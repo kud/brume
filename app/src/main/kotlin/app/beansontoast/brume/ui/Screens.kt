@@ -583,6 +583,8 @@ fun AboutScreen(
     version: String,
     onIntro: () -> Unit = {},
     onBack: () -> Unit = {},
+    /** The github build's Updates section (src/github); the fdroid build has none. */
+    updates: @Composable () -> Unit = {},
 ) {
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
@@ -613,6 +615,7 @@ fun AboutScreen(
         OutlinedButton(onIntro, Modifier.fillMaxWidth().padding(top = 16.dp).heightIn(min = 48.dp)) {
             Text(stringResource(R.string.about_intro))
         }
+        updates()
         // The brand signs About at its foot, never as a title (Erwann, 2026-10-31).
         Column(Modifier.padding(top = 24.dp, bottom = 16.dp)) {
             Text(stringResource(R.string.brand_word), style = MaterialTheme.typography.titleLarge)

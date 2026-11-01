@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 val appId: String = providers.gradleProperty("app.applicationId").get()
@@ -43,6 +44,20 @@ android {
                 keyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").get()
                 keyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").get()
             }
+        }
+    }
+
+    // Two builds of the same app (docs/updates.md). `github` carries the in-app updater, and with it
+    // INTERNET and REQUEST_INSTALL_PACKAGES, used only to check and download Brume's own releases
+    // from GitHub. `fdroid` is Brume as it always was, with no network at all. checkNoNetwork* and
+    // GuardsTest enforce both.
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("github") {
+            dimension = "distribution"
+        }
+        create("fdroid") {
+            dimension = "distribution"
         }
     }
 
@@ -109,14 +124,15 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
-// No network in v0.1, by construction (pastille's check, stricter): every variant's merged manifest
-// is read before it assembles or lints, and any network permission fails the build. The updater
-// arrives later in its own `github` flavour, which will be the only variant allowed INTERNET.
+// Network by construction (pastille's check, stricter): every variant's merged manifest is read
+// before it assembles or lints. An `fdroid` variant fails on any network permission; a `github`
+// variant may ask only for the updater's two (INTERNET, REQUEST_INSTALL_PACKAGES), never another.
 androidComponents {
     onVariants { variant ->
         val name = variant.name.replaceFirstChar { it.uppercase() }
         val check = tasks.register<NoNetworkCheck>("checkNoNetwork$name") {
             manifest.set(variant.artifacts.get(com.android.build.api.artifact.SingleArtifact.MERGED_MANIFEST))
+            updater.set(variant.flavorName == "github")
         }
         afterEvaluate {
             tasks.named("assemble$name") { dependsOn(check) }
@@ -130,15 +146,21 @@ abstract class NoNetworkCheck : DefaultTask() {
     @get:PathSensitive(PathSensitivity.NONE)
     abstract val manifest: RegularFileProperty
 
+    /** The github flavour: the updater's two permissions are allowed, nothing else. */
+    @get:Input
+    abstract val updater: Property<Boolean>
+
     @TaskAction
     fun check() {
         val text = manifest.get().asFile.readText()
         val asked = Regex("""<uses-permission[^>]*android:name="([^"]+)"""").findAll(text).map { it.groupValues[1] }.toSet()
-        val forbidden = asked.filter { it in NETWORK_PERMISSIONS }
-        check(forbidden.isEmpty()) { "Brume v0.1 must not ask for $forbidden (${manifest.get().asFile})" }
+        val allowed = if (updater.get()) UPDATER_PERMISSIONS else emptySet()
+        val forbidden = asked.filter { it in NETWORK_PERMISSIONS && it !in allowed }
+        check(forbidden.isEmpty()) { "This Brume build must not ask for $forbidden (${manifest.get().asFile})" }
     }
 
     private companion object {
+        val UPDATER_PERMISSIONS = setOf("android.permission.INTERNET", "android.permission.REQUEST_INSTALL_PACKAGES")
         val NETWORK_PERMISSIONS = setOf(
             "android.permission.INTERNET",
             "android.permission.ACCESS_NETWORK_STATE",
@@ -160,6 +182,8 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.savedstate)
     implementation(libs.coroutines.android)
+    // The updater reads GitHub's release list; only the github build carries it.
+    "githubImplementation"(libs.serialization.json)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)

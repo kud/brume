@@ -6,13 +6,18 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Two promises checked on the source itself: Brume never touches the system volume or the network,
- * and no string makes a health claim. Each guard first proves it can still fail.
+ * Promises checked on the source itself: Brume never touches the system volume; `src/main` and the
+ * fdroid build never reach the network, and in the github build only the updater does; no string
+ * makes a health claim. Each guard first proves it can still fail.
  */
 class GuardsTest {
-    private val sources = File("src/main/kotlin").walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
-    private val stringFiles = File("src/main/res").listFiles { f -> f.name.startsWith("values") }!!
-        .map { File(it, "strings.xml") }.filter { it.exists() }
+    private fun kotlin(dir: String) = File(dir).walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
+    private val sources = kotlin("src/main/kotlin") + kotlin("src/fdroid/kotlin")
+    private val githubSources = kotlin("src/github/kotlin")
+    private val resRoots = listOf("src/main/res", "src/github/res")
+    private val stringFiles = resRoots.flatMap { root ->
+        File(root).listFiles { f -> f.name.startsWith("values") }!!.map { File(it, "strings.xml") }.filter { it.exists() }
+    }
 
     private val forbiddenCode = listOf(
         "setStreamVolume", "adjustStreamVolume", "adjustSuggestedStreamVolume", "adjustVolume(",
@@ -25,6 +30,19 @@ class GuardsTest {
         assertTrue("no Kotlin sources found", sources.size >= 5)
         assertEquals(listOf("setStreamVolume"), codeHits("audio.setStreamVolume(STREAM_MUSIC, 15, 0)"))
         sources.forEach { assertEquals("${it.path}", emptyList<String>(), codeHits(it.readText())) }
+    }
+
+    /**
+     * The github build may use the network, only to check and download Brume's own releases: the
+     * HTTP code lives in its `update/` package (Updater, through Hosts.ALLOWED), and nowhere else.
+     */
+    @Test fun `in the github build only the updater reaches the network`() {
+        assertTrue("no github sources found", githubSources.size >= 3)
+        val network = listOf("java.net.", "javax.net.", "HttpURLConnection", "okhttp")
+        val reaching = githubSources.filter { f -> network.any { it in f.readText() } }.map { it.invariantSeparatorsPath }
+        assertTrue("the updater no longer found", reaching.any { it.endsWith("/update/Updater.kt") })
+        reaching.forEach { assertTrue("$it reaches the network outside update/", "/brume/update/" in it) }
+        githubSources.forEach { assertTrue("${it.path} must not change the volume", codeHits(it.readText()).none { "Volume" in it }) }
     }
 
     // Wellness wording (evidence.md §16, experience.md §8). The disclaimer may say what Brume is not.
@@ -49,7 +67,7 @@ class GuardsTest {
     private fun strings(file: File) = entry.findAll(file.readText()).associate { it.groupValues[1] to it.groupValues[2] }
 
     @Test fun `no string makes a claim`() {
-        assertTrue("both locales present", stringFiles.size >= 2)
+        assertTrue("both locales present in main and github", stringFiles.size >= 4)
         assertTrue(claims.containsMatchIn("This treatment works"))
         assertTrue(claims.containsMatchIn("Un soulagement durable"))
         stringFiles.forEach { file ->
@@ -72,13 +90,15 @@ class GuardsTest {
             "A therapy for tinnitus",
         ).forEach { assertTrue(it, claimIn(it)) }
         // The real strings do name it, so the exception is in use, not dead.
-        assertTrue(stringFiles.all { "NHS Talking Therapies" in it.readText() })
+        assertTrue(stringFiles.filter { "src/main" in it.invariantSeparatorsPath }.all { "NHS Talking Therapies" in it.readText() })
     }
 
     @Test fun `every string exists in English and French`() {
-        val en = strings(File("src/main/res/values/strings.xml")).keys
-        val fr = strings(File("src/main/res/values-fr/strings.xml")).keys
-        assertTrue(en.size > 30)
-        assertEquals(en, fr)
+        resRoots.forEach { root ->
+            val en = strings(File("$root/values/strings.xml")).keys
+            val fr = strings(File("$root/values-fr/strings.xml")).keys
+            assertTrue(root, en.size > 20)
+            assertEquals(root, en, fr)
+        }
     }
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The github build only: the in-app updater (docs/updates.md). INTERNET reaches GitHub's API and
+     download hosts and nothing else (Hosts.ALLOWED); no reading, setting or level ever leaves the
+     phone. The fdroid build has neither permission, which checkNoNetwork* enforces. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <application>
+        <receiver
+            android:name=".update.UpdateInstallReceiver"
+            android:exported="false" />
+    </application>
+
+</manifest>

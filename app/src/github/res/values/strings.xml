@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The github build's updater (docs/updates.md). Every string here exists in values-fr too. -->
+<resources>
+    <string name="update_title">Update Brume</string>
+    <string name="update_installed">Installed: %1$s</string>
+    <string name="update_checking">Asking GitHub…</string>
+    <string name="update_up_to_date">Up to date: nothing newer on GitHub</string>
+    <string name="update_ready">Version %1$s is ready</string>
+    <string name="update_downloading">Downloading %1$s…</string>
+    <string name="update_downloading_percent">Downloading %1$s · %2$d%%</string>
+    <string name="update_downloading_spoken">Downloading %1$s, %2$d percent</string>
+    <string name="update_needs_permission">Downloaded: allow installs to finish</string>
+    <string name="update_installing">Installing %1$s…</string>
+    <string name="update_fail_network">Couldn\'t reach GitHub: try again</string>
+    <string name="update_fail_feed">GitHub\'s answer was garbled: try again</string>
+    <string name="update_fail_download">Download stopped: try again</string>
+    <string name="update_fail_digest">Checksum didn\'t match: try again</string>
+    <string name="update_fail_package">Not a newer Brume, deleted: try again</string>
+    <string name="update_fail_install">Android didn\'t install it: try again</string>
+    <string name="update_note_confirm">Android asks you to confirm before it installs</string>
+    <string name="update_note_permission">On Android\'s page, turn on Allow from this source, then come back</string>
+    <string name="update_later">Later</string>
+    <string name="update_download">Download</string>
+    <string name="update_not_now">Not now</string>
+    <string name="update_allow">Allow installs</string>
+    <string name="update_close">Close</string>
+    <string name="update_try_again">Try again</string>
+    <string name="update_done">Done</string>
+    <string name="about_updates_title">Updates</string>
+    <string name="about_updates_idle">Brume looks for a newer version on GitHub when it opens. Nothing else leaves the phone.</string>
+    <string name="about_updates_found">Version %1$s is out</string>
+    <string name="about_updates_check">Check for updates</string>
+    <string name="about_updates_install">Update to %1$s</string>
+    <!-- Overrides of src/main's privacy lines: the github build goes online, only for its own updates. -->
+    <string name="about_privacy">Everything stays on this phone. Brume has no account and no cloud backup; it goes online only to look for its own updates on GitHub, and sends nothing about you. Data leaves only in a file you save yourself, or in the folder you choose to sync with.</string>
+    <string name="sync_off_body">Choose a folder, in Google Drive or on this phone. Brume keeps one file there, brume-sync.json, and updates it after every change. Another phone that chooses the same folder keeps the same journal. The storage app does the uploading: Brume itself goes online only to look for its own updates.</string>
+</resources>

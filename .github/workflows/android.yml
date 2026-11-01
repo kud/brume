@@ -38,10 +38,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6.4.0
 
       - name: Test, lint and assemble
-        run: ./gradlew --stacktrace :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+        # The github build (with the updater) is tested and linted; the fdroid build, with no
+        # network at all, is assembled and runs its own guards (checkNoNetwork*, GuardsTest).
+        run: ./gradlew --stacktrace :core:test :app:testGithubDebugUnitTest :app:testFdroidDebugUnitTest :app:lintGithubDebug :app:assembleGithubDebug :app:assembleFdroidDebug
 
       - name: Lint has no errors
-        run: test "$(grep -c 'severity="Error"' app/build/reports/lint-results-debug.xml)" = 0
+        run: test "$(grep -c 'severity="Error"' app/build/reports/lint-results-githubDebug.xml)" = 0
 
       - name: Room schemas match the committed ones
         run: |
@@ -52,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/github/debug/*.apk
           if-no-files-found: error
 
       - name: Upload reports
@@ -95,7 +97,8 @@ jobs:
             echo "::error::Tag $TAG is not vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-dev.N"
             exit 1
           fi
-          # A dev build sorts below its final release: 0.1.0-dev.3 < 0.1.0.
+          # A dev build sorts below its final release: 0.1.0-dev.3 < 0.1.0. Never change this formula:
+          # installs update in place only to a higher code (v0.1.0-dev.20 shipped as 100020).
           dev="${BASH_REMATCH[5]:-99}"
           if [ "$dev" -gt 98 ] && [ -n "${BASH_REMATCH[4]}" ]; then
             echo "::error::dev numbers stop at 98"
@@ -141,15 +144,15 @@ jobs:
 
       - name: Assemble release
         if: env.SIGNED == 'true'
-        run: ./gradlew --stacktrace :app:assembleRelease
+        run: ./gradlew --stacktrace :app:assembleGithubRelease
 
       - name: Verify the signature
         if: env.SIGNED == 'true'
         run: |
-          apk=app/build/outputs/apk/release/app-release.apk
+          apk=app/build/outputs/apk/github/release/app-github-release.apk
           if [ ! -f "$apk" ]; then
-            echo "::error::$apk not found (an unsigned build would be app-release-unsigned.apk)"
-            ls -la app/build/outputs/apk/release/ || true
+            echo "::error::$apk not found (an unsigned build would be app-github-release-unsigned.apk)"
+            ls -la app/build/outputs/apk/github/release/ || true
             exit 1
           fi
           apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
@@ -162,21 +165,24 @@ jobs:
       - name: Keep the R8 mapping
         if: env.SIGNED == 'true'
         run: |
-          mapping=app/build/outputs/mapping/release/mapping.txt
+          mapping=app/build/outputs/mapping/githubRelease/mapping.txt
           [ -f "$mapping" ] || { echo "::error::$mapping not found"; exit 1; }
           name=$(grep '^app.name=' gradle.properties | cut -d= -f2)
           cp "$mapping" "$RUNNER_TEMP/$name-$BRUME_VERSION_NAME-mapping.txt"
           echo "RELEASE_MAPPING=$RUNNER_TEMP/$name-$BRUME_VERSION_NAME-mapping.txt" >> "$GITHUB_ENV"
 
+      # Every release also carries the github build's debug APK, signed with the committed debug key,
+      # because the in-app updater follows its own variant (docs/updates.md): a `.debug` install
+      # takes `<app>-<version>-debug.apk`, a release install `<app>-<version>.apk`. Rename either
+      # and the installs stop finding their updates.
       - name: Assemble debug
-        if: env.SIGNED != 'true'
         run: |
-          ./gradlew --stacktrace :app:assembleDebug
-          apk=app/build/outputs/apk/debug/app-debug.apk
-          [ -f "$apk" ] || { echo "::error::$apk not found"; ls -la app/build/outputs/apk/debug/ || true; exit 1; }
+          ./gradlew --stacktrace :app:assembleGithubDebug
+          apk=app/build/outputs/apk/github/debug/app-github-debug.apk
+          [ -f "$apk" ] || { echo "::error::$apk not found"; ls -la app/build/outputs/apk/github/debug/ || true; exit 1; }
           name=$(grep '^app.name=' gradle.properties | cut -d= -f2)
           cp "$apk" "$RUNNER_TEMP/$name-$BRUME_VERSION_NAME-debug.apk"
-          echo "RELEASE_APK=$RUNNER_TEMP/$name-$BRUME_VERSION_NAME-debug.apk" >> "$GITHUB_ENV"
+          echo "DEBUG_APK=$RUNNER_TEMP/$name-$BRUME_VERSION_NAME-debug.apk" >> "$GITHUB_ENV"
 
       - name: Publish the GitHub Release
         env:
@@ -194,7 +200,8 @@ jobs:
           else
             flags+=(--verify-tag)
           fi
-          files=("$RELEASE_APK")
+          files=("$DEBUG_APK")
+          if [ -n "${RELEASE_APK:-}" ]; then files+=("$RELEASE_APK"); fi
           if [ -n "${RELEASE_MAPPING:-}" ]; then files+=("$RELEASE_MAPPING"); fi
           gh release create "$TAG" "${files[@]}" --generate-notes --title "$TAG" "${flags[@]}"
 

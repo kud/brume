@@ -167,6 +167,8 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     fun pop() { pages = stack.dropLast(1).joinToString("/") }
     // The introduction shows once, on first launch, and again from About Brume. Finishing or skipping marks it seen.
     var showIntro by rememberSaveable { mutableStateOf(!graph.settings.introSeen) }
+    // The update sheet (github build only; the fdroid build's stand-ins draw nothing).
+    var showUpdate by rememberSaveable { mutableStateOf(false) }
 
     // A sound scene keeps its own mix: any change to its sounds or timer is saved to it at once.
     fun keepMix() { if (scene.sounds) graph.settings.setSceneMix(scene.name, SceneMix.of(graph.player.ui.value).encode()) }
@@ -265,7 +267,8 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                             country = CountryChoice(chosen, guessedCountry) { graph.settings.setCountry(it?.name) },
                             language = if (Build.VERSION.SDK_INT >= 33) remember { LanguageChoice(currentLanguage(context)) { applyLanguage(context, it) } } else null)
                         page?.startsWith("topic:") == true -> LearnTopicScreen(page.removePrefix("topic:").toInt(), onBack = ::pop, onCard = { push("card:$it") })
-                        page == "about" -> AboutScreen(version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true }, onBack = ::pop)
+                        page == "about" -> AboutScreen(version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true }, onBack = ::pop,
+                            updates = { UpdatesAbout(onOpen = { showUpdate = true }) })
                         page == "tones-how" -> TonesHowScreen(onBack = ::pop)
                         page == "sounds" -> SoundsScreen(player, actions, onBack = ::pop, hint = pickerHint, onHintSeen = graph.settings::setPickerHintSeen)
                         page == "tones" -> TonesScreen(player, actions, onHow = { push("tones-how") })
@@ -340,6 +343,9 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                     }
                 }
                 LaunchIntroOverlay(intro, firstLaunch)
+                // A newer build found on opening offers itself once, never over the introduction or a session.
+                UpdatesOnOpen(canAnnounce = { !showIntro && breathStartedAt == null && meditationStartedAt == null }, onFound = { showUpdate = true })
+                if (showUpdate) UpdateSheet(onDismiss = { showUpdate = false })
             }
         }
     }
