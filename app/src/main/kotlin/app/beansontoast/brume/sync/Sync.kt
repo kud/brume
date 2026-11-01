@@ -172,7 +172,10 @@ class Sync(
         val merged = SyncMerge.merge(local, other, Instant.now().toString(), BuildConfig.VERSION_NAME)
         val changes = SyncMerge.changesFor(local, merged)
         if (changes.isEmpty) return 0 to 0
-        val counts = database.withTransaction { journal.take(changes.checkIns, changes.sessions) }
+        val counts = database.withTransaction {
+            journal.takeProfiles(changes.profiles)
+            journal.take(changes.checkIns, changes.sessions)
+        }
         withContext(Dispatchers.Main) {
             changes.nightHours?.let { (on, at) -> settings.applyNightHours(on, at) }
             changes.tones?.let { (pitch, trims, at) -> player.applySyncedTones(pitch, trims, at) }

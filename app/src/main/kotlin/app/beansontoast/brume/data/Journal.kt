@@ -5,6 +5,8 @@ import app.beansontoast.brume.core.export.ExportFile
 import app.beansontoast.brume.core.export.ExportFormat
 import app.beansontoast.brume.core.export.SessionV1
 import app.beansontoast.brume.core.export.SettingsV1
+import app.beansontoast.brume.core.export.ProfileV1
+import app.beansontoast.brume.core.finder.TinnitusProfile
 import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.journal.EndedBy
 import app.beansontoast.brume.core.journal.ListeningSession
@@ -16,6 +18,17 @@ import java.time.ZoneId
 
 class Journal(private val dao: JournalDao) {
     val checkIns: Flow<List<CheckIn>> = dao.checkIns().map { rows -> rows.map { it.toCore() } }
+
+    /** « Mon acouphène » profiles, most recently saved first; removed ones are not listed. */
+    val profiles: Flow<List<TinnitusProfile>> = dao.profiles().map { rows -> rows.map { it.toCore() } }
+
+    suspend fun saveProfile(profile: TinnitusProfile) = dao.upsertProfile(profile.copy(updatedAt = System.currentTimeMillis()).toEntity())
+
+    /** Removes a profile: only its id and the time stay, so another phone's copy is not brought back. */
+    suspend fun deleteProfile(id: String) = dao.upsertProfile(TinnitusProfile(id, "").tombstone(System.currentTimeMillis()).toEntity())
+
+    /** Stores profiles merged from a file, each with its own save time. */
+    suspend fun takeProfiles(profiles: List<ProfileV1>) = profiles.forEach { dao.upsertProfile(ExportFormat.toProfile(it).toEntity()) }
 
     /** Seconds listened since Monday, local time. */
     fun weekSeconds(zone: ZoneId = ZoneId.systemDefault()): Flow<Long> {
@@ -46,7 +59,7 @@ class Journal(private val dao: JournalDao) {
         }
         val rows = dao.allCheckIns()
         return ExportFormat.build(Instant.now().toString(), appVersion, rows.map { it.toCore() }, sessions,
-            rows.associate { it.day to it.updatedAt }, settings)
+            rows.associate { it.day to it.updatedAt }, settings, dao.allProfiles().map { it.toCore() })
     }
 
     /** Stores rows merged from a file, keeping each check-in's own save time. Returns (days, sessions). */
@@ -61,4 +74,12 @@ class Journal(private val dao: JournalDao) {
     }
 
     private fun CheckInEntity.toCore() = CheckIn(day, loudness, bother, note)
+
+    private fun ProfileEntity.toCore() = ExportFormat.toProfile(
+        ProfileV1(id, name, character, side, rhythm, loudness, bother, updatedAt, deleted),
+    ).copy(matches = ExportFormat.decodeMatches(matches))
+
+    private fun TinnitusProfile.toEntity() = ExportFormat.toV1(this).let {
+        ProfileEntity(id, name, it.character, it.side, it.rhythm, loudness, bother, ExportFormat.encodeMatches(matches), updatedAt, deleted)
+    }
 }

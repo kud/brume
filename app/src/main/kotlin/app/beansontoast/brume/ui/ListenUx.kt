@@ -118,7 +118,7 @@ fun ListenComfort(all: PlayerUi, allActions: ListenActions) {
  * the dock with its session timer. Play is one tap from the tab.
  */
 @Composable
-fun TonesScreen(all: PlayerUi, allActions: ListenActions, onHow: () -> Unit = {}) {
+fun TonesScreen(all: PlayerUi, allActions: ListenActions, onHow: () -> Unit = {}, onFinder: () -> Unit = {}) {
     val (ui, actions) = forMode(all, allActions, Mode.TONES)
     Column(Modifier.fillMaxSize()) {
         val scroll = rememberScrollState()
@@ -126,6 +126,7 @@ fun TonesScreen(all: PlayerUi, allActions: ListenActions, onHow: () -> Unit = {}
             ScreenTitle(R.string.tab_tones, stringResource(R.string.ux_tones_heading) + " · " + stringResource(R.string.ux_tones_session))
             NowPlaying(ui, actions, Modifier.padding(top = 16.dp))
             QuietLink(stringResource(R.string.tones_how), onHow)
+            QuietLink(stringResource(R.string.finder_entry), onFinder)
             SectionTitle(stringResource(R.string.tones_pitch))
             PitchCard(ui, actions.tones)
             SectionTitle(stringResource(R.string.listen_levels))
@@ -218,7 +219,11 @@ private fun Empty(@StringRes text: Int) =
     Text(stringResource(text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = 4.dp))
 
-@StringRes internal fun Sound.kind() = if (this is Sound.Noise) R.string.listen_noise else R.string.mixer_recording
+@StringRes internal fun Sound.kind() = when (this) {
+    is Sound.Noise -> R.string.listen_noise
+    is Sound.Recorded -> R.string.mixer_recording
+    is Sound.Band -> R.string.sound_band_kind
+}
 
 /**
  * Every sound as a chip, noises then recordings: a check and weight on the ones in the mix. A tap

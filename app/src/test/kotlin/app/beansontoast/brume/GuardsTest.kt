@@ -101,4 +101,24 @@ class GuardsTest {
             assertEquals(root, en, fr)
         }
     }
+
+    // « Mon acouphène » (2026-11-01): finding and describing, never testing or diagnosing, and no programme.
+    private val clinical = Regex(
+        "\\b(test|tests|testing|measure|measurement|detect|detection|assessment|diagnos\\w*|programme|program|" +
+            "examen|mesure\\w*|détect\\w*|évaluation|diagnostic\\w*)\\b|\\bCR\\b|notch|encoche",
+        RegexOption.IGNORE_CASE,
+    )
+
+    @Test fun `the tinnitus journey finds and describes, never tests or diagnoses`() {
+        assertTrue(clinical.containsMatchIn("A hearing test"))
+        assertTrue(clinical.containsMatchIn("Un diagnostic"))
+        var seen = 0
+        listOf("values", "values-fr").forEach { dir ->
+            strings(File("src/main/res/$dir/strings.xml")).filterKeys { it.startsWith("finder_") || it.startsWith("sound_band") }.forEach { (name, text) ->
+                seen++
+                assertTrue("$dir $name: \"$text\"", !clinical.containsMatchIn(text))
+            }
+        }
+        assertTrue("the guard read the journey's strings", seen > 150)
+    }
 }

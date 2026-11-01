@@ -174,6 +174,16 @@ object ExportFormat {
         },
     )
 
+    private val compact = Json { encodeDefaults = true; ignoreUnknownKeys = true }
+    private val matchList = kotlinx.serialization.builtins.ListSerializer(MatchV1.serializer())
+
+    /** A profile's matches as stored in one database column: the export's own shape. */
+    fun encodeMatches(matches: List<PitchMatch>): String =
+        compact.encodeToString(matchList, matches.map { MatchV1(it.id, it.day, it.hz, it.sound.wire(), it.octaveChecked) })
+
+    fun decodeMatches(text: String): List<PitchMatch> = runCatching { compact.decodeFromString(matchList, text) }.getOrDefault(emptyList())
+        .mapNotNull { m -> enumOf<Character>(m.sound)?.let { PitchMatch(m.id, m.day, PitchLadder.clamp(m.hz), it, m.octaveChecked) } }
+
     fun toProfiles(file: ExportFile): List<TinnitusProfile> = file.profiles.orEmpty().map(::toProfile)
 
     private fun Enum<*>.wire() = name.lowercase()

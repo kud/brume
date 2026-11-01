@@ -142,6 +142,7 @@ fun Modules.shows(tab: Tab) = when (tab) { Tab.TONES -> tones; Tab.CALM -> calm;
 @StringRes fun Sound.label() = when (this) {
     is Sound.Noise -> colour.label()
     is Sound.Recorded -> ambience.label()
+    is Sound.Band -> R.string.sound_band
 }
 
 
@@ -545,6 +546,7 @@ fun LearnScreen(
     onAbout: () -> Unit = {},
     onCard: (String) -> Unit = {},
     still: Boolean? = null,
+    onFinder: () -> Unit = {},
 ) {
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
@@ -556,6 +558,8 @@ fun LearnScreen(
         HorizontalDivider(Modifier.padding(top = 24.dp, bottom = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
         Text(stringResource(R.string.learn_library), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
         LearnTopics(onTopic)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        NavRow(stringResource(R.string.finder_title), stringResource(R.string.finder_entry_summary), onClick = onFinder)
 
         DoctorGroup(onSettings)
 

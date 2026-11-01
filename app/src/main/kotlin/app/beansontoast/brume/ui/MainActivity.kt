@@ -29,6 +29,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.DisposableEffect
+import app.beansontoast.brume.core.sound.Sound
+import app.beansontoast.brume.playback.ProbePlayer
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -327,7 +330,25 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                             updates = { UpdatesAbout(onOpen = { showUpdate = true }) })
                         page == "tones-how" -> TonesHowScreen(onBack = ::pop)
                         page == "sounds" -> SoundsScreen(player, actions, onBack = ::pop, hint = pickerHint, onHintSeen = graph.settings::setPickerHintSeen)
-                        page == "tones" -> TonesScreen(player, actions, onHow = { push("tones-how") })
+                        page == "tones" -> TonesScreen(player, actions, onHow = { push("tones-how") }, onFinder = { push("finder") })
+                        page == "finder" -> {
+                            // The search plays on its own track; the mixer goes quiet first (start from silence).
+                            val probe = remember { ProbePlayer() }
+                            DisposableEffect(Unit) { onDispose { probe.close() } }
+                            val profiles by graph.journal.profiles.collectAsStateWithLifecycle(initialValue = emptyList())
+                            FinderScreen(profiles, onBack = ::pop, actions = FinderActions(
+                                probe = { p -> if (p != null && p.level > 0f) graph.player.pause(EndedBy.USER); probe.set(p) },
+                                tooLoud = probe::tooLoud,
+                                save = { scope.launch { graph.journal.saveProfile(it) } },
+                                delete = { scope.launch { graph.journal.deleteProfile(it) } },
+                                // The comfort sound joins the mix as one more layer, in a sound scene, at the level in words he sets.
+                                comfort = { band ->
+                                    modules.scenes().firstOrNull { it.sounds }?.let(::goScene)
+                                    graph.player.add(Sound.Band(band.centre, band.widthTenths)); keepMix()
+                                    tab = Tab.LISTEN; pages = ""
+                                },
+                            ))
+                        }
                         page == "calm" -> CalmScreen(
                             modules = modules,
                             practice = practice,
@@ -398,7 +419,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                             onExport = { export.launch("brume-export-${LocalDate.now()}.json") },
                             onCard = { push("card:$it") },
                         )
-                        Tab.LEARN -> LearnScreen(onTopic = { push("topic:$it") }, onSettings = { push("settings") }, onAbout = { push("about") }, onCard = { push("card:$it") })
+                        Tab.LEARN -> LearnScreen(onFinder = { push("finder") }, onTopic = { push("topic:$it") }, onSettings = { push("settings") }, onAbout = { push("about") }, onCard = { push("card:$it") })
                         }
                     }
                     }

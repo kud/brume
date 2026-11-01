@@ -201,6 +201,7 @@ class Player(private val context: Context, private val journal: Journal, private
     private fun post(layer: MixLayer, level: Float) {
         when (val sound = layer.sound) {
             is Sound.Noise -> engine.post(Command.Add(sound, level, layer.tone))
+            is Sound.Band -> engine.post(Command.Add(sound, level))
             is Sound.Recorded -> scope.launch(Dispatchers.Default) {
                 val loop = loops[sound.ambience] ?: runCatching { Loops.decode(context, sound.ambience) }.getOrNull()?.also { loops[sound.ambience] = it }
                 // Still wanted once decoded, at the level it has now: a slider moved meanwhile wins.
@@ -299,14 +300,16 @@ class Player(private val context: Context, private val journal: Journal, private
         // The log has no tone column yet: a tone session goes in the sound slot as TONE_PATTERN, with
         // its level and never its pitch, so the schema (and every stored row) stays as it is.
         val tones = ui.mode == Mode.TONES
+        // A comfort band from « Mon acouphène » joins the noise column as BAND, never with its pitch.
         val noises = ui.sounds.filterIsInstance<Sound.Noise>()
+        val bands = ui.sounds.filterIsInstance<Sound.Band>()
         val recorded = ui.sounds.filterIsInstance<Sound.Recorded>()
         val session = ListeningSession(
             startedAt = sessionStartedAt, seconds = seconds,
             // The log keeps its two columns: every noise in the first, every recording in the second,
             // joined by "+", each with the loudest level of its group.
-            noise = if (tones) TONE_PATTERN else noises.joinToString("+") { it.colour.name }.ifEmpty { null },
-            noiseLevel = if (tones) ui.toneLevel else noises.maxOfOrNull { ui.level(it) },
+            noise = if (tones) TONE_PATTERN else (noises.map { it.colour.name } + bands.map { "BAND" }).joinToString("+").ifEmpty { null },
+            noiseLevel = if (tones) ui.toneLevel else (noises + bands).maxOfOrNull { ui.level(it) },
             ambience = if (tones) null else recorded.joinToString("+") { it.ambience.name }.ifEmpty { null },
             ambienceLevel = if (tones) null else recorded.maxOfOrNull { ui.level(it) },
             endedBy = ended,
