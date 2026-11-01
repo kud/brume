@@ -1,5 +1,8 @@
 package app.beansontoast.brume.ui
 
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -104,7 +107,7 @@ enum class Tab { LISTEN, CALM, TONES, JOURNAL, LEARN }
 fun Modules.shows(tab: Tab) = when (tab) { Tab.TONES -> tones; Tab.CALM -> calm; else -> true }
 
 @Composable
-fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), content: @Composable () -> Unit) {
+fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), mini: (@Composable () -> Unit)? = null, content: @Composable () -> Unit) {
     // A few words across the top (Erwann chose A's shape, 2026-10-31): Listen, Journal, Learn.
     // Breathe and Tones are scenes inside Listen, so they are not here twice; [modules] only
     // decides which scenes Listen shows.
@@ -119,22 +122,48 @@ fun BrumeScaffold(tab: Tab, onTab: (Tab) -> Unit, modules: Modules = Modules(), 
                 }
             }
         },
+        bottomBar = { mini?.invoke() },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) { content() }
     }
 }
 
-/** The page you are on is told by weight and a short rule under the word, never by a hue. */
+/**
+ * The page you are on is told by weight and an underline, never by a hue (Erwann, 2026-10-31: the
+ * words were hard to see). The others stay in the full ink, a little lighter, and every word has a
+ * 48 dp target at least.
+ */
 @Composable
 private fun TopWord(@StringRes text: Int, selected: Boolean, onClick: () -> Unit) {
-    val ink = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-    Column(
-        Modifier.heightIn(min = 48.dp).selectable(selected = selected, role = Role.Tab, onClick = onClick).padding(horizontal = 8.dp, vertical = 10.dp),
-        horizontalAlignment = Alignment.Start,
+    val ink = MaterialTheme.colorScheme.onSurface
+    Box(
+        Modifier.heightIn(min = 56.dp).widthIn(min = 48.dp).selectable(selected = selected, role = Role.Tab, onClick = onClick).padding(horizontal = 12.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(stringResource(text), style = MaterialTheme.typography.titleMedium, color = ink, maxLines = 1,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
-        Box(Modifier.padding(top = 4.dp).width(20.dp).height(2.dp).background(if (selected) ink else Color.Transparent))
+        Text(stringResource(text), style = MaterialTheme.typography.titleMedium, color = if (selected) ink else ink.copy(alpha = 0.8f), maxLines = 1,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            textDecoration = if (selected) TextDecoration.Underline else null)
+    }
+}
+
+/**
+ * The sound playing, on every tab but Listen (Erwann, 2026-10-31): its name and Pause, under a hair
+ * line, in the ink of the top words. Nothing else; Listen has the rest.
+ */
+@Composable
+fun MiniPlayer(name: String, onPause: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val pause = stringResource(R.string.action_pause)
+    Column(Modifier.fillMaxWidth().background(scheme.background).navigationBarsPadding()) {
+        Box(Modifier.fillMaxWidth().height(1.dp).background(scheme.outlineVariant))
+        Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            Row(Modifier.heightIn(min = 48.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onPause).padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Icon(painterResource(R.drawable.ic_pause), null, modifier = Modifier.size(20.dp))
+                Text(pause, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
+            }
+        }
     }
 }
 

@@ -1,5 +1,7 @@
 package app.beansontoast.brume.ui
 
+import app.beansontoast.brume.playback.Bells
+import app.beansontoast.brume.core.sound.Bell
 import app.beansontoast.brume.playback.openOutputSwitcher
 import android.os.Build
 import android.os.Bundle
@@ -88,13 +90,14 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     LaunchedEffect(modules) { if (scene !in modules.scenes()) scene = Scene.SETTLE }
     var breath by remember {
         mutableStateOf(BreathSetup(
-            pattern = Pattern.entries.firstOrNull { it.name == graph.settings.breathPattern } ?: Pattern.LONG_OUT,
+            // 5-5 left the set (2026-11-01): a stored 5-5 becomes Souffle long, and is saved so.
+            pattern = Pattern.fromStored(graph.settings.breathPattern).also { graph.settings.breathPattern = it.name },
             minutes = graph.settings.breathMinutes, haptics = graph.settings.breathHaptics, sound = graph.settings.breathSound,
         ))
     }
     var meditation by remember {
         mutableStateOf(MeditationSetup(
-            meditation = Meditation.entries.firstOrNull { it.name == graph.settings.meditationChoice } ?: Meditation.SOUNDS,
+            meditation = Meditation.fromStored(graph.settings.meditationChoice).also { graph.settings.meditationChoice = it.name },
             minutes = graph.settings.meditationMinutes, haptics = graph.settings.meditationHaptics, sound = graph.settings.meditationSound,
         ))
     }
@@ -103,7 +106,14 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     var breathStartedAt by rememberSaveable { mutableStateOf<Long?>(null) }
     var meditationStartedAt by rememberSaveable { mutableStateOf<Long?>(null) }
     var breathStartedSound by rememberSaveable { mutableStateOf(false) }
+    val bells = remember { Bells() }
+    val pickerHint = remember { !graph.settings.pickerHintSeen }
     val player by graph.player.ui.collectAsStateWithLifecycle()
+    // Tones is a practice, not a background: leaving its scene, or Listen, pauses it. The comfort
+    // sounds play on, with the mini player on the other tabs (Erwann, 2026-10-31).
+    LaunchedEffect(tab, scene, player.playing, player.mode) {
+        if (player.playing && player.mode == SoundEngine.Mode.TONES && (tab != Tab.LISTEN || scene != Scene.TONES)) graph.player.pause(EndedBy.USER)
+    }
     val checkIns by graph.journal.checkIns.collectAsStateWithLifecycle(emptyList())
     val weekSeconds by remember { graph.journal.weekSeconds() }.collectAsStateWithLifecycle(0L)
     var journalMessage by remember { mutableStateOf<String?>(null) }
@@ -201,6 +211,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     fun endBreath() {
         if (breathStartedSound) graph.player.pause(EndedBy.USER)
         breathStartedSound = false
+        bells.stop()
         breathStartedAt = null
         meditationStartedAt = null
     }
@@ -224,8 +235,15 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                     BreathSession(BreathPlan(breath.pattern, breath.minutes), breathStartedAt!!, night, breath.haptics, onEnd = ::endBreath)
                 } else if (meditationStartedAt != null) {
                     BackHandler { endBreath() }
-                    MeditationSession(meditation, meditationStartedAt!!, night, onEnd = ::endBreath)
-                } else BrumeScaffold(tab = tab, onTab = { tab = it; pages = "" }, modules = modules) {
+                    // The bell follows the session's level: the sound under it, or the listening level when none plays.
+                    val sessionLevel = if (player.playing && player.mode == SoundEngine.Mode.SOUNDS)
+                        listOfNotNull(player.noise?.let { player.noiseLevel }, player.ambience?.let { player.ambienceLevel }).maxOrNull() ?: player.noiseLevel
+                    else player.noiseLevel
+                    MeditationSession(meditation, meditationStartedAt!!, night, onEnd = ::endBreath, onBell = { bells.ring(Bell.gain(sessionLevel, it.strength)) })
+                } else BrumeScaffold(tab = tab, onTab = { tab = it; pages = "" }, modules = modules,
+                    mini = if (tab != Tab.LISTEN && player.playing && player.mode == SoundEngine.Mode.SOUNDS) {
+                        { MiniPlayer(chosenSound(context, player)) { graph.player.pause(EndedBy.USER) } }
+                    } else null) {
                     val page = stack.lastOrNull()
                     if (page != null) BackHandler { pop() }
                     when {
@@ -236,7 +254,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                         page?.startsWith("topic:") == true -> LearnTopicScreen(page.removePrefix("topic:").toInt(), onBack = ::pop, onCard = { push("card:$it") })
                         page == "about" -> AboutScreen(version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true }, onBack = ::pop)
                         page == "tones-how" -> TonesHowScreen(onBack = ::pop)
-                        page == "sounds" -> SoundsScreen(player, actions, onBack = ::pop)
+                        page == "sounds" -> SoundsScreen(player, actions, onBack = ::pop, hint = pickerHint, onHintSeen = graph.settings::setPickerHintSeen)
                         page == "tones" -> TonesScreen(player, actions, onHow = { push("tones-how") })
                         page == "calm" -> CalmScreen(
                             modules = modules,
@@ -274,7 +292,10 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                                 practices = listOfNotNull(Practice.BREATHE.takeIf { modules.breath }, Practice.MEDITATE.takeIf { modules.meditation }),
                                 practice = if (!modules.breath) Practice.MEDITATE else if (!modules.meditation) Practice.BREATHE else practice,
                                 onPractice = { practice = it; graph.settings.calmPractice = it.name },
-                                minutes = if (practice == Practice.MEDITATE && modules.meditation || !modules.breath) meditation.minutes else breath.minutes,
+                                minutes = if (practice == Practice.MEDITATE && modules.meditation || !modules.breath) meditation.length else breath.minutes,
+                                cycles = breath.pattern.cycles.takeUnless { practice == Practice.MEDITATE && modules.meditation || !modules.breath },
+                                pattern = breath.pattern,
+                                onPattern = { breath = breath.copy(pattern = it); graph.settings.breathPattern = it.name },
                                 soundName = chosenSound(context, player).ifEmpty { null }
                                     ?.takeIf { if (practice == Practice.MEDITATE && modules.meditation || !modules.breath) meditation.sound else breath.sound },
                                 onStart = { if (practice == Practice.MEDITATE && modules.meditation || !modules.breath) startMeditation() else startBreath() },
