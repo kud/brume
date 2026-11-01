@@ -200,5 +200,5 @@ internal val sceneArt = mapOf(
     Scene.SLEEP to SceneLayers(R.drawable.scene_sleep_bg, R.drawable.scene_sleep_mist, 1603, R.drawable.scene_sleep_mid, 1450),
     Scene.SETTLE to SceneLayers(R.drawable.scene_settle_bg, R.drawable.scene_settle_mist, 1272, R.drawable.scene_settle_mid, 1768),
     Scene.BREATHE to SceneLayers(R.drawable.scene_breathe_bg, R.drawable.scene_breathe_mist, 1693, R.drawable.scene_breathe_mid, 1449),
-    Scene.TONES to SceneLayers(R.drawable.scene_tones_bg, R.drawable.scene_tones_mist, 1921, R.drawable.scene_tones_mid, 1508),
+    Scene.TONES to SceneLayers(R.drawable.scene_tones_bg, R.drawable.scene_tones_mist, 1695, R.drawable.scene_tones_mid, 1467),
 )
