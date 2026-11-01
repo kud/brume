@@ -37,6 +37,15 @@ class GuardsTest {
     private val entry = Regex("<string name=\"([^\"]+)\"[^>]*>(.*?)</string>", RegexOption.DOT_MATCHES_ALL)
     private val allowed = setOf("about_disclaimer")
 
+    /**
+     * The one proper noun the claim words may sit inside: the NHS service's official name (Erwann,
+     * 2026-11-01: « Garde le nom officiel NHS Talking Therapies »). Exact case, whole name, removed
+     * before the scan, so "therapy" or "therapies" anywhere else is still caught.
+     */
+    private val properNouns = Regex("\\bNHS Talking Therapies\\b")
+
+    private fun claimIn(text: String) = claims.containsMatchIn(properNouns.replace(text, ""))
+
     private fun strings(file: File) = entry.findAll(file.readText()).associate { it.groupValues[1] to it.groupValues[2] }
 
     @Test fun `no string makes a claim`() {
@@ -45,9 +54,25 @@ class GuardsTest {
         assertTrue(claims.containsMatchIn("Un soulagement durable"))
         stringFiles.forEach { file ->
             strings(file).filterKeys { it !in allowed }.forEach { (name, text) ->
-                assertTrue("$file $name: \"$text\"", !claims.containsMatchIn(text))
+                assertTrue("$file $name: \"$text\"", !claimIn(text))
             }
         }
+    }
+
+    @Test fun `only the exact name NHS Talking Therapies is let through`() {
+        assertTrue(!claimIn("refer yourself to NHS Talking Therapies, without a GP"))
+        assertTrue(!claimIn("au service NHS Talking Therapies"))
+        listOf(
+            "NHS Talking Therapies is a therapy",
+            "NHS Talking Therapies and other therapies",
+            "Talking therapies",
+            "NHS talking therapies",
+            "NHS Talking Therapy",
+            "Talking Therapies",
+            "A therapy for tinnitus",
+        ).forEach { assertTrue(it, claimIn(it)) }
+        // The real strings do name it, so the exception is in use, not dead.
+        assertTrue(stringFiles.all { "NHS Talking Therapies" in it.readText() })
     }
 
     @Test fun `every string exists in English and French`() {

@@ -518,7 +518,7 @@
     <string name="region_uk_urgent">Urgent but not an emergency: call NHS %1$s, or go to 111.nhs.uk.</string>
     <string name="region_uk_crisis">If you\'re thinking about ending your life, call %1$s and select the mental health option, or Samaritans on %2$s (free, day and night).</string>
     <string name="region_uk_sudden">Sudden hearing loss is urgent: ask for an urgent GP appointment or call NHS %1$s. Go to A&amp;E or call %2$s if it comes with facial weakness or spinning vertigo.</string>
-    <string name="region_uk_care">Start with your GP, who can check for simple causes such as earwax and refer you to NHS audiology or ENT. NHS hearing aids are free when they help. If tinnitus weighs on your mood, in England you can refer yourself to NHS support for anxiety and low mood, without a GP.</string>
+    <string name="region_uk_care">Start with your GP, who can check for simple causes such as earwax and refer you to NHS audiology or ENT. NHS hearing aids are free when they help. If tinnitus weighs on your mood, in England you can refer yourself to NHS Talking Therapies, for anxiety and low mood, without a GP.</string>
     <string name="region_uk_association">Tinnitus UK: helpline %1$s, Monday to Friday 10:00–16:00, or text %2$s. RNID: %3$s, Monday to Friday 8:30–17:00, or text %4$s.</string>
     <string name="region_uk_earplugs">In the UK, custom-moulded plugs cost roughly £135–£190 a pair. If your work is loud, your employer must offer hearing protection from 80 dB(A), and make sure it\'s worn from 85 dB(A).</string>
     <string name="region_fr_emergency">In an emergency, call %1$s (medical) or %2$s.</string>
