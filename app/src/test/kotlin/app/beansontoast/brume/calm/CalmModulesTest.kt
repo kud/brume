@@ -5,8 +5,9 @@ import androidx.test.core.app.ApplicationProvider
 import app.beansontoast.brume.Modules
 import app.beansontoast.brume.Settings
 import app.beansontoast.brume.ui.Meditation
-import app.beansontoast.brume.ui.Tab
-import app.beansontoast.brume.ui.shows
+import app.beansontoast.brume.ui.Fn
+import app.beansontoast.brume.ui.allows
+import app.beansontoast.brume.ui.fns
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -14,17 +15,17 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** Calm (ADR 0003): existing Breathe choices carry over, an older sync file never switches Meditation off. */
+/** Respirer and Méditer (ADR 0003): existing Breathe choices carry over, an older sync file never switches Meditation off. */
 @RunWith(RobolectricTestRunner::class)
 class CalmModulesTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private fun prefs() = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
-    @Test fun `a fresh install has both practices and the Calm tab`() {
+    @Test fun `a fresh install has both practices on home`() {
         prefs().edit().clear().commit()
         val m = Settings(context).modules.value
         assertTrue(m.breath && m.meditation && m.tones)
-        assertTrue(m.shows(Tab.CALM))
+        assertTrue(Fn.BREATHE in m.fns() && Fn.MEDITATE in m.fns())
     }
 
     @Test fun `Breathe switched off before Calm stays off, and Meditation arrives on`() {
@@ -34,7 +35,8 @@ class CalmModulesTest {
         val m = settings.modules.value
         assertFalse(m.breath)
         assertTrue(m.meditation)
-        assertTrue("Calm shows for Meditation", m.shows(Tab.CALM))
+        assertFalse("Respirer stays off home", Fn.BREATHE in m.fns())
+        assertTrue("Méditer arrives on home", Fn.MEDITATE in m.fns())
         assertEquals(1_000L, settings.modulesAt)
     }
 
@@ -49,10 +51,14 @@ class CalmModulesTest {
         assertEquals(Modules(breath = true, meditation = false, tones = false), Settings(context).modules.value)
     }
 
-    @Test fun `Calm goes only when both practices are off`() {
-        assertTrue(Modules(breath = false, meditation = true).shows(Tab.CALM))
-        assertTrue(Modules(breath = true, meditation = false).shows(Tab.CALM))
-        assertFalse(Modules(breath = false, meditation = false).shows(Tab.CALM))
+    @Test fun `each practice follows its own switch, and Settings is always reachable`() {
+        assertEquals(listOf(Fn.MEDITATE), Modules(breath = false, meditation = true).fns().filter { it == Fn.BREATHE || it == Fn.MEDITATE })
+        assertEquals(listOf(Fn.BREATHE), Modules(breath = true, meditation = false).fns().filter { it == Fn.BREATHE || it == Fn.MEDITATE })
+        val none = Modules(breath = false, meditation = false, tones = false)
+        assertFalse(Fn.BREATHE in none.fns() || Fn.MEDITATE in none.fns() || Fn.TONES in none.fns())
+        assertFalse("Settings is the quiet icon, never a row", Fn.SETTINGS in Modules().fns())
+        assertTrue(none.allows(Fn.SETTINGS))
+        assertFalse(none.allows(Fn.BREATHE))
     }
 
     @Test fun `an older sync file without Meditation never switches it off`() {

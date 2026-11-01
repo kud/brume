@@ -119,10 +119,7 @@ class Settings(context: Context) {
         get() = prefs.getBoolean(HOLD_NOTE_SEEN, false)
         set(v) = prefs.edit().putBoolean(HOLD_NOTE_SEEN, v).apply()
 
-    /** Which practice Calm opens on, and the last meditation choices: this phone only, like Breathe's. */
-    var calmPractice: String?
-        get() = prefs.getString(CALM_PRACTICE, null)
-        set(v) = prefs.edit().putString(CALM_PRACTICE, v).apply()
+    /** The last meditation choices: this phone only, like Breathe's. */
     var meditationChoice: String?
         get() = prefs.getString(MEDITATION_CHOICE, null)
         set(v) = prefs.edit().putString(MEDITATION_CHOICE, v).apply()
@@ -135,11 +132,6 @@ class Settings(context: Context) {
     var meditationSound: Boolean
         get() = prefs.getBoolean(MEDITATION_SOUND, false)
         set(v) = prefs.edit().putBoolean(MEDITATION_SOUND, v).apply()
-
-    /** True once the scenes have been changed: the swipe hint has done its job and goes. */
-    var scenesSwiped: Boolean
-        get() = prefs.getBoolean(SCENES_SWIPED, false)
-        set(v) = prefs.edit().putBoolean(SCENES_SWIPED, v).apply()
 
     /** The scene last used, this phone only: Brume reopens where it was left, never on a guess. */
     var scene: String?
@@ -156,12 +148,10 @@ class Settings(context: Context) {
     internal companion object {
         const val COUNTRY = "country"
         const val SCENE = "scene"
-        const val SCENES_SWIPED = "scenes_swiped"
         const val SCENE_MIX = "scene_mix_"
         const val MODULE_TONES = "module_tones"
         const val MODULE_BREATH = "module_breath"
         const val MODULE_MEDITATION = "module_meditation"
-        const val CALM_PRACTICE = "calm_practice"
         const val MEDITATION_CHOICE = "meditation_choice"
         const val MEDITATION_MINUTES = "meditation_minutes"
         const val MEDITATION_HAPTICS = "meditation_haptics"

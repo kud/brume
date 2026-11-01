@@ -23,7 +23,6 @@ import app.beansontoast.brume.ui.CountrySettings
 import app.beansontoast.brume.ui.DoctorGroup
 import app.beansontoast.brume.ui.LearnCardScreen
 import app.beansontoast.brume.ui.LocalCountry
-import app.beansontoast.brume.ui.Tab
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule

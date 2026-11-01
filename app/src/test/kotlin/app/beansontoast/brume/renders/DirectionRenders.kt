@@ -57,7 +57,11 @@ class DirectionRenders(private val shot: String) {
             "home" -> capture(night) { HomeScreen(Modules().fns(), onOpen = {}) }
             "home-mini" -> capture(night) { HomeScreen(Modules().fns(), onOpen = {}, mini = { MiniPlayer("Bruit brun et pluie", onPause = {}) }) }
             "home-modules-off" -> capture(night) { HomeScreen(Modules(tones = false, meditation = false).fns(), onOpen = {}) }
-            "breathe" -> capture(night) { FnFrame(onClose = {}, title = "Respirer") { BreatheScreen(box, {}, {}, {}, previewAt = 1.5) } }
+            "breathe" -> capture(night) { FnFrame(onClose = {}, title = "Respirer") { BreatheScreen(box, {}, {}, previewAt = 1.5) } }
+            // Phase 5: pace, length and voice in a quiet sheet over Respirer, as Méditer's options are.
+            "breathe-options" -> capture(night) {
+                FnFrame(onClose = {}, title = "Respirer") { BreatheScreen(box, {}, {}, soundName = "Bruit brun", previewAt = 1.5, options = true) }
+            }
             "breath-in" -> capture(night) { BreathSession(box.plan(), 0L, night, haptics = false, onEnd = {}, elapsed = 2.0, still = false) }
             "breath-hold" -> capture(night) { BreathSession(box.plan(), 0L, night, haptics = false, onEnd = {}, elapsed = 5.0, still = false) }
             "breath-out" -> capture(night) { BreathSession(box.plan(), 0L, night, haptics = false, onEnd = {}, elapsed = 8.0, still = false) }
@@ -126,7 +130,7 @@ class DirectionRenders(private val shot: String) {
             "home-day", "home-night", "home-mini-day", "home-mini-night", "home-modules-off-day",
             "breathe-day", "breathe-night", "breath-in-day", "breath-hold-day", "breath-out-day", "breath-hold-night",
             "settle-day", "settle-playing-night", "journal-day",
-        ) + listOf("intro-card", "mixer", "mixer-add", "learn", "topic", "card", "about", "meditate", "meditate-options", "med-session", "tones", "settings", "settings-sheet", "finder", "finder-profile", "journal", "loudness", "finder-step1", "finder-step3")
+        ) + listOf("intro-card", "mixer", "mixer-add", "learn", "topic", "card", "about", "meditate", "meditate-options", "breathe-options", "med-session", "tones", "settings", "settings-sheet", "finder", "finder-profile", "journal", "loudness", "finder-step1", "finder-step3")
             .flatMap { listOf("$it-day", "$it-night") }.filter { it != "journal-day" }
     }
 }

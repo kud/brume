@@ -4,14 +4,11 @@
     <string name="tab_journal">Journal</string>
     <string name="listen_guide">Réglez-le pour que votre acouphène se fonde dedans, encore un peu là. Le couvrir complètement n\'est pas nécessaire.</string>
     <string name="listen_noise">Bruit</string>
-    <string name="listen_nature">Nature</string>
     <string name="noise_white">Blanc</string>
     <string name="noise_pink">Rose</string>
     <string name="noise_brown">Brun</string>
     <string name="noise_grey">Gris</string>
-    <string name="noise_brown_note">Grave. Il peut ne pas atteindre un acouphène aigu.</string>
     <string name="nature_rain">Pluie</string>
-    <string name="nature_surf">Ressac</string>
     <string name="nature_wind">Vent</string>
     <string name="listen_level">Niveau %1$d sur 20</string>
     <string name="listen_level_label">Niveau : %1$s</string>
@@ -30,15 +27,11 @@
     <string name="journal_today">Aujourd\'hui</string>
     <string name="journal_loudness">Intensité</string>
     <string name="journal_bother">Gêne</string>
-    <string name="journal_bother_hint">À quel point il vous pèse</string>
     <string name="journal_rating">%1$s : %2$d sur 10</string>
     <string name="journal_note">Note (facultative)</string>
     <string name="journal_save">Enregistrer</string>
     <string name="journal_update">Mettre à jour aujourd\'hui</string>
     <string name="journal_saved">Enregistré</string>
-    <string name="journal_recent">Derniers jours</string>
-    <string name="journal_empty_title">Aucune saisie pour l\'instant</string>
-    <string name="journal_empty_body">Une par jour suffit. Cela prend quelques secondes.</string>
     <string name="journal_listened">Écouté cette semaine : %1$s</string>
     <string name="duration_hours_minutes">%1$d h %2$d min</string>
     <string name="duration_minutes">%1$d min</string>
@@ -66,7 +59,6 @@
     <string name="notification_channel">Lecture</string>
     <string name="notification_playing">En lecture</string>
     <string name="notification_paused">En pause</string>
-    <string name="notification_stop">Arrêter</string>
 
     <!-- Redesign, 2026-10-31 -->
     <string name="brand_word">brume</string>
@@ -74,9 +66,6 @@
     <string name="noise_pink_hint">Plus doux, équilibré</string>
     <string name="noise_brown_hint">Profond et grave</string>
     <string name="noise_grey_hint">Égal à l\'oreille</string>
-    <string name="nature_rain_hint">Pluie régulière</string>
-    <string name="nature_surf_hint">Vagues lentes</string>
-    <string name="nature_wind_hint">Air qui passe</string>
     <string name="listen_levels">Niveaux</string>
     <string name="listen_state_empty">Choisissez un son plus haut.</string>
     <string name="listen_state_ready">Prêt : %1$s. Le son démarre en douceur.</string>
@@ -85,11 +74,9 @@
     <string name="timer_change">Changer la minuterie</string>
     <string name="journal_scale">%1$s %2$d</string>
     <string name="journal_of_ten">sur 10</string>
-    <string name="journal_export_title">Vos données</string>
     <string name="about_privacy_title">Sur ce téléphone uniquement</string>
 
     <!-- Tone pattern (Maya, acrn) -->
-    <string name="mode_sounds">Sons</string>
     <string name="mode_tones">Motif de tons (ACRN)</string>
     <string name="tones_note">Quatre tons doux autour de la hauteur réglée, dans un ordre qui change : trois temps joués, deux en pause. À garder tout juste audible, seul.</string>
     <string name="tones_pitch">Hauteur</string>
@@ -108,10 +95,6 @@
     <string name="ux_now_playing">En lecture</string>
     <string name="ux_ready">Prêt à jouer</string>
     <string name="ux_remove">Retirer</string>
-    <string name="ux_slot_empty_noise">Pas de bruit. Choisissez-en un plus bas, ou laissez vide.</string>
-    <string name="ux_slot_empty_nature">Pas de son de nature. Choisissez-en un plus bas, ou laissez vide.</string>
-    <string name="ux_noise_rule">Un seul à la fois : en choisir un autre le remplace.</string>
-    <string name="ux_nature_rule">Un seul à la fois, joué par-dessus le bruit.</string>
     <string name="ux_one_at_a_time">Lancer un son arrête le motif de tons, et lancer le motif de tons arrête ces sons.</string>
     <string name="ux_tones_heading">Motif de tons</string>
     <string name="ux_tones_session">ACRN · une pratique en séances minutées, seule, jamais par-dessus d\'autres sons.</string>
@@ -199,24 +182,19 @@
     <!-- Breathe (Souffle) and the module switches -->
     <string name="tab_breath">Souffle</string>
     <string name="breath_intro">Respirez doucement, lentement, les yeux ouverts ou fermés.</string>
-    <string name="breath_rhythm">Rythme</string>
     <string name="breath_length">Durée</string>
     <string name="breath_minutes">%d min</string>
-    <string name="breath_options">Pendant la séance</string>
     <string name="breath_haptics">Vibrer à chaque changement</string>
     <string name="breath_haptics_summary">Une légère pulsation, pour pouvoir fermer les yeux.</string>
     <string name="breath_sound">Son en fond</string>
     <string name="breath_sound_summary">%s, en fondu.</string>
     <string name="breath_sound_none">Choisissez d\'abord un son dans Écouter.</string>
-    <string name="breath_start">Commencer</string>
     <string name="breath_left">encore %1$d:%2$02d</string>
     <string name="breath_end">Terminer</string>
     <string name="breath_done">Terminé</string>
     <string name="breath_done_body">Prenez un moment avant de reprendre.</string>
     <string name="breath_back">Retour</string>
     <!-- Calm (Calme): the tab, and Meditation's guided steps (ADR 0003) -->
-    <string name="tab_calm">Calme</string>
-    <string name="calm_intro">Respiration et méditation : quelques minutes au calme.</string>
     <string name="practice_meditation">Méditation</string>
     <string name="med_choose">Séance</string>
     <string name="med_body">Corps</string>
@@ -229,11 +207,8 @@
     <string name="med_timer_hint">Sans guide : une cloche au début et à la fin.</string>
     <string name="med_haptics_guided">Vibrer avec chaque cloche</string>
     <string name="med_haptics_guided_summary">Une légère pulsation en plus de la cloche.</string>
-    <string name="med_haptics_timer">Vibrer au début et à la fin</string>
-    <string name="med_haptics_timer_summary">Une légère pulsation en plus de la cloche.</string>
     <string name="med_options">Pendant la séance</string>
     <string name="med_stop_note">Vous pouvez arrêter à tout moment. Si une séance ne vous convient pas aujourd\'hui, terminez-la : il n\'y a pas de mauvaise façon de faire.</string>
-    <string name="med_step">%1$d sur %2$d</string>
     <string name="sit_settle">Installez-vous.</string>
     <string name="sit_return">Revenez doucement.</string>
     <string name="module_meditation_summary">De courtes séances guidées, et un minuteur.</string>
@@ -328,10 +303,8 @@
     <string name="learn_try">À essayer</string>
     <string name="learn_sources">Sources : %1$s</string>
     <string name="learn_next">Suivante : %1$s</string>
-    <string name="learn_read">Lire la fiche</string>
     <string name="learn_back">Retour</string>
     <string name="learn_count">%1$d fiches</string>
-    <string name="settings_row_summary">Heures de nuit, activités, langue, synchronisation, sortie du son</string>
     <string name="tones_evidence_note">Les études sur ce type de motif de tons sont rares et petites : à essayer par curiosité, à arrêter s\'il ne vous convient pas.</string>
     <string name="journal_q_place">Quelle place a pris le son aujourd\'hui ?</string>
     <string name="journal_q_place_low">à peine là</string>
@@ -346,11 +319,8 @@
     <string name="tag_stress">Stress</string>
     <string name="tag_poor_sleep">Mal dormi</string>
     <string name="journal_invite_title">Vous avez noté « %1$s »</string>
-    <string name="journal_invite_body">Envie de savoir ce que disent les études ? Le tag reste là pour remarquer, à votre rythme.</string>
-    <string name="settings_display">Nuit</string>
     <string name="tab_learn">Comprendre</string>
     <string name="about_brume">À propos de Brume</string>
-    <string name="about_row_summary">Ce qu\'est Brume, confidentialité, sources, version</string>
     <string name="settings_output">Sortie du son</string>
     <string name="about_sources_title">Sources</string>
     <string name="about_sources">Brume s\'appuie sur des recommandations cliniques et des associations de patients : NICE NG155, la recommandation AAO-HNSF, OMS–UIT H.870, France Acouphènes et Tinnitus UK. Chaque fiche de Comprendre cite ses propres sources.</string>
@@ -360,14 +330,10 @@
     <string name="scene_settle">Se poser</string>
     <string name="scene_breathe">Respirer</string>
     <string name="scene_tones">Tons</string>
-    <string name="scene_swipe">Glissez de côté pour changer de scène</string>
     <string name="scene_sleep_purpose">Pour s\'endormir, avec une minuterie</string>
     <string name="scene_settle_purpose">Pour se poser en journée, sans minuterie</string>
-    <string name="scene_breathe_purpose">Respirer en rythme, ou une séance au calme</string>
     <string name="scene_tones_purpose">Une suite de tons à la fréquence choisie</string>
     <string name="tones_at">À %1$,d Hz</string>
-    <string name="scene_with">avec %1$s</string>
-    <string name="scene_breathe_quiet">En silence</string>
     <string name="scene_suggest_timer">Une suggestion · s\'arrête après %1$d min</string>
     <string name="scene_suggest_open">Une suggestion · sans minuterie</string>
     <string name="scene_suggest_play">Lancer cette suggestion</string>
@@ -387,15 +353,9 @@
     <string name="scene_in_mix">%1$s, dans le mélange. Changer les sons</string>
     <string name="scene_sounds">Sons</string>
     <string name="scene_sounds_hint">Superposez autant de sons que vous voulez, chacun à son niveau.</string>
-    <string name="scene_levels">Chaque son</string>
     <string name="scene_tones_setup">Hauteur et niveaux</string>
-    <string name="scene_breathe_setup">Rythme et durée</string>
-    <string name="scene_practice_breathe">Respiration</string>
-    <string name="scene_practice_meditate">Méditation</string>
     <string name="scene_start">Commencer</string>
-    <string name="scene_minutes_with">%1$d min · avec %2$s</string>
     <string name="scene_minutes">%1$d min</string>
-    <string name="scene_choose">Scène</string>
 
     <!-- Comprendre: decibel dial (Iris, 2026-10-31) and advice cards (Iris, 2026-11-01) -->
     <string name="db_title">Combien de décibels, combien de temps ?</string>
@@ -439,10 +399,6 @@
     <string name="db_aeroplane">Avion à réaction au décollage</string>
     <string name="db_rocket">Décollage d’une fusée, à 1,5 km</string>
     <string name="learn_library">Bibliothèque</string>
-    <string name="picker_background">Fond</string>
-    <string name="picker_ambience">Ambiance</string>
-    <string name="picker_none">Aucun</string>
-    <string name="picker_none_ambience">Aucune</string>
     <string name="picker_hint">Mélangez les sons de votre choix, chacun à son niveau : un bruit pour fondre, un lieu où être.</string>
     <string name="breath_long">Souffle long</string>
     <string name="breath_sigh">Soupir cyclique</string>
@@ -612,15 +568,12 @@
     <string name="sound_band">Autour de votre son</string>
     <string name="sound_band_kind">Confort</string>
     <string name="finder_entry">Mon acouphène : trouver le son que vous entendez</string>
-    <string name="finder_entry_summary">Trouver le son que vous entendez, le décrire avec vos mots, garder un profil</string>
     <string name="finder_title">Mon acouphène</string>
     <string name="finder_home_intro">Un chemin facultatif, à votre rythme.</string>
     <string name="finder_home_empty">Rien d\'enregistré pour l\'instant. Vous pouvez trouver le son que vous entendez, décrire votre acouphène avec vos mots, et garder un profil pour en parler à un professionnel.</string>
     <string name="finder_unnamed">Sans nom</string>
     <string name="finder_start">Trouver le son que j\'entends</string>
     <string name="finder_start_another">Ajouter un autre acouphène</string>
-    <string name="finder_back">Retour</string>
-    <string name="finder_close">Fermer</string>
     <string name="finder_step">Étape %1$d sur %2$d</string>
     <string name="finder_skip">Passer</string>
     <string name="finder_continue">Continuer</string>

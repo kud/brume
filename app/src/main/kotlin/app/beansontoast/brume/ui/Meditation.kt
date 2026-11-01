@@ -80,9 +80,6 @@ import app.beansontoast.design.rememberReducedMotion
 import app.beansontoast.design.tabular
 import kotlinx.coroutines.delay
 
-/** The two practices Calm holds (ADR 0003). */
-enum class Practice { BREATHE, MEDITATE }
-
 /**
  * What a meditation is: one of three guided sessions, with bells and, if chosen, a voice (Respiration, Corps, Sons), or the
  * unguided timer. Sons follows MBCT-T's "Sounds and Thoughts" (practice-research.md).
@@ -175,81 +172,6 @@ data class MeditationSetup(
 }
 
 /**
- * The Calm tab: Breathe and Meditation, one entry per practice. With only one switched on, it
- * shows that one and no chooser.
- */
-@Composable
-fun CalmScreen(
-    modules: Modules,
-    practice: Practice,
-    onPractice: (Practice) -> Unit,
-    breath: BreathSetup,
-    meditation: MeditationSetup,
-    soundName: String?,
-    onBreath: (BreathSetup) -> Unit,
-    onMeditation: (MeditationSetup) -> Unit,
-    onStartBreath: () -> Unit,
-    onStartMeditation: () -> Unit,
-    voice: Voice.State = Voice.State.IDLE,
-) {
-    val shown = when {
-        !modules.breath -> Practice.MEDITATE
-        !modules.meditation -> Practice.BREATHE
-        else -> practice
-    }
-    val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).underChrome()) {
-        Column(gutter) {
-            ScreenLead(stringResource(R.string.calm_intro))
-            if (modules.breath && modules.meditation) Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SelectChip(stringResource(R.string.tab_breath), shown == Practice.BREATHE, { onPractice(Practice.BREATHE) })
-                SelectChip(stringResource(R.string.practice_meditation), shown == Practice.MEDITATE, { onPractice(Practice.MEDITATE) })
-            }
-            when (shown) {
-                Practice.BREATHE -> BreathPanel(breath, soundName, voice, onBreath, onStartBreath)
-                Practice.MEDITATE -> MeditationPanel(meditation, soundName, voice, onMeditation, onStartMeditation)
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun MeditationPanel(setup: MeditationSetup, soundName: String?, voice: Voice.State, onChange: (MeditationSetup) -> Unit, onStart: () -> Unit) {
-    Column {
-        SectionTitle(stringResource(R.string.med_choose), Modifier.padding(top = 4.dp))
-        Meditation.entries.forEach { m -> ChoiceRow(stringResource(m.title()), stringResource(m.hint()), setup.meditation == m) { onChange(setup.copy(meditation = m)) } }
-
-        SectionTitle(stringResource(R.string.breath_length), Modifier.padding(top = 4.dp))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            setup.meditation.lengths.forEach { m -> SelectChip(stringResource(R.string.breath_minutes, m), setup.length == m, { onChange(setup.copy(minutes = m)) }) }
-        }
-        Text(stringResource(R.string.med_bells_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp))
-
-        SettingsGroup(stringResource(R.string.med_options), Modifier.padding(top = 12.dp)) {
-            // The unguided timer has no words: the row keeps its place, faded and out of reach.
-            val guided = setup.meditation.guided != null
-            Box(Modifier.alpha(calmAlpha(guided)).then(if (guided) Modifier else Modifier.clearAndSetSemantics { })) {
-                VoiceRow(setup.voice, voice, R.string.voice_med_summary) { if (guided) onChange(setup.copy(voice = it)) }
-            }
-            SwitchRow(stringResource(R.string.med_haptics_guided), stringResource(R.string.med_haptics_guided_summary), setup.haptics) { onChange(setup.copy(haptics = it)) }
-            if (soundName != null) SwitchRow(stringResource(R.string.breath_sound), stringResource(R.string.breath_sound_summary, soundName), setup.sound) {
-                onChange(setup.copy(sound = it))
-            } else Column(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = 8.dp)) {
-                Text(stringResource(R.string.breath_sound), style = MaterialTheme.typography.bodyLarge)
-                Text(stringResource(R.string.breath_sound_none), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        Text(stringResource(R.string.med_stop_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 12.dp))
-        FilledTonalButton(onStart, Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp).heightIn(min = 56.dp)) {
-            Text(stringResource(R.string.breath_start), style = MaterialTheme.typography.titleMedium)
-        }
-    }
-}
-
-/**
  * The resting orb for Méditer (Iris, 2026-11-01, phase 3): Respirer's orb, but nothing paces it. It
  * swells a few percent over sixteen seconds and its edge drifts at half speed, as in a hold, so the
  * eye has somewhere soft to land without being asked to follow. Reduced motion: still, half size.
@@ -330,22 +252,6 @@ fun MeditateScreen(
         }
     }
 }
-
-/** One choice of a list: a check glyph and weight say which is chosen, never a hue. */
-@Composable
-internal fun ChoiceRow(title: String, hint: String, selected: Boolean, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).selectable(selected, onClick = onClick, role = Role.RadioButton).padding(vertical = 8.dp),
-        verticalAlignment = Alignment.Top) {
-        Box(Modifier.width(28.dp).padding(top = 2.dp)) {
-            if (selected) Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, modifier = Modifier.size(20.dp))
-        }
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
-            Text(hint, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
-
 
 /**
  * A meditation, full screen, eyes closed (Erwann, 2026-10-31: « la méditation, c'est pas vraiment

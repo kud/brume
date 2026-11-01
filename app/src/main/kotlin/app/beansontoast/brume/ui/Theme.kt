@@ -26,7 +26,6 @@ import app.beansontoast.brume.core.sound.NoiseColour
 import app.beansontoast.design.GammeColors
 import app.beansontoast.design.GammeTheme
 import app.beansontoast.design.gammeTypography
-import app.beansontoast.brume.ui.launch.mistLines
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -137,9 +136,13 @@ private fun DrawScope.wave(y: Float, amplitude: Float, wavelength: Float, phase:
 @Composable
 fun Mist(modifier: Modifier, strength: Float = 0.5f, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
     Canvas(modifier) {
-        // The lines are mistLines (ui/launch), so the launch intro lands exactly on them.
-        for (line in mistLines(size.width, size.height, strength)) {
-            wave(line.y, line.amplitude, line.wavelength, line.phase, line.from, line.to, color.copy(alpha = line.alpha), 1.5f * density)
+        // Five lines, the middle one strongest; their places and waves are fixed, so the mist never jumps.
+        val w = size.width; val h = size.height
+        for (i in 0 until 5) {
+            val t = i / 4f
+            val alpha = (0.10f + 0.22f * strength) * (1f - kotlin.math.abs(t - 0.5f))
+            wave(h * (0.15f + 0.7f * t), h * 0.06f, w * (0.55f + 0.12f * i), i * 1.7f, w * (0.04f * (i % 3)), w * (1f - 0.05f * ((i + 1) % 3)),
+                color.copy(alpha = alpha), 1.5f * density)
         }
     }
 }

@@ -1,17 +1,9 @@
 package app.beansontoast.brume.ui
 
 import app.beansontoast.design.Motion
-import androidx.compose.ui.layout.FirstBaseline
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
-import app.beansontoast.brume.ui.launch.LocalLaunchAnchors
-import app.beansontoast.brume.ui.launch.WelcomeAnchor
 
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
@@ -166,17 +158,8 @@ private fun Welcome() {
     Box(Modifier.fillMaxWidth().height(260.dp)) {
         Mist(Modifier.fillMaxSize(), strength = 0.6f)
         Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-            // The first launch's intro settles the splash lockup onto this one (ui/launch).
-            val anchors = LocalLaunchAnchors.current
-            val iconInk = MaterialTheme.colorScheme.primary
-            val wordInk = LocalContentColor.current
-            var icon by remember { mutableStateOf<Rect?>(null) }
-            Icon(painterResource(R.drawable.ic_horizon), null, tint = iconInk, modifier = Modifier.size(96.dp).onGloballyPositioned { icon = it.boundsInWindow() })
-            Wordmark(Modifier.onGloballyPositioned {
-                val box = it.boundsInWindow()
-                val at = icon ?: return@onGloballyPositioned
-                anchors?.welcome = WelcomeAnchor(at, iconInk, box.left, box.top + it[FirstBaseline], box.width, wordInk)
-            })
+            Icon(painterResource(R.drawable.ic_horizon), null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(96.dp))
+            Wordmark()
         }
     }
     Body(R.string.about_what, Modifier.padding(top = 8.dp))

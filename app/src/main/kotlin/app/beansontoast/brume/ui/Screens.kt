@@ -10,10 +10,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
-import app.beansontoast.brume.ui.launch.LocalLaunchAnchors
-import app.beansontoast.brume.ui.launch.MistAnchor
 
 import app.beansontoast.brume.Modules
 
@@ -108,15 +104,6 @@ import app.beansontoast.design.tabular
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
-
-/**
- * Each tab is a category used directly (Erwann, 2026-10-31, reversing the guide): Listen first, then
- * Calm, Tones, Journal, and Learn, which holds the cards, the settings and About Brume.
- */
-enum class Tab { LISTEN, CALM, TONES, JOURNAL, LEARN }
-
-/** Listen, Journal and Learn are always there; the others follow their module switch, Calm while Breathe or Meditation is on (ADR 0003). */
-fun Modules.shows(tab: Tab) = when (tab) { Tab.TONES -> tones; Tab.CALM -> calm; else -> true }
 
 @StringRes fun NoiseColour.label() = when (this) {
     NoiseColour.WHITE -> R.string.noise_white
@@ -284,12 +271,9 @@ internal fun Dock(ui: PlayerUi, actions: ListenActions, @StringRes timerTitle: I
     }
     // Pinned at the page's foot, so it stands clear of the floating bar.
     Box(Modifier.fillMaxWidth().padding(bottom = chromeBottom())) {
-        // The launch intro lands Horizon's lines on this mist (ui/launch).
-        val anchors = LocalLaunchAnchors.current
         val strength = if (ui.playing) 1f else 0.35f
         val mistInk = MaterialTheme.colorScheme.onSurfaceVariant
-        Mist(Modifier.fillMaxWidth().height(132.dp).align(Alignment.Center)
-            .onGloballyPositioned { anchors?.mist = MistAnchor(it.boundsInWindow(), strength, mistInk) }, strength = strength, color = mistInk)
+        Mist(Modifier.fillMaxWidth().height(132.dp).align(Alignment.Center), strength = strength, color = mistInk)
         Column(gutter.padding(top = 8.dp, bottom = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(line, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, minLines = 2,

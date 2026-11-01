@@ -35,14 +35,14 @@ import app.beansontoast.brume.ui.JournalScreen
 import app.beansontoast.brume.ui.ListenActions
 import app.beansontoast.brume.ui.ListenComfort
 import app.beansontoast.brume.ui.TonesScreen
-import app.beansontoast.brume.ui.Tab
-import app.beansontoast.brume.ui.CalmScreen
 import app.beansontoast.brume.ui.Meditation
 import app.beansontoast.brume.ui.MeditationSession
 import app.beansontoast.brume.ui.MeditationSetup
-import app.beansontoast.brume.ui.Practice
 import app.beansontoast.brume.ui.BreathSession
 import app.beansontoast.brume.ui.BreathSetup
+import app.beansontoast.brume.ui.BreatheScreen
+import app.beansontoast.brume.ui.MeditateScreen
+import app.beansontoast.brume.voice.Voice
 import app.beansontoast.brume.ui.ModuleSettings
 import app.beansontoast.brume.Modules
 import app.beansontoast.brume.core.breath.BreathPlan
@@ -104,52 +104,52 @@ class Renders(private val shot: String) {
     )
 
     @Test fun render() = when (shot) {
-        "mixer-night" -> shoot(dark = true, night = true, Tab.LISTEN) { SoundsScreen(mixed, ListenActions(), onBack = {}) }
-        "mixer-day" -> shoot(dark = false, night = false, Tab.LISTEN) { SoundsScreen(mixed, ListenActions(), onBack = {}) }
-        "mixer-first-visit-day" -> shoot(dark = false, night = false, Tab.LISTEN) { SoundsScreen(idle, ListenActions(), onBack = {}, hint = true) }
-        "mixer-add-sheet-night" -> shoot(dark = true, night = true, Tab.LISTEN) { SoundsScreen(mixed, ListenActions(), onBack = {}, sheet = SoundsSheet.ADD) }
-        "mixer-ears-sheet-day" -> shoot(dark = false, night = false, Tab.LISTEN) { SoundsScreen(mixed, ListenActions(), onBack = {}, sheet = SoundsSheet.EARS) }
-        "mixer-many-day" -> shoot(dark = false, night = false, Tab.LISTEN) { SoundsScreen(many, ListenActions(), onBack = {}) }
-        "journal-note-sheet-night" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}, noteOpen = true) }
-        "mixer-empty-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { SoundsScreen(PlayerUi(mix = emptyList()), ListenActions(), onBack = {}) }
-        "listen-mix-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(mixed, ListenActions()) }
-        "listen-idle-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
-        "listen-playing-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
-        "listen-idle-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
-        "listen-playing-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
-        "listen-empty-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenComfort(PlayerUi(mix = emptyList()), ListenActions()) }
-        "listen-stopped-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenComfort(idle.copy(status = Status.TOO_LOUD), ListenActions()) }
-        "listen-tones-night" -> shoot(dark = true, night = true, Tab.TONES) { TonesScreen(tones.copy(playing = true), ListenActions()) }
-        "listen-tones-day" -> shoot(dark = false, night = false, Tab.TONES) { TonesScreen(tones, ListenActions()) }
-        "balance-listen-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(playing.copy(balance = -0.3f, output = Output(OutputKind.BLUETOOTH, "WH-1000XM4")), ListenActions()) }
-        "balance-listen-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(idle.copy(balance = 1f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
-        "balance-tones-night" -> shoot(dark = true, night = true, Tab.TONES) { TonesScreen(tones.copy(playing = true, balance = 0.6f, output = Output(OutputKind.BLUETOOTH, "Sleep Buds")), ListenActions()) }
-        "balance-tones-day" -> shoot(dark = false, night = false, Tab.TONES) { TonesScreen(tones.copy(output = Output(OutputKind.SPEAKER, null)), ListenActions()) }
-        "journal-day" -> shoot(dark = false, night = false, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
-        "journal-night" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
-        "journal-empty-dark" -> shoot(dark = true, night = false, Tab.JOURNAL) { JournalScreen(emptyList(), 0, today, null, { _, _, _ -> }, {}) }
-        "about-night" -> shoot(dark = true, night = true, Tab.LEARN) { LearnScreen() }
-        "listen-playing-open-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
-        "about-day" -> shoot(dark = false, night = false, Tab.LEARN) { LearnScreen() }
-        "about-language-night" -> shoot(dark = true, night = true, Tab.LEARN) { Column(Modifier.padding(horizontal = 20.dp)) { LanguageSettings(LanguageChoice("en") {}) } }
-        "about-language-day" -> shoot(dark = false, night = false, Tab.LEARN) { Column(Modifier.padding(horizontal = 20.dp)) { LanguageSettings(LanguageChoice("") {}) } }
-        "balance-centre-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(playing.copy(balance = 0f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
-        "sync-night" -> shoot(dark = true, night = true, Tab.LEARN) { syncShot() }
-        "sync-day" -> shoot(dark = false, night = false, Tab.LEARN) { syncShot() }
-        "sync-off-day" -> shoot(dark = false, night = false, Tab.LEARN) { Column(Modifier.padding(horizontal = 20.dp)) { SyncSettings(SyncState(), null, SyncActions()) } }
-        "sync-problem-night" -> shoot(dark = true, night = true, Tab.LEARN) {
+        "mixer-night" -> shoot(dark = true, night = true) { SoundsScreen(mixed, ListenActions(), onBack = {}) }
+        "mixer-day" -> shoot(dark = false, night = false) { SoundsScreen(mixed, ListenActions(), onBack = {}) }
+        "mixer-first-visit-day" -> shoot(dark = false, night = false) { SoundsScreen(idle, ListenActions(), onBack = {}, hint = true) }
+        "mixer-add-sheet-night" -> shoot(dark = true, night = true) { SoundsScreen(mixed, ListenActions(), onBack = {}, sheet = SoundsSheet.ADD) }
+        "mixer-ears-sheet-day" -> shoot(dark = false, night = false) { SoundsScreen(mixed, ListenActions(), onBack = {}, sheet = SoundsSheet.EARS) }
+        "mixer-many-day" -> shoot(dark = false, night = false) { SoundsScreen(many, ListenActions(), onBack = {}) }
+        "journal-note-sheet-night" -> shoot(dark = true, night = true) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}, noteOpen = true) }
+        "mixer-empty-dark" -> shoot(dark = true, night = false) { SoundsScreen(PlayerUi(mix = emptyList()), ListenActions(), onBack = {}) }
+        "listen-mix-day" -> shoot(dark = false, night = false) { ListenComfort(mixed, ListenActions()) }
+        "listen-idle-night" -> shoot(dark = true, night = true) { ListenComfort(idle, ListenActions()) }
+        "listen-playing-night" -> shoot(dark = true, night = true) { ListenComfort(playing, ListenActions()) }
+        "listen-idle-day" -> shoot(dark = false, night = false) { ListenComfort(idle, ListenActions()) }
+        "listen-playing-day" -> shoot(dark = false, night = false) { ListenComfort(playing, ListenActions()) }
+        "listen-empty-dark" -> shoot(dark = true, night = false) { ListenComfort(PlayerUi(mix = emptyList()), ListenActions()) }
+        "listen-stopped-dark" -> shoot(dark = true, night = false) { ListenComfort(idle.copy(status = Status.TOO_LOUD), ListenActions()) }
+        "listen-tones-night" -> shoot(dark = true, night = true) { TonesScreen(tones.copy(playing = true), ListenActions()) }
+        "listen-tones-day" -> shoot(dark = false, night = false) { TonesScreen(tones, ListenActions()) }
+        "balance-listen-night" -> shoot(dark = true, night = true) { ListenComfort(playing.copy(balance = -0.3f, output = Output(OutputKind.BLUETOOTH, "WH-1000XM4")), ListenActions()) }
+        "balance-listen-day" -> shoot(dark = false, night = false) { ListenComfort(idle.copy(balance = 1f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
+        "balance-tones-night" -> shoot(dark = true, night = true) { TonesScreen(tones.copy(playing = true, balance = 0.6f, output = Output(OutputKind.BLUETOOTH, "Sleep Buds")), ListenActions()) }
+        "balance-tones-day" -> shoot(dark = false, night = false) { TonesScreen(tones.copy(output = Output(OutputKind.SPEAKER, null)), ListenActions()) }
+        "journal-day" -> shoot(dark = false, night = false) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
+        "journal-night" -> shoot(dark = true, night = true) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
+        "journal-empty-dark" -> shoot(dark = true, night = false) { JournalScreen(emptyList(), 0, today, null, { _, _, _ -> }, {}) }
+        "about-night" -> shoot(dark = true, night = true) { LearnScreen() }
+        "listen-playing-open-day" -> shoot(dark = false, night = false) { ListenComfort(playing, ListenActions()) }
+        "about-day" -> shoot(dark = false, night = false) { LearnScreen() }
+        "about-language-night" -> shoot(dark = true, night = true) { Column(Modifier.padding(horizontal = 20.dp)) { LanguageSettings(LanguageChoice("en") {}) } }
+        "about-language-day" -> shoot(dark = false, night = false) { Column(Modifier.padding(horizontal = 20.dp)) { LanguageSettings(LanguageChoice("") {}) } }
+        "balance-centre-night" -> shoot(dark = true, night = true) { ListenComfort(playing.copy(balance = 0f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
+        "sync-night" -> shoot(dark = true, night = true) { syncShot() }
+        "sync-day" -> shoot(dark = false, night = false) { syncShot() }
+        "sync-off-day" -> shoot(dark = false, night = false) { Column(Modifier.padding(horizontal = 20.dp)) { SyncSettings(SyncState(), null, SyncActions()) } }
+        "sync-problem-night" -> shoot(dark = true, night = true) {
             Column(Modifier.padding(horizontal = 20.dp)) { SyncSettings(SyncState("Brume", true, true, null, SyncProblem.UNREACHABLE), null, SyncActions()) }
         }
-        "screens-listen" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
-        "screens-breath" -> shoot(dark = true, night = true, Tab.CALM) { calm(BreathSetup(), soundName = "Pink noise") }
-        "screens-tones" -> shoot(dark = true, night = true, Tab.TONES) { TonesScreen(tones, ListenActions()) }
-        "screens-journal" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
-        "screens-about" -> shoot(dark = true, night = true, Tab.LEARN) { LearnScreen() }
-        "modules-night" -> shoot(dark = true, night = true, Tab.LEARN) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(), {}) } }
-        "modules-day" -> shoot(dark = false, night = false, Tab.LEARN, Modules(tones = false)) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(tones = false), {}) } }
-        "breath-setup-night" -> shoot(dark = true, night = true, Tab.CALM) { calm(BreathSetup(), soundName = "Pink noise") }
-        "breath-setup-day" -> shoot(dark = false, night = false, Tab.CALM) { calm(BreathSetup(Technique.FOUR_SEVEN_EIGHT, minutes = 2, sound = true), soundName = "Rain") }
-        "breath-setup-nosound-day" -> shoot(dark = false, night = false, Tab.CALM, Modules(tones = false, meditation = false)) { calm(BreathSetup(Technique.BOX, minutes = 10), Modules(tones = false, meditation = false)) }
+        "screens-listen" -> shoot(dark = true, night = true) { ListenComfort(idle, ListenActions()) }
+        "screens-breath" -> shoot(dark = true, night = true) { breathe(BreathSetup(), soundName = "Pink noise") }
+        "screens-tones" -> shoot(dark = true, night = true) { TonesScreen(tones, ListenActions()) }
+        "screens-journal" -> shoot(dark = true, night = true) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
+        "screens-about" -> shoot(dark = true, night = true) { LearnScreen() }
+        "modules-night" -> shoot(dark = true, night = true) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(), {}) } }
+        "modules-day" -> shoot(dark = false, night = false, Modules(tones = false)) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(tones = false), {}) } }
+        "breath-setup-night" -> shoot(dark = true, night = true) { breathe(BreathSetup(), soundName = "Pink noise") }
+        "breath-setup-day" -> shoot(dark = false, night = false) { breathe(BreathSetup(Technique.FOUR_SEVEN_EIGHT, minutes = 2, sound = true), soundName = "Rain") }
+        "breath-setup-nosound-day" -> shoot(dark = false, night = false, Modules(tones = false, meditation = false)) { breathe(BreathSetup(Technique.BOX, minutes = 10), soundName = null) }
         "breath-in-night" -> bare(dark = true, night = true) { session(Technique.LONG_OUT.pattern(), 5, 2.6) }
         "breath-hold-night" -> bare(dark = true, night = true) { session(Technique.FOUR_SEVEN_EIGHT.pattern(Variant.STANDARD), 4, 7.0) }
         "breath-out-night" -> bare(dark = true, night = true) { session(Technique.LONG_OUT.pattern(), 5, 7.5) }
@@ -157,9 +157,9 @@ class Renders(private val shot: String) {
         "breath-out-day" -> bare(dark = false, night = false) { session(Technique.BOX.pattern(Variant.STANDARD), 3, 61.0 + 5.0 + 2.5, night = false) }
         "breath-still-night" -> bare(dark = true, night = true) { session(Technique.LONG_OUT.pattern(), 5, 2.6, still = true) }
         "breath-done-night" -> bare(dark = true, night = true) { session(Technique.LONG_OUT.pattern(), 3, 180.0) }
-        "calm-meditate-night" -> shoot(dark = true, night = true, Tab.CALM) { calm(practice = Practice.MEDITATE, soundName = "Pink noise") }
-        "calm-meditate-day" -> shoot(dark = false, night = false, Tab.CALM) { calm(practice = Practice.MEDITATE, med = MeditationSetup(Meditation.TIMER, 15, sound = true), soundName = "Rain") }
-        "calm-only-meditate-day" -> shoot(dark = false, night = false, Tab.CALM, Modules(breath = false)) { calm(modules = Modules(breath = false), med = MeditationSetup(Meditation.BODY), soundName = null) }
+        "calm-meditate-night" -> shoot(dark = true, night = true) { meditate(MeditationSetup(), soundName = "Pink noise") }
+        "calm-meditate-day" -> shoot(dark = false, night = false) { meditate(MeditationSetup(Meditation.TIMER, 15, sound = true), soundName = "Rain") }
+        "calm-only-meditate-day" -> shoot(dark = false, night = false, Modules(breath = false)) { meditate(MeditationSetup(Meditation.BODY), soundName = null) }
         "med-sounds-night" -> bare(dark = true, night = true) { med(MeditationSetup(Meditation.SOUNDS), 80.0) }
         "med-sounds-day" -> bare(dark = false, night = false) { med(MeditationSetup(Meditation.SOUNDS), 80.0, night = false) }
         "med-body-first-night" -> bare(dark = true, night = true) { med(MeditationSetup(Meditation.BODY), 12.0) }
@@ -168,8 +168,8 @@ class Renders(private val shot: String) {
         "med-timer-middle-night" -> bare(dark = true, night = true) { med(MeditationSetup(Meditation.TIMER, 10), 260.0) }
         "med-timer-return-day" -> bare(dark = false, night = false) { med(MeditationSetup(Meditation.TIMER, 10), 590.0, night = false) }
         "med-done-night" -> bare(dark = true, night = true) { med(MeditationSetup(Meditation.SOUNDS), 300.0) }
-        "modules-calm-night" -> shoot(dark = true, night = true, Tab.LEARN) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(), {}) } }
-        "modules-calm-day" -> shoot(dark = false, night = false, Tab.LEARN, Modules(breath = false)) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(breath = false), {}) } }
+        "modules-calm-night" -> shoot(dark = true, night = true) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(), {}) } }
+        "modules-calm-day" -> shoot(dark = false, night = false, Modules(breath = false)) { Column(Modifier.padding(horizontal = 20.dp)) { ModuleSettings(Modules(breath = false), {}) } }
         else -> if (shot.startsWith("breath-frame-")) bare(dark = true, night = true) {
             session(Technique.LONG_OUT.pattern(), 3, shot.removePrefix("breath-frame-").toInt() * 0.5)
         } else error(shot)
@@ -179,10 +179,13 @@ class Renders(private val shot: String) {
         SyncSettings(SyncState("Brume", hasFolder = true, auto = true, lastSyncedAt = 1_768_941_600_000), "Imported. Days added or updated: 4. Listening sessions added: 9.", SyncActions(), java.time.ZoneOffset.UTC)
     }
 
-    @Composable private fun calm(
-        breath: BreathSetup = BreathSetup(), modules: Modules = Modules(), practice: Practice = Practice.BREATHE,
-        med: MeditationSetup = MeditationSetup(), soundName: String? = "Pink noise",
-    ) = CalmScreen(modules, practice, {}, breath, med, soundName, {}, {}, {}, {})
+    /** Respirer with its pace, length and voice sheet open, the orb's clock fixed. */
+    @Composable private fun breathe(breath: BreathSetup, soundName: String?) =
+        BreatheScreen(breath, {}, {}, soundName = soundName, previewAt = 2.0, options = true)
+
+    /** Méditer with its options sheet open, the orb's clock fixed. */
+    @Composable private fun meditate(med: MeditationSetup, soundName: String?) =
+        MeditateScreen(med, soundName, Voice.State.IDLE, {}, {}, previewAt = 2.0, options = true)
 
     @Composable private fun med(setup: MeditationSetup, at: Double, still: Boolean = false, night: Boolean = true) =
         MeditationSession(setup.copy(haptics = false), 0L, night, onEnd = {}, elapsed = at, still = still)
@@ -192,7 +195,7 @@ class Renders(private val shot: String) {
 
     private fun bare(dark: Boolean, night: Boolean, content: @Composable () -> Unit) = capture { BrumeTheme(dark = dark, night = night) { content() } }
 
-    private fun shoot(dark: Boolean, night: Boolean, tab: Tab, modules: Modules = Modules(), content: @Composable () -> Unit) =
+    private fun shoot(dark: Boolean, night: Boolean, modules: Modules = Modules(), content: @Composable () -> Unit) =
         capture { BrumeTheme(dark = dark, night = night) { FnFrame(onClose = {}) { content() } } }
 
     private fun capture(content: @Composable () -> Unit) {

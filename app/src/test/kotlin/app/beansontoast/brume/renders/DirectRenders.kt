@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import app.beansontoast.brume.Modules
 import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.learn.Learn
 import app.beansontoast.brume.core.sound.Ambience
@@ -17,7 +16,7 @@ import app.beansontoast.brume.ui.AboutScreen
 import app.beansontoast.brume.ui.BreathSetup
 import app.beansontoast.brume.ui.FnFrame
 import app.beansontoast.brume.ui.BrumeTheme
-import app.beansontoast.brume.ui.CalmScreen
+import app.beansontoast.brume.ui.BreatheScreen
 import app.beansontoast.brume.ui.LanguageChoice
 import app.beansontoast.brume.ui.LearnScreen
 import app.beansontoast.brume.ui.TonesHowScreen
@@ -26,10 +25,7 @@ import app.beansontoast.brume.ui.LearnCardScreen
 import app.beansontoast.brume.ui.LearnTopicScreen
 import app.beansontoast.brume.ui.ListenActions
 import app.beansontoast.brume.ui.ListenComfort
-import app.beansontoast.brume.ui.MeditationSetup
-import app.beansontoast.brume.ui.Practice
 import app.beansontoast.brume.ui.SettingsScreen
-import app.beansontoast.brume.ui.Tab
 import app.beansontoast.brume.ui.TonesScreen
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -70,29 +66,29 @@ class DirectRenders(private val shot: String) {
         val dark = night || shot.endsWith("-dark")
         val name = shot.removeSuffix("-night").removeSuffix("-day")
         when (name) {
-            "listen" -> tab(dark, night, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
-            "listen-playing" -> tab(dark, night, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
-            "calm" -> tab(dark, night, Tab.CALM) { CalmScreen(Modules(), Practice.BREATHE, {}, BreathSetup(), MeditationSetup(), "Bruit brun", {}, {}, {}, {}) }
-            "tones" -> tab(dark, night, Tab.TONES) { TonesScreen(tones, ListenActions()) }
-            "tones-how" -> tab(dark, night, Tab.TONES) { TonesHowScreen {} }
-            "journal" -> tab(dark, night, Tab.JOURNAL) { JournalScreen(week, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
-            "journal-saved" -> tab(dark, night, Tab.JOURNAL) { JournalScreen(noted, 4 * 3600 + 25 * 60, today, "Enregistré", { _, _, _ -> }, {}) }
-            "learn" -> tab(dark, night, Tab.LEARN) { LearnScreen() }
-            "settings-modules-sheet" -> tab(dark, night, Tab.LEARN) { SettingsScreen(true, {}, {}, language = LanguageChoice("fr") {}, sheet = app.beansontoast.brume.ui.SettingsSheet.MODULES) }
-            "settings-sync-sheet" -> tab(dark, night, Tab.LEARN) { SettingsScreen(true, {}, {}, sync = app.beansontoast.brume.sync.SyncState(folderName = "Brume", hasFolder = true, auto = true, lastSyncedAt = 1_768_900_000_000), language = LanguageChoice("fr") {}, sheet = app.beansontoast.brume.ui.SettingsSheet.SYNC) }
-            "settings-country-sheet" -> tab(dark, night, Tab.LEARN) { SettingsScreen(true, {}, {}, language = LanguageChoice("fr") {}, country = app.beansontoast.brume.ui.CountryChoice(null, app.beansontoast.brume.core.region.Regions.supported.first()) {}, sheet = app.beansontoast.brume.ui.SettingsSheet.COUNTRY) }
-            "learn-library" -> tab(dark, night, Tab.LEARN) { LearnScreen(startPage = 1) }
-            "learn-loudness" -> tab(dark, night, Tab.LEARN) { LearnScreen(startPage = 2, still = true) }
-            "learn-doctor-sheet" -> tab(dark, night, Tab.LEARN) { LearnScreen(doctorOpen = true) }
-            "learn-topic" -> tab(dark, night, Tab.LEARN) { LearnTopicScreen(3, {}, {}) }
-            "card-coffee" -> tab(dark, night, Tab.LEARN) { LearnCardScreen(Learn.card("c3_1")!!, "Retour", {}, onNext = {}) }
-            "settings" -> tab(dark, night, Tab.LEARN) { SettingsScreen(true, {}, {}, language = LanguageChoice("fr") {}) }
-            "about" -> tab(dark, night, Tab.LEARN) { AboutScreen("0.2.0") }
+            "listen" -> tab(dark, night) { ListenComfort(idle, ListenActions()) }
+            "listen-playing" -> tab(dark, night) { ListenComfort(playing, ListenActions()) }
+            "breathe-options" -> tab(dark, night) { BreatheScreen(BreathSetup(), {}, {}, soundName = "Bruit brun", previewAt = 2.0, options = true) }
+            "tones" -> tab(dark, night) { TonesScreen(tones, ListenActions()) }
+            "tones-how" -> tab(dark, night) { TonesHowScreen {} }
+            "journal" -> tab(dark, night) { JournalScreen(week, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
+            "journal-saved" -> tab(dark, night) { JournalScreen(noted, 4 * 3600 + 25 * 60, today, "Enregistré", { _, _, _ -> }, {}) }
+            "learn" -> tab(dark, night) { LearnScreen() }
+            "settings-modules-sheet" -> tab(dark, night) { SettingsScreen(true, {}, {}, language = LanguageChoice("fr") {}, sheet = app.beansontoast.brume.ui.SettingsSheet.MODULES) }
+            "settings-sync-sheet" -> tab(dark, night) { SettingsScreen(true, {}, {}, sync = app.beansontoast.brume.sync.SyncState(folderName = "Brume", hasFolder = true, auto = true, lastSyncedAt = 1_768_900_000_000), language = LanguageChoice("fr") {}, sheet = app.beansontoast.brume.ui.SettingsSheet.SYNC) }
+            "settings-country-sheet" -> tab(dark, night) { SettingsScreen(true, {}, {}, language = LanguageChoice("fr") {}, country = app.beansontoast.brume.ui.CountryChoice(null, app.beansontoast.brume.core.region.Regions.supported.first()) {}, sheet = app.beansontoast.brume.ui.SettingsSheet.COUNTRY) }
+            "learn-library" -> tab(dark, night) { LearnScreen(startPage = 1) }
+            "learn-loudness" -> tab(dark, night) { LearnScreen(startPage = 2, still = true) }
+            "learn-doctor-sheet" -> tab(dark, night) { LearnScreen(doctorOpen = true) }
+            "learn-topic" -> tab(dark, night) { LearnTopicScreen(3, {}, {}) }
+            "card-coffee" -> tab(dark, night) { LearnCardScreen(Learn.card("c3_1")!!, "Retour", {}, onNext = {}) }
+            "settings" -> tab(dark, night) { SettingsScreen(true, {}, {}, language = LanguageChoice("fr") {}) }
+            "about" -> tab(dark, night) { AboutScreen("0.2.0") }
             else -> error(shot)
         }
     }
 
-    private fun tab(dark: Boolean, night: Boolean, tab: Tab, content: @Composable () -> Unit) = capture {
+    private fun tab(dark: Boolean, night: Boolean, content: @Composable () -> Unit) = capture {
         BrumeTheme(dark = dark, night = night) { FnFrame(onClose = {}) { content() } }
     }
 
@@ -110,7 +106,7 @@ class DirectRenders(private val shot: String) {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun shots() = listOf(
-            "listen", "listen-playing", "calm", "tones", "tones-how", "journal", "journal-saved",
+            "listen", "listen-playing", "breathe-options", "tones", "tones-how", "journal", "journal-saved",
             "learn", "learn-library", "learn-loudness", "learn-doctor-sheet", "learn-topic", "card-coffee", "settings", "settings-modules-sheet", "settings-sync-sheet", "settings-country-sheet", "about",
         ).flatMap { listOf("$it-night", "$it-day") }.map { arrayOf<Any>(it) }
     }

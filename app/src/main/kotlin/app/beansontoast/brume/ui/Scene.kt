@@ -100,8 +100,6 @@ import app.beansontoast.brume.core.sound.Sound
 import app.beansontoast.brume.core.sound.SoundEngine.Mode
 import app.beansontoast.brume.core.sound.Volume
 import app.beansontoast.brume.playback.PlayerUi
-import app.beansontoast.brume.ui.launch.LocalLaunchAnchors
-import app.beansontoast.brume.ui.launch.MistAnchor
 import app.beansontoast.design.tabular
 import java.util.Locale
 
@@ -297,11 +295,6 @@ private fun stateWord(ui: PlayerUi): String? = when {
     2 -> R.string.volume_2
     3 -> R.string.volume_3
     else -> R.string.volume_4
-}
-
-@StringRes internal fun Practice.label() = when (this) {
-    Practice.BREATHE -> R.string.scene_practice_breathe
-    Practice.MEDITATE -> R.string.scene_practice_meditate
 }
 
 /** The timer's share left, for the ring: null with no timer; whole until it runs. */

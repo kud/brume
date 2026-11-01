@@ -18,7 +18,6 @@ import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.DecibelExplorer
 import app.beansontoast.brume.ui.LearnScreen
 import app.beansontoast.brume.ui.AdviceDeck
-import app.beansontoast.brume.ui.Tab
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule

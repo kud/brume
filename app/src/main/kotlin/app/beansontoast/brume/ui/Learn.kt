@@ -121,18 +121,6 @@ internal fun NavRow(title: String, summary: String? = null, trailing: String? = 
     }
 }
 
-/** Back to where the page came from: the arrow and a word, 48 dp. */
-@Composable
-internal fun BackRow(label: String, onBack: () -> Unit) {
-    Row(
-        Modifier.padding(top = 12.dp).heightIn(min = 48.dp).clickable(role = Role.Button, onClick = onBack).padding(end = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(painterResource(R.drawable.ic_back), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 6.dp))
-    }
-}
-
 /**
  * The library as tiles (Iris, 2026-11-01, garden second pass): the seven topics and « Mon
  * acouphène », two to a row, each a framed tile with its name and its size in words.

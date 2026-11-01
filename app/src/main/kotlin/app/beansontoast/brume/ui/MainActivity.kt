@@ -16,10 +16,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import app.beansontoast.brume.ui.launch.LaunchAnchors
 import app.beansontoast.brume.ui.launch.LaunchIntro
 import app.beansontoast.brume.ui.launch.LaunchIntroOverlay
-import app.beansontoast.brume.ui.launch.LocalLaunchAnchors
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -269,8 +267,8 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     // Bells and voice follow the session's level: the sound under it, or the listening level when none
     // plays, so neither is ever louder than the session.
     val sessionLevel = player.levels.values.maxOrNull() ?: LevelRules.DEFAULT_LEVEL
-    // The voice wakes when its setup or the Breathe scene is in view, so its row can say if it is missing.
-    val voiceNear = stack.lastOrNull() == "calm" || (stack.isEmpty() && fn == Fn.BREATHE)
+    // The voice wakes when Respirer (and its setup sheet) is in view, so its row can say if it is missing.
+    val voiceNear = stack.isEmpty() && fn == Fn.BREATHE
     LaunchedEffect(voiceNear) { if (voiceNear) voice.prepare() }
 
     fun keepBreath(it: BreathSetup) {
@@ -311,11 +309,8 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
         ))
     }
 
-    val anchors = remember { LaunchAnchors() }
-    // Read once: the launch intro lands on the introduction only on the launch that shows it.
-    val firstLaunch = remember { showIntro }
     BrumeTheme(dark = isSystemInDarkTheme(), night = night) {
-        CompositionLocalProvider(LocalLaunchAnchors provides anchors, LocalCountry provides country) {
+        CompositionLocalProvider(LocalCountry provides country) {
             Box(Modifier.fillMaxSize()) {
                 // Introduction, a session and home give way to each other by a slow cross-fade, each
                 // drawn from its own key so the one leaving keeps its state (docs/motion.md).
@@ -390,13 +385,6 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                         page == "tones" -> TonesScreen(player, actions, onHow = { push("tones-how") }, onFinder = { push("finder") })
                         page == "settings" -> settingsPage(::pop)
                         page == "finder" -> finderPage(::pop)
-                        // Under Respirer, pace, length and voice: the breathing half of the setup only.
-                        page == "calm" -> CalmScreen(
-                            modules = modules.copy(meditation = false), practice = Practice.BREATHE, onPractice = {},
-                            breath = breath, meditation = meditation, soundName = chosenSound(context, player).ifEmpty { null },
-                            onBreath = ::keepBreath, onMeditation = ::keepMeditation,
-                            onStartBreath = ::startBreath, onStartMeditation = ::startMeditation, voice = voiceState,
-                        )
                         page?.startsWith("card:") == true -> {
                             // "card:c3_1" from the library or a Journal tag; Next walks the reading order in place.
                             val card = Learn.card(page.removePrefix("card:"))
@@ -414,8 +402,8 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                                 keepMix(); graph.player.play()
                             },
                         )
-                        Fn.BREATHE -> BreatheScreen(breath, onChange = ::keepBreath,
-                            onStart = ::startBreath, onMore = { push("calm") })
+                        Fn.BREATHE -> BreatheScreen(breath, onChange = ::keepBreath, onStart = ::startBreath,
+                            soundName = chosenSound(context, player).ifEmpty { null }, voice = voiceState)
                         Fn.MEDITATE -> MeditateScreen(meditation, chosenSound(context, player).ifEmpty { null }, voiceState,
                             onChange = ::keepMeditation, onStart = ::startMeditation)
                         Fn.EAR -> finderPage(::home)
@@ -441,7 +429,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                     }
                 }
                 }
-                LaunchIntroOverlay(intro, firstLaunch)
+                LaunchIntroOverlay(intro)
                 // A newer build found on opening offers itself once, never over the introduction or a session.
                 UpdatesOnOpen(canAnnounce = { !showIntro && !breathPrelude && breathStartedAt == null && meditationStartedAt == null }, onFound = { showUpdate = true })
                 // Always composed, so it fades and rises like every quiet sheet rather than popping.

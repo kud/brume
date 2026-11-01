@@ -10,6 +10,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -182,54 +185,44 @@ internal fun VoiceRow(on: Boolean, state: Voice.State, @StringRes summary: Int, 
 }
 
 /**
- * Breathe's setup: the five techniques in order, each with what it is and how to sit; its pace and
- * every phase written out; the hold line (kept in place, faded, when there is no hold); the length
- * (minutes or rounds); the options; then Start.
+ * Pace, length and voice, the sheet under Respirer (it was a scrolled page of its own until the
+ * no-scroll pass): the chosen rhythm's line (what it is, how to sit) in a reserved three-line place,
+ * its paces and every phase written out, the hold line (kept in place, faded, when there is no hold),
+ * the length (minutes or rounds), then what happens while you breathe. The rhythms themselves and
+ * Start stay on the screen.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun BreathPanel(setup: BreathSetup, soundName: String?, voice: Voice.State, onChange: (BreathSetup) -> Unit, onStart: () -> Unit) {
+internal fun ColumnScope.BreathOptions(setup: BreathSetup, soundName: String?, voice: Voice.State, onChange: (BreathSetup) -> Unit) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
-    Column {
-        Text(stringResource(R.string.breath_intro), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
-        SectionTitle(stringResource(R.string.breath_rhythm), Modifier.padding(top = 4.dp))
-        Column(Modifier.selectableGroup()) {
-            Technique.entries.forEach { ChoiceRow(stringResource(it.title()), stringResource(it.hint()), setup.technique == it) { onChange(setup.copy(technique = it)) } }
+    Text(stringResource(R.string.breath_intro) + " " + stringResource(setup.technique.hint()), style = MaterialTheme.typography.bodySmall, color = muted,
+        minLines = 3, maxLines = 3, overflow = TextOverflow.Ellipsis)
+    Row(Modifier.padding(top = 8.dp).selectableGroup(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.breath_variant), style = MaterialTheme.typography.labelLarge, color = muted, modifier = Modifier.padding(end = 4.dp))
+        setup.technique.offered.forEach { v ->
+            SelectChip(stringResource(v.label()), setup.pattern.variant == v, { onChange(setup.copy(variants = setup.variants.with(setup.technique, v))) })
         }
-
-        SectionTitle(stringResource(R.string.breath_variant), Modifier.padding(top = 8.dp))
-        Row(Modifier.padding(top = 4.dp).selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            setup.technique.offered.forEach { v ->
-                SelectChip(stringResource(v.label()), setup.pattern.variant == v, { onChange(setup.copy(variants = setup.variants.with(setup.technique, v))) })
-            }
+    }
+    Text(setup.pattern.phasesText(), style = MaterialTheme.typography.bodyMedium.tabular(), modifier = Modifier.padding(top = 4.dp))
+    // Always laid out, so nothing below moves when a technique without holds is chosen.
+    Text(stringResource(R.string.breath_hold_easy), style = MaterialTheme.typography.bodySmall, color = muted, minLines = 2, maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.alpha(calmAlpha(setup.pattern.holds)).then(if (setup.pattern.holds) Modifier else Modifier.clearAndSetSemantics { }))
+    Text(stringResource(if (setup.byRounds) R.string.breath_rounds_title else R.string.breath_length), style = MaterialTheme.typography.labelLarge,
+        color = muted, modifier = Modifier.padding(top = 8.dp))
+    FlowRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        setup.technique.length.options.forEach { n ->
+            val label = stringResource(if (setup.byRounds) R.string.breath_cycles else R.string.breath_minutes, n)
+            SelectChip(label, setup.length == n, { onChange(setup.withLength(n)) })
         }
-        Text(setup.pattern.phasesText(), style = MaterialTheme.typography.bodyLarge.tabular(), modifier = Modifier.padding(top = 8.dp))
-        // Always laid out, so nothing below moves when a technique without holds is chosen.
-        Text(stringResource(R.string.breath_hold_easy), style = MaterialTheme.typography.bodyMedium, color = muted, minLines = 2,
-            modifier = Modifier.padding(top = 4.dp).alpha(calmAlpha(setup.pattern.holds))
-                .then(if (setup.pattern.holds) Modifier else Modifier.clearAndSetSemantics { }))
-
-        SectionTitle(stringResource(if (setup.byRounds) R.string.breath_rounds_title else R.string.breath_length), Modifier.padding(top = 12.dp))
-        FlowRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            setup.technique.length.options.forEach { n ->
-                val label = stringResource(if (setup.byRounds) R.string.breath_cycles else R.string.breath_minutes, n)
-                SelectChip(label, setup.length == n, { onChange(setup.withLength(n)) })
-            }
-        }
-
-        SettingsGroup(stringResource(R.string.breath_options), Modifier.padding(top = 12.dp)) {
-            VoiceRow(setup.voice, voice, R.string.voice_breath_summary) { onChange(setup.copy(voice = it)) }
-            SwitchRow(stringResource(R.string.breath_haptics), stringResource(R.string.breath_haptics_summary), setup.haptics) { onChange(setup.copy(haptics = it)) }
-            if (soundName != null) SwitchRow(stringResource(R.string.breath_sound), stringResource(R.string.breath_sound_summary, soundName), setup.sound) {
-                onChange(setup.copy(sound = it))
-            } else Column(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = 8.dp)) {
-                Text(stringResource(R.string.breath_sound), style = MaterialTheme.typography.bodyLarge)
-                Text(stringResource(R.string.breath_sound_none), style = MaterialTheme.typography.bodyMedium, color = muted)
-            }
-        }
-        FilledTonalButton(onStart, Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp).heightIn(min = 56.dp)) {
-            Text(stringResource(R.string.breath_start), style = MaterialTheme.typography.titleMedium)
-        }
+    }
+    VoiceRow(setup.voice, voice, R.string.voice_breath_summary) { onChange(setup.copy(voice = it)) }
+    SwitchRow(stringResource(R.string.breath_haptics), stringResource(R.string.breath_haptics_summary), setup.haptics) { onChange(setup.copy(haptics = it)) }
+    if (soundName != null) SwitchRow(stringResource(R.string.breath_sound), stringResource(R.string.breath_sound_summary, soundName), setup.sound) {
+        onChange(setup.copy(sound = it))
+    } else Column(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = 8.dp)) {
+        Text(stringResource(R.string.breath_sound), style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(R.string.breath_sound_none), style = MaterialTheme.typography.bodyMedium, color = muted)
     }
 }
 
@@ -431,11 +424,14 @@ internal fun rememberSeconds(still: Boolean): Double {
 /**
  * Respirer's own screen (Iris, 2026-11-01): the orb breathing the rhythm chosen, its length at
  * the centre, the five rhythms as light rows (the chosen one has a ground, a hairline and a check,
- * never colour alone), then a link to pace, length and voice, and Start. [previewAt] fixes the
- * orb's clock for renders.
+ * never colour alone), then a link to pace, length and voice (a quiet sheet, like Méditer's), and
+ * Start. [previewAt] fixes the orb's clock for renders; [options] opens the sheet.
  */
 @Composable
-fun BreatheScreen(setup: BreathSetup, onChange: (BreathSetup) -> Unit, onStart: () -> Unit, onMore: () -> Unit, previewAt: Double? = null) {
+fun BreatheScreen(
+    setup: BreathSetup, onChange: (BreathSetup) -> Unit, onStart: () -> Unit,
+    soundName: String? = null, voice: Voice.State = Voice.State.IDLE, previewAt: Double? = null, options: Boolean = false,
+) {
     val scheme = MaterialTheme.colorScheme
     val still = previewAt != null || rememberReducedMotion()
     val clock = rememberSeconds(still)
@@ -443,6 +439,8 @@ fun BreatheScreen(setup: BreathSetup, onChange: (BreathSetup) -> Unit, onStart: 
     val cycle = setup.pattern.steps.sumOf { it.seconds }
     val t = previewAt ?: clock
     val moment = plan.at(t % cycle)
+    var open by rememberSaveable { mutableStateOf(options) }
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp).padding(bottom = LocalChromeBottom.current + 12.dp)) {
         BreathOrb(if (still && previewAt == null) 0.5f else moment.fullness, moment.phase == Phase.HOLD, if (still && previewAt == null) 0.0 else t,
             Modifier.weight(1f).fillMaxWidth()) {
@@ -458,7 +456,7 @@ fun BreatheScreen(setup: BreathSetup, onChange: (BreathSetup) -> Unit, onStart: 
                 }
             }
         }
-        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClick = onMore)
+        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button) { open = true }
             .padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.breathe_more), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f))
             Text("›", style = MaterialTheme.typography.titleMedium, color = scheme.onSurfaceVariant)
@@ -467,6 +465,8 @@ fun BreatheScreen(setup: BreathSetup, onChange: (BreathSetup) -> Unit, onStart: 
             Icon(painterResource(R.drawable.ic_play), null, modifier = Modifier.size(20.dp))
             Text(stringResource(R.string.scene_start), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 8.dp))
         }
+    }
+    QuietSheet(open, { open = false }, stringResource(R.string.breathe_more)) { BreathOptions(setup, soundName, voice, onChange) }
     }
 }
 
@@ -499,25 +499,6 @@ internal fun DrawScope.holdMarks(count: Int, filled: Int, ink: Color) {
         if (i < filled) drawCircle(ink, r, c) else drawCircle(ink, r - 0.5f.dp.toPx(), c, style = Stroke(1.dp.toPx()))
         x += 2 * r + gap
     }
-}
-
-/**
- * The mist band: five thin horizon lines around a centre that rises from low (empty) to high (full),
- * spreading a little as it fills. Alpha stays low and lower again at night; nothing is filled.
- */
-internal fun DrawScope.mistBand(fullness: Float, ink: Color, fade: Float) {
-    val w = size.width; val h = size.height
-    val centre = h * (0.78f - 0.5f * fullness)
-    val spread = h * (0.035f + 0.03f * fullness)
-    for (i in -2..2) {
-        val weight = 1f - 0.28f * kotlin.math.abs(i)
-        val y = centre + i * spread
-        val x0 = w * (0.06f + 0.05f * kotlin.math.abs(i)); val x1 = w - x0
-        val alpha = (0.18f + 0.22f * fullness) * weight * fade
-        horizon(y, h * 0.008f, w * (0.9f + 0.15f * i), (i * 1.3f + fullness * 0.8f), x0, x1, ink.copy(alpha = alpha), (1.2f + 1.0f * weight) * density)
-    }
-    // One faint line stays on the horizon below: where the breath settles back to.
-    horizon(h * 0.86f, 0f, w, 0f, w * 0.2f, w * 0.8f, ink.copy(alpha = 0.12f * fade), 1f * density)
 }
 
 /** One soft tap, or nothing when the phone has no vibrator. */

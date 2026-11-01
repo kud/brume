@@ -32,7 +32,6 @@ import app.beansontoast.brume.ui.FinderScreen
 import app.beansontoast.brume.ui.FinderStep
 import app.beansontoast.brume.ui.ListenActions
 import app.beansontoast.brume.ui.NowPlaying
-import app.beansontoast.brume.ui.Tab
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule

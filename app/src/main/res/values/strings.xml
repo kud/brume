@@ -5,14 +5,11 @@
     <string name="tab_journal">Journal</string>
     <string name="listen_guide">Set it so your tinnitus blends in, still just there. Covering it completely isn\'t needed.</string>
     <string name="listen_noise">Noise</string>
-    <string name="listen_nature">Nature</string>
     <string name="noise_white">White</string>
     <string name="noise_pink">Pink</string>
     <string name="noise_brown">Brown</string>
     <string name="noise_grey">Grey</string>
-    <string name="noise_brown_note">Deep. It may not reach a high-pitched tinnitus.</string>
     <string name="nature_rain">Rain</string>
-    <string name="nature_surf">Surf</string>
     <string name="nature_wind">Wind</string>
     <string name="listen_level">Level %1$d of 20</string>
     <string name="listen_level_label">%1$s level</string>
@@ -31,15 +28,11 @@
     <string name="journal_today">Today</string>
     <string name="journal_loudness">Loudness</string>
     <string name="journal_bother">Bother</string>
-    <string name="journal_bother_hint">How much it\'s getting to you</string>
     <string name="journal_rating">%1$s: %2$d of 10</string>
     <string name="journal_note">Note (optional)</string>
     <string name="journal_save">Save</string>
     <string name="journal_update">Update today</string>
     <string name="journal_saved">Saved</string>
-    <string name="journal_recent">Recent days</string>
-    <string name="journal_empty_title">No check-ins yet</string>
-    <string name="journal_empty_body">One a day is enough. It takes a few seconds.</string>
     <string name="journal_listened">Listened this week: %1$s</string>
     <string name="duration_hours_minutes">%1$d h %2$d min</string>
     <string name="duration_minutes">%1$d min</string>
@@ -67,7 +60,6 @@
     <string name="notification_channel">Playback</string>
     <string name="notification_playing">Playing</string>
     <string name="notification_paused">Paused</string>
-    <string name="notification_stop">Stop</string>
 
     <!-- Redesign, 2026-10-31 -->
     <string name="brand_word">brume</string>
@@ -75,9 +67,6 @@
     <string name="noise_pink_hint">Softer, balanced</string>
     <string name="noise_brown_hint">Deep and low</string>
     <string name="noise_grey_hint">Even to the ear</string>
-    <string name="nature_rain_hint">Steady rain</string>
-    <string name="nature_surf_hint">Slow waves</string>
-    <string name="nature_wind_hint">Moving air</string>
     <string name="listen_levels">Levels</string>
     <string name="listen_state_empty">Choose a sound above.</string>
     <string name="listen_state_ready">Ready: %1$s. It starts softly.</string>
@@ -86,11 +75,9 @@
     <string name="timer_change">Change the sleep timer</string>
     <string name="journal_scale">%1$s %2$d</string>
     <string name="journal_of_ten">of 10</string>
-    <string name="journal_export_title">Your data</string>
     <string name="about_privacy_title">On this phone only</string>
 
     <!-- Tone pattern (Maya, acrn) -->
-    <string name="mode_sounds">Sounds</string>
     <string name="mode_tones">Tone pattern (ACRN)</string>
     <string name="tones_note">Four soft tones around the pitch you set, in a shifting order: three beats on, two off. Keep it just audible, on its own.</string>
     <string name="tones_pitch">Pitch</string>
@@ -109,10 +96,6 @@
     <string name="ux_now_playing">Now playing</string>
     <string name="ux_ready">Ready to play</string>
     <string name="ux_remove">Remove</string>
-    <string name="ux_slot_empty_noise">No noise. Pick one below, or leave it empty.</string>
-    <string name="ux_slot_empty_nature">No nature sound. Pick one below, or leave it empty.</string>
-    <string name="ux_noise_rule">One at a time: picking another swaps it.</string>
-    <string name="ux_nature_rule">One at a time, played over the noise.</string>
     <string name="ux_one_at_a_time">Playing a sound stops the tone pattern, and starting the tone pattern stops these sounds.</string>
     <string name="ux_tones_heading">Tone pattern</string>
     <string name="ux_tones_session">ACRN · a practice in timed sessions, on its own, never over other sounds.</string>
@@ -200,24 +183,19 @@
     <!-- Breathe (Souffle) and the module switches -->
     <string name="tab_breath">Breathe</string>
     <string name="breath_intro">Breathe gently and slowly, eyes open or closed.</string>
-    <string name="breath_rhythm">Rhythm</string>
     <string name="breath_length">Length</string>
     <string name="breath_minutes">%d min</string>
-    <string name="breath_options">While you breathe</string>
     <string name="breath_haptics">Vibrate at each change</string>
     <string name="breath_haptics_summary">A light tap, so you can close your eyes.</string>
     <string name="breath_sound">Sound underneath</string>
     <string name="breath_sound_summary">%s, fading in.</string>
     <string name="breath_sound_none">Choose a sound in Listen first.</string>
-    <string name="breath_start">Start</string>
     <string name="breath_left">%1$d:%2$02d left</string>
     <string name="breath_end">End</string>
     <string name="breath_done">Done</string>
     <string name="breath_done_body">Take a moment before you move on.</string>
     <string name="breath_back">Back</string>
     <!-- Calm (Calme): the tab, and Meditation's guided steps (ADR 0003) -->
-    <string name="tab_calm">Calm</string>
-    <string name="calm_intro">Breathing and meditation: a few quiet minutes.</string>
     <string name="practice_meditation">Meditate</string>
     <string name="med_choose">Session</string>
     <string name="med_body">Body</string>
@@ -230,11 +208,8 @@
     <string name="med_timer_hint">No guide: a bell at the start and at the end.</string>
     <string name="med_haptics_guided">Vibrate with each bell</string>
     <string name="med_haptics_guided_summary">A light pulse as well as the bell.</string>
-    <string name="med_haptics_timer">Vibrate at the start and end</string>
-    <string name="med_haptics_timer_summary">A light pulse as well as the bell.</string>
     <string name="med_options">While you sit</string>
     <string name="med_stop_note">You can stop at any time. If a session doesn\'t feel right today, end it: there\'s no wrong way to do this.</string>
-    <string name="med_step">%1$d of %2$d</string>
     <string name="sit_settle">Settle in.</string>
     <string name="sit_return">Slowly come back.</string>
     <string name="module_meditation_summary">Short guided sessions, and a timer.</string>
@@ -329,10 +304,8 @@
     <string name="learn_try">Try this</string>
     <string name="learn_sources">Sources: %1$s</string>
     <string name="learn_next">Next: %1$s</string>
-    <string name="learn_read">Read the card</string>
     <string name="learn_back">Back</string>
     <string name="learn_count">%1$d cards</string>
-    <string name="settings_row_summary">Night hours, activities, language, sync, sound output</string>
     <string name="tones_evidence_note">Studies on tone patterns like this one are few and small: try it if you\'re curious, and stop if it doesn\'t suit you.</string>
     <string name="journal_q_place">How much room did the sound take today?</string>
     <string name="journal_q_place_low">barely there</string>
@@ -347,11 +320,8 @@
     <string name="tag_stress">Stress</string>
     <string name="tag_poor_sleep">Poor sleep</string>
     <string name="journal_invite_title">You noted “%1$s”</string>
-    <string name="journal_invite_body">Curious what studies say? The tag is there to notice, at your pace.</string>
-    <string name="settings_display">Night</string>
     <string name="tab_learn">Learn</string>
     <string name="about_brume">About Brume</string>
-    <string name="about_row_summary">What Brume is, privacy, sources, version</string>
     <string name="settings_output">Sound output</string>
     <string name="about_sources_title">Sources</string>
     <string name="about_sources">Brume draws on clinical guidance and patient groups: NICE NG155, the AAO-HNSF guideline, WHO–ITU H.870, France Acouphènes and Tinnitus UK. Each Learn card names its own sources.</string>
@@ -361,14 +331,10 @@
     <string name="scene_settle">Settle</string>
     <string name="scene_breathe">Breathe</string>
     <string name="scene_tones">Tones</string>
-    <string name="scene_swipe">Swipe sideways for another scene</string>
     <string name="scene_sleep_purpose">To fall asleep, with a timer</string>
     <string name="scene_settle_purpose">To settle during the day, no timer</string>
-    <string name="scene_breathe_purpose">A paced breath, or a quiet session</string>
     <string name="scene_tones_purpose">A tone pattern at the pitch you set</string>
     <string name="tones_at">At %1$,d Hz</string>
-    <string name="scene_with">with %1$s</string>
-    <string name="scene_breathe_quiet">In silence</string>
     <string name="scene_suggest_timer">A suggestion · stops after %1$d min</string>
     <string name="scene_suggest_open">A suggestion · no timer</string>
     <string name="scene_suggest_play">Play this suggestion</string>
@@ -388,15 +354,9 @@
     <string name="scene_in_mix">%1$s, in the mix. Change the sounds</string>
     <string name="scene_sounds">Sounds</string>
     <string name="scene_sounds_hint">Layer as many sounds as you like, each at its own level.</string>
-    <string name="scene_levels">Each sound</string>
     <string name="scene_tones_setup">Pitch and levels</string>
-    <string name="scene_breathe_setup">Pattern and length</string>
-    <string name="scene_practice_breathe">Breathing</string>
-    <string name="scene_practice_meditate">Meditation</string>
     <string name="scene_start">Start</string>
-    <string name="scene_minutes_with">%1$d min · with %2$s</string>
     <string name="scene_minutes">%1$d min</string>
-    <string name="scene_choose">Scene</string>
 
     <!-- Comprendre: decibel dial (Iris, 2026-10-31) and advice cards (Iris, 2026-11-01) -->
     <string name="db_title">How loud, for how long?</string>
@@ -440,10 +400,6 @@
     <string name="db_aeroplane">Jet plane taking off</string>
     <string name="db_rocket">Rocket launch, 1.5 km away</string>
     <string name="learn_library">Library</string>
-    <string name="picker_background">Background</string>
-    <string name="picker_ambience">Ambience</string>
-    <string name="picker_none">None</string>
-    <string name="picker_none_ambience">None</string>
     <string name="picker_hint">Mix any sounds together, each at its own level: a noise to blend, a place to be.</string>
     <string name="breath_long">Long out-breath</string>
     <string name="breath_sigh">Cyclic sigh</string>
@@ -614,15 +570,12 @@
     <string name="sound_band">Around your sound</string>
     <string name="sound_band_kind">Comfort</string>
     <string name="finder_entry">My tinnitus: find the sound you hear</string>
-    <string name="finder_entry_summary">Find the sound you hear, describe it in your words, keep a profile</string>
     <string name="finder_title">My tinnitus</string>
     <string name="finder_home_intro">An optional path, at your pace.</string>
     <string name="finder_home_empty">Nothing saved yet. You can find the sound you hear, describe your tinnitus in your own words, and keep a profile to talk about it with a professional.</string>
     <string name="finder_unnamed">Unnamed</string>
     <string name="finder_start">Find the sound I hear</string>
     <string name="finder_start_another">Add another tinnitus</string>
-    <string name="finder_back">Back</string>
-    <string name="finder_close">Close</string>
     <string name="finder_step">Step %1$d of %2$d</string>
     <string name="finder_skip">Skip</string>
     <string name="finder_continue">Continue</string>
