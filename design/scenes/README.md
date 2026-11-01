@@ -31,3 +31,24 @@ Use the **same file** for 40 dp circular crops and wider ~160 × 88 dp cards. Cr
 `contact-sheet.png` previews all four scenes composited, their separated layers, and the seven textures in circular crops. PNGs are paletted with alpha to preserve mist soft falloff while keeping APK size low; backgrounds use WebP. All assets are self-contained and work without network or real user data.
 
 No Compose screens or playback logic are modified in this artwork-only branch.
+
+## Motion and small-size review
+
+These assets are intentionally static; the Android UI owns all motion. Suggested, deliberately conservative starting points:
+
+- **Mist drift:** independently translate the centred 1404 px layer by up to **±80 source pixels** horizontally (less than its 162 px overhang), with an approximately **45–90 second** aperiodic cycle. Do not animate the background.
+- **Middle:** leave `sleep` and `settle` largely still. For `breathe`, gently modulate the middle layer's opacity rather than warping the contour; for `tones`, let the four marks dissolve softly without a pulsing equaliser rhythm. Avoid brightening all layers together.
+- **Reduced motion:** respect the device's remove-animations preference; make drift and opacity changes optional, and render a stable composited still when animation is disabled.
+- **Rendering memory:** decode and retain only the active scene. At full resolution, a background + two 32-bit alpha layers can occupy approximately **33.4 MB** of decoded pixel data; retaining all four scenes simultaneously can multiply this. Recycle/evict inactive textures where practical.
+- **Night legibility:** keep titles around 25–35% of the display and the central play disc around 40–60%. The committed artwork's visibly opaque features start below the 60% boundary; do not translate them vertically into the controls.
+
+### Repeatable checks
+
+With Python 3 and [Pillow](https://pypi.org/project/Pillow/) available:
+
+```sh
+python design/scenes/validate.py
+python design/scenes/preview.py
+```
+
+`validate.py` checks dimensions, opacity, transparent mist edges, quiet top/centre, and distinct texture crops at 40 px. `preview.py` creates `motion-preview.gif` and `motion-preview-still.png` locally (these review files are not required by Android). Neither script modifies source artwork, Compose or playback logic. The animation is illustrative, not a specification for speed or opacity. Physical-device preview remains necessary.
