@@ -29,10 +29,8 @@ import app.beansontoast.brume.ui.LearnScreen
 import app.beansontoast.brume.ui.ListenActions
 import app.beansontoast.brume.ui.MiniPlayer
 import app.beansontoast.brume.ui.Scene
-import app.beansontoast.brume.ui.SceneArtCache
 import app.beansontoast.brume.ui.SceneScreen
 import app.beansontoast.brume.ui.Tab
-import app.beansontoast.brume.ui.art
 import app.beansontoast.brume.ui.scenes
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -60,7 +58,6 @@ class ChromeRenders(private val shot: String) {
 
     @Before fun only() {
         assumeTrue(System.getenv("BRUME_RENDERS") != null)
-        Scene.entries.forEach { s -> s.art()?.let { SceneArtCache.loadAll(compose.activity, it) } }
         compose.runOnUiThread { WindowCompat.setDecorFitsSystemWindows(compose.activity.window, false) }
     }
 
@@ -87,7 +84,7 @@ class ChromeRenders(private val shot: String) {
     }
 
     private fun listen(scene: Scene, ui: PlayerUi, night: Boolean) = capture(night) {
-        BrumeTheme(dark = true, night = night) {
+        BrumeTheme(dark = night, night = night) {
             BrumeScaffold(Tab.LISTEN, {}, Modules(), bleed = true) {
                 SceneScreen(Modules().scenes(), scene, {}, ui, ListenActions(), breathe = breathe, night = night, swipeHint = false, sceneClock = { 0L })
             }
@@ -95,7 +92,7 @@ class ChromeRenders(private val shot: String) {
     }
 
     private fun reading(tab: Tab, night: Boolean, scrolled: Boolean = false, content: @Composable () -> Unit) = capture(night, scrolled) {
-        BrumeTheme(dark = true, night = night) {
+        BrumeTheme(dark = night, night = night) {
             BrumeScaffold(tab, {}, Modules(), mini = { MiniPlayer("Brown noise + Rain") {} }, backdrop = Scene.SLEEP, night = night) { content() }
         }
     }

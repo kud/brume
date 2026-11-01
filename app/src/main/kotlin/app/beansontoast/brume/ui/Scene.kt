@@ -68,6 +68,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -138,8 +141,6 @@ fun Modules.scenes(): List<Scene> = Scene.entries.filter {
     when (it) { Scene.BREATHE -> calm; Scene.TONES -> tones; else -> true }
 }
 
-/** Sacha's scene art: three layers per scene, drawn full-bleed behind the page ([SceneBackdrop]). */
-internal fun Scene.art(): SceneLayers? = sceneArt[this]
 
 /**
  * Sacha's sound thumbnails: a square image per sound, in the pills and the tiles. His first set (PR
@@ -207,13 +208,6 @@ fun SceneScreen(
     val shown = scenes.getOrElse(pager.currentPage) { scene }
     val still = sceneClock == null && rememberReducedMotion()
     val clock = sceneClock ?: rememberSceneClock(still)
-    // Only the shown scene and its neighbours are decoded, ahead of the swipe that reaches them.
-    val context = LocalContext.current
-    LaunchedEffect(pager, scenes) {
-        snapshotFlow { pager.settledPage }.collect { i ->
-            listOf(i, i + 1, i - 1).forEach { scenes.getOrNull(it)?.let { s -> SceneArtCache.preload(context, s.art()) } }
-        }
-    }
 
     Box(Modifier.fillMaxSize()) {
         // The launch intro lands Horizon's lines on this mist (ui/launch), as it did on the old dock.
@@ -222,8 +216,8 @@ fun SceneScreen(
         val mistInk = scheme.onSurfaceVariant
         val mistArea = Modifier.fillMaxWidth().fillMaxHeight(0.62f).align(Alignment.BottomCenter)
             .onGloballyPositioned { anchors?.mist = MistAnchor(it.boundsInWindow(), strength, mistInk) }
-        // The drawn mist stands in only where a scene has no art; the intro keeps its landing place.
-        if (shown.art() == null) Mist(mistArea, strength = strength, color = mistInk) else Box(mistArea)
+        // The garden replaces the drawn mist; the intro keeps its landing place.
+        Box(mistArea)
         // The art runs edge to edge, under the status and navigation bars (Erwann, dev.19: « pas
         // coupé en haut et en bas »): the pager fills the screen, and the names above and the
         // timer row below float over it on transparent ground. Each page is padded by both.
@@ -346,13 +340,18 @@ private fun ScenePage(
             line = listOfNotNull(stateWord(ui), word).joinToString(" · ")
         }
     }
-    Box(Modifier.fillMaxSize()) {
-        scene.art()?.let {
-            // Breathe's swell previews the rhythm chosen for the session; the others breathe at rest.
-            SceneBackdrop(scene, it, night, still, clock, offset,
-                breathe = if (scene == Scene.BREATHE && breathe.practice == Practice.BREATHE) breathe.pattern else null,
-                modifier = Modifier.fillMaxSize())
-        }
+    // The garden (Iris, 2026-11-01): the stone is the play control, the rakes are drawn around it.
+    // Its centre is measured in the page, read only while drawing, so a swipe never recomposes.
+    var pageAt by remember { mutableStateOf(Offset.Zero) }
+    var stoneAt by remember { mutableStateOf(Offset(Float.NaN, Float.NaN)) }
+    val rhythm = if (scene == Scene.BREATHE && breathe.practice == Practice.BREATHE) breathe.pattern else null
+    val rakes = remember(scene, all.tones.pitch) { scene.rakes(all.tones.pitch) }
+    Box(Modifier.fillMaxSize().onGloballyPositioned { pageAt = it.positionInRoot() }) {
+        Ground(Modifier.fillMaxSize())
+        RakedGravel(rakes, stone = { stoneAt - pageAt }, swell = {
+            // Breathe's rings preview the rhythm chosen for the session; the others breathe with the sound.
+            gardenSwell(clock() / 1000.0, still, rhythm, ui.playing && scene != Scene.BREATHE, levels.maxOrNull() ?: 0f, scene.ordinal)
+        }, modifier = Modifier.fillMaxSize())
         Column(
             Modifier.fillMaxSize().volumeSlide(levels, set).padding(insets).padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -374,10 +373,12 @@ private fun ScenePage(
             Row(Modifier.fillMaxWidth().padding(top = 28.dp), verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.weight(1f).height(1.dp))
                 Spacer(Modifier.width(56.dp))
+                Box(Modifier.onGloballyPositioned { stoneAt = it.boundsInRoot().center }) {
                 if (scene == Scene.BREATHE) Disc(ui.copy(playing = false), ring = null, word = R.string.scene_start, onClick = breathe.onStart, always = true)
                 else if (suggestion != null) Disc(ui, ring = suggestion.timer?.let { 1f }, word = R.string.scene_suggest_play,
                     onClick = { onSuggest(suggestion) }, always = true)
                 else Disc(ui, ring(ui), word = null, onClick = if (ui.hasSound) actions.toggle else onSounds)
+                }
                 VolumeTrack(levels, set, word, Modifier.width(56.dp))
                 Spacer(Modifier.weight(1f).height(1.dp))
             }
@@ -522,18 +523,19 @@ private fun Disc(ui: PlayerUi, ring: Float?, @StringRes word: Int?, onClick: () 
         else -> R.string.action_play
     })
     Box(Modifier.size(196.dp), contentAlignment = Alignment.Center) {
-        val track = scheme.outline.copy(alpha = 0.35f)
+        // The raked rings are the track; the timer is the one firmer line, emptying (weight, not colour).
         val ink = scheme.onSurface.copy(alpha = 0.8f)
         Canvas(Modifier.fillMaxSize()) {
             val stroke = 2.dp.toPx()
             val inset = stroke / 2
             val box = Size(size.width - stroke, size.height - stroke)
-            drawArc(track, 0f, 360f, false, Offset(inset, inset), box, style = Stroke(stroke))
             if (ring != null) drawArc(ink, -90f, 360f * ring, false, Offset(inset, inset), box, style = Stroke(stroke, cap = StrokeCap.Round))
         }
+        // With a sound, the stone; without, its place, a quiet circle in the gravel.
+        if (has) Stone(Modifier.size(STONE_RADIUS * 2 + 24.dp))
         Box(
-            Modifier.size(112.dp).clip(CircleShape)
-                .then(if (has) Modifier.background(scheme.inverseSurface) else Modifier.border(2.dp, scheme.outline, CircleShape))
+            Modifier.size(STONE_RADIUS * 2).clip(CircleShape)
+                .then(if (has) Modifier else Modifier.border(1.dp, scheme.outline, CircleShape))
                 .clickable(role = Role.Button, onClickLabel = label, onClick = onClick).semantics { contentDescription = label },
             contentAlignment = Alignment.Center,
         ) {

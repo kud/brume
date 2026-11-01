@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -69,7 +70,7 @@ import kotlin.math.sin
  *    from the edges, in the ink and mist language: the serif of the scene names, a hairline, and
  *    the page you are on told by weight and a small mist wave under its name, never by a hue.
  *  - The sound playing docks onto the bar on Journal and Learn: one floating piece, not two.
- *  - Off Listen, the scene last used stays behind the page, dimmer and still, so reading never moves.
+ *  - Every page stands on the garden's ground; only Listen rakes it.
  */
 
 /** The height the floating bar (and the nav bar under it) takes at the bottom: pages pad by it so nothing ends under the bar. */
@@ -79,12 +80,9 @@ val LocalChromeBottom = compositionLocalOf { 0.dp }
 @Composable
 fun Modifier.underChrome(): Modifier = padding(bottom = LocalChromeBottom.current + 8.dp)
 
-/** How far behind a reading page the scene art sits, against its dim on Listen (35% at night, 70% by day). */
-internal const val READING_VEIL = 0.45f
-
 /**
  * Every tab's frame. [bleed]: the page draws under the status bar itself (Listen's scenes); the
- * others are kept below it. [backdrop]: the scene art shown, still and veiled, behind a reading page.
+ * others are kept below it. [backdrop]: kept for callers; every page now stands on the garden's [Ground].
  */
 @Composable
 fun BrumeScaffold(
@@ -104,14 +102,9 @@ fun BrumeScaffold(
     // Until the bar is measured, a fair guess: the bar, its margin and a gesture bar.
     val chromeBottom = if (dockPx > 0) with(density) { dockPx.toDp() } else if (mini != null) 160.dp else 104.dp
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        // The veiled scene fades in and out behind reading pages instead of appearing at once.
-        var lastBackdrop by remember { mutableStateOf(backdrop) }
-        if (backdrop != null) lastBackdrop = backdrop
-        val backdropAlpha = calmAlpha(backdrop != null)
-        lastBackdrop?.let { b -> b.art()?.takeIf { backdropAlpha > 0f }?.let {
-            SceneBackdrop(b, it, night, still = true, clock = { 0L }, offset = { 0f }, breathe = null,
-                veil = READING_VEIL, modifier = Modifier.fillMaxSize().alpha(backdropAlpha))
-        } }
+        // Every page stands on the garden's ground (washi by day, graphite at night); the raked
+        // stone stays on Listen, so reading never moves (Iris, 2026-11-01).
+        Ground(Modifier.fillMaxSize())
         CompositionLocalProvider(LocalChromeBottom provides chromeBottom) {
             Box(Modifier.fillMaxSize().then(if (bleed) Modifier else Modifier.statusBarsPadding())) { content() }
         }
@@ -145,9 +138,12 @@ private fun FloatingDock(here: Tab, onTab: (Tab) -> Unit, mini: (@Composable () 
                     Box(Modifier.padding(horizontal = 20.dp).fillMaxWidth().height(1.dp).background(scheme.outlineVariant.copy(alpha = 0.6f)))
                 }
             }
-            Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp).selectableGroup(), verticalAlignment = Alignment.CenterVertically) {
+            // Each word takes its own width and the gaps share the rest, so « Comprendre » is never cut
+            // at 360 dp, which a third of the bar each did (Iris, 2026-11-01).
+            Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp).selectableGroup(), horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically) {
                 listOf(Tab.LISTEN to R.string.tab_listen, Tab.JOURNAL to R.string.tab_journal, Tab.LEARN to R.string.tab_learn).forEach { (t, label) ->
-                    MenuWord(label, here == t, Modifier.weight(1f)) { onTab(t) }
+                    MenuWord(label, here == t, Modifier.widthIn(min = 72.dp)) { onTab(t) }
                 }
             }
         }

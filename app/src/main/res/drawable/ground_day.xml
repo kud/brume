@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder ground (Iris, 2026-11-01) until Sacha's ground-day.png (1440 x 3120 grain) lands:
+     delete this file and put drawable-nodpi/ground_day.png in its place. Plain washi. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp" android:height="780dp" android:viewportWidth="360" android:viewportHeight="780">
+    <path android:fillColor="#FFF2EDE3" android:pathData="M0,0h360v780h-360z" />
+</vector>

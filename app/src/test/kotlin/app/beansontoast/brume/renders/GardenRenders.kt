@@ -15,10 +15,8 @@ import app.beansontoast.brume.ui.BrumeScaffold
 import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.ListenActions
 import app.beansontoast.brume.ui.Scene
-import app.beansontoast.brume.ui.SceneArtCache
 import app.beansontoast.brume.ui.SceneScreen
 import app.beansontoast.brume.ui.Tab
-import app.beansontoast.brume.ui.art
 import app.beansontoast.brume.ui.scenes
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -31,20 +29,19 @@ import org.robolectric.annotation.GraphicsMode
 import java.io.File
 
 /**
- * Sacha's scene art in place (Iris, 2026-11-01), in English at his phone's 1080 x 2340: each scene
- * in night hours (35%), by day in the dark theme (70%) and in the light theme (line art in ink),
- * then drift frames (a fixed clock, every 2 s) and swipe frames for the parallax, on invented data.
- * `BRUME_RENDERS=<dir> ./gradlew --offline :app:testDebugUnitTest --tests '*SceneArtRenders*'`.
+ * The garden (Iris, 2026-11-01, direction A): each scene in night hours, by day in the dark theme
+ * and on washi (light), then drift frames (a fixed clock, every 2 s), breath frames (every 1 s, the
+ * rings following the rhythm) and swipe frames, on invented data, at 360 x 780.
+ * `BRUME_RENDERS=<dir> ./gradlew --offline :app:testDebugUnitTest --tests '*GardenRenders*'`.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "en-w360dp-h780dp-xxhdpi")
-class SceneArtRenders(private val shot: String) {
+class GardenRenders(private val shot: String) {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Before fun only() {
         assumeTrue(System.getenv("BRUME_RENDERS") != null)
-        Scene.entries.forEach { s -> s.art()?.let { SceneArtCache.loadAll(compose.activity, it) } }
     }
 
     private val playing = PlayerUi(NoiseColour.BROWN, Ambience.RAIN, 0.3f, 0.45f, timerMinutes = 45, playing = true, timerRemainingMinutes = 38)
