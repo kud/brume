@@ -21,3 +21,15 @@ Brume is a relaxation app: it should feel extremely soft. Erwann on dev.21: « e
 ## Checking
 
 The renders (`BRUME_RENDERS=<dir> ./gradlew --offline :app:testGithubDebugUnitTest --tests '*Renders*'`) show states side by side: a state change that moves anything else on screen is a bug.
+
+## The garden (direction A, karesansui; Iris, 2026-11-01)
+
+Erwann asked for « minimaliste, un peu à la japonaise… pas du tout comics ou manga » and called the full-bleed scene art « années 2000… fond d'écran ». The art now belongs to the interface (`ui/Garden.kt`, maths in `:core` `garden/Rake`):
+
+- **Ground**: washi by day, graphite at night (`Ground`, `ground_day` / `ground_night`). Warm neutrals at very low chroma; meaning by line count, spacing and weight, never hue.
+- **The stone is the play control** (`Stone`, `stone_day` / `stone_night`): value, no outline, no glow. Without a sound, its place is a quiet circle.
+- **Raked gravel** drawn as vectors (`RakedGravel`): rings around the stone, straight lines elsewhere that stop at the rings. At rest the rings drift ±6% of a spacing over 23 s; playing, they breathe with the level (one swell every 9 s); on Respirer they widen with the in-breath and narrow with the out-breath. Rings never cross (`Rake.MAX_SWELL`).
+- **Scenes**: Dormir one stone, wide slow rings; Se poser two stones, parallel lines; Respirer rings that follow the breath; Tons lines whose spacing follows the pitch (log scale, 250 Hz wide to 12 kHz close).
+- **The timer** is the one firmer line around the stone, emptying: weight, not colour.
+- **Reduced motion**: the garden rests at swell 0; nothing drifts.
+- Sacha's files replace the placeholders without code changes: delete `res/drawable/stone_night.xml` (and `stone_day`, `ground_night`, `ground_day`) and drop the PNG of the same name into `res/drawable-nodpi/`.
