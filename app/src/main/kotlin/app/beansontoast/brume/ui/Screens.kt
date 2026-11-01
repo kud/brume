@@ -1,5 +1,9 @@
 package app.beansontoast.brume.ui
 
+import app.beansontoast.design.WeightSwap
+import app.beansontoast.design.Motion
+import androidx.compose.animation.Crossfade
+import androidx.compose.material3.IconButton
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.ui.text.style.TextDecoration
@@ -345,6 +349,7 @@ fun JournalScreen(
     onSave: (Int, Int, String) -> Unit,
     onExport: () -> Unit,
     onCard: (String) -> Unit = {},
+    noteOpen: Boolean = false,
 ) {
     val todays = checkIns.firstOrNull { it.day == today.toString() }
     val start = todays ?: checkIns.firstOrNull()
@@ -353,99 +358,135 @@ fun JournalScreen(
     var bother by remember(todays) { mutableIntStateOf(start?.bother ?: 5) }
     var note by remember(todays) { mutableStateOf(todaysParts.text) }
     var tags by remember(todays) { mutableStateOf(todaysParts.tags) }
+    var day by remember(today) { mutableStateOf(today) }
+    var writing by remember { mutableStateOf(noteOpen) }
     val dayFormat = remember { DateTimeFormatter.ofPattern("EEEE d MMMM") }
-    val shortFormat = remember { DateTimeFormatter.ofPattern("EEE d MMM") }
+    val byDay = remember(checkIns) { checkIns.associateBy { it.day } }
 
-    val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
-        ScreenTitle(R.string.tab_journal, stringResource(R.string.journal_listened, duration(weekSeconds)))
-
-        SectionTitle(stringResource(R.string.journal_today) + " · " + today.format(dayFormat))
-        // Today's entry sits on the ground like Listen, not in a card (Iris, 2026-11-01, dev.15):
-        // the questions are the structure, and it all fits above the fold, Save included, so the
-        // scroll cue never fades over the button.
-        Column {
-            Question(stringResource(R.string.journal_q_loud), stringResource(R.string.journal_loudness), loudness,
-                stringResource(R.string.journal_q_loud_low), stringResource(R.string.journal_q_loud_high)) { loudness = it }
-            Spacer(Modifier.height(4.dp))
-            Question(stringResource(R.string.journal_q_place), stringResource(R.string.journal_bother), bother,
-                stringResource(R.string.journal_q_place_low), stringResource(R.string.journal_q_place_high)) { bother = it }
-            Text(stringResource(R.string.journal_q_note), style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 20.dp).semantics { heading() })
+    // The journal as one frame (Iris, 2026-11-01, garden second pass): a week of seven days with
+    // ‹ › to step back through the weeks, the chosen day below it, and the note in a sheet so the
+    // field never sits under the bar. Today is asked; another day is read.
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().then(gutter).padding(bottom = chromeBottom() + 8.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Column(Modifier.weight(1f)) { ScreenTitle(R.string.tab_journal, stringResource(R.string.journal_listened, duration(weekSeconds))) }
+                val export = stringResource(R.string.journal_export)
+                IconButton(onExport, Modifier.padding(top = 20.dp).semantics { contentDescription = export }) {
+                    Icon(painterResource(R.drawable.ic_export), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                }
+            }
+            WeekRow(today, day, byDay, Modifier.padding(top = 12.dp)) { day = it }
+            SectionTitle((if (day == today) stringResource(R.string.journal_today) + " · " else "") + day.format(dayFormat))
+            Crossfade(day == today, Modifier.weight(1f), animationSpec = Motion.tween(Motion.CALM), label = "day") { isToday ->
+                if (isToday) Column(Modifier.fillMaxSize()) {
+                    Question(stringResource(R.string.journal_q_loud), stringResource(R.string.journal_loudness), loudness,
+                        stringResource(R.string.journal_q_loud_low), stringResource(R.string.journal_q_loud_high)) { loudness = it }
+                    Spacer(Modifier.height(4.dp))
+                    Question(stringResource(R.string.journal_q_place), stringResource(R.string.journal_bother), bother,
+                        stringResource(R.string.journal_q_place_low), stringResource(R.string.journal_q_place_high)) { bother = it }
+                    // The note as one line that opens its sheet: the words written so far, or an invitation.
+                    val written = listOf(tagWords(tags), note.trim()).filter { it.isNotEmpty() }.joinToString(" · ")
+                    NavRow(stringResource(R.string.journal_q_note), written.ifEmpty { stringResource(R.string.journal_note_add) }) { writing = true }
+                    Spacer(Modifier.weight(1f))
+                    // The screen's one ink action.
+                    Button(
+                        onClick = { onSave(loudness, bother, NoteTags.compose(note, tags)) },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = CircleShape,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.inverseSurface, contentColor = MaterialTheme.colorScheme.inverseOnSurface),
+                    ) {
+                        Text(stringResource(if (todays == null) R.string.journal_save else R.string.journal_update), style = MaterialTheme.typography.labelLarge)
+                    }
+                    // Its line is always there, so the confirmation fades in without moving anything (Iris, 2026-11-01).
+                    Text(message ?: "", style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, minLines = 1,
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp).alpha(calmAlpha(message != null)))
+                } else PastDay(byDay[day.toString()], onCard)
+            }
+        }
+        QuietSheet(writing, { writing = false }, stringResource(R.string.journal_q_note)) {
             Text(stringResource(R.string.journal_q_note_hint), style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
             TagChips(tags) { tag -> tags = if (tag in tags) tags - tag else tags + tag }
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it.take(CheckIn.NOTE_MAX - 60) },
                 label = { Text(stringResource(R.string.journal_note)) },
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                minLines = 3, maxLines = 3,
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
             )
-            // The screen's one ink action.
-            Button(
-                onClick = { onSave(loudness, bother, NoteTags.compose(note, tags)) },
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp).heightIn(min = 52.dp), shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.inverseSurface, contentColor = MaterialTheme.colorScheme.inverseOnSurface),
-            ) {
-                Text(stringResource(if (todays == null) R.string.journal_save else R.string.journal_update), style = MaterialTheme.typography.labelLarge)
-            }
         }
-        // Its line is always there, so the confirmation fades in without pushing the invitation down (Iris, 2026-11-01).
-        Text(message ?: "", style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, minLines = 1,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp).alpha(calmAlpha(message != null)))
+    }
+}
 
-        // An invitation from the latest day with a tag, today or yesterday: one card, never a finding.
-        val invite = checkIns.filter { it.day == today.toString() || it.day == today.minusDays(1).toString() }
-            .firstNotNullOfOrNull { NoteTags.parse(it.note).tags.firstOrNull() }
-        if (invite != null) {
-            val card = Learn.card(invite.card)
-            if (card != null) Column(
-                Modifier.padding(top = 14.dp).fillMaxWidth().clip(MaterialTheme.shapes.large)
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow).padding(16.dp),
-            ) {
-                Text(stringResource(R.string.journal_invite_title, stringResource(invite.word())), style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(stringResource(R.string.journal_invite_body), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
-                NavRow(cardTitle(card)) { onCard(card.id) }
-            }
+/**
+ * Seven days, Monday first, between ‹ and ›: each its initial and its date, a short rule under a
+ * day with an entry, and the chosen one in weight with a ring. Days to come are faint and can't be
+ * chosen; the week never steps past today's.
+ */
+@Composable
+private fun WeekRow(today: LocalDate, chosen: LocalDate, byDay: Map<String, CheckIn>, modifier: Modifier, onDay: (LocalDate) -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val monday = chosen.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
+    val thisMonday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
+    val initial = remember { DateTimeFormatter.ofPattern("EEEEE") }
+    val spoken = remember { DateTimeFormatter.ofPattern("EEEE d MMMM") }
+    val noted = stringResource(R.string.journal_day_noted)
+    val back = stringResource(R.string.journal_week_previous)
+    val next = stringResource(R.string.journal_week_next)
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        IconButton({ onDay(chosen.minusWeeks(1)) }, Modifier.semantics { contentDescription = back }) {
+            Text("‹", style = MaterialTheme.typography.titleLarge, color = scheme.onSurfaceVariant)
         }
-
-        SectionTitle(stringResource(R.string.journal_recent))
-        if (checkIns.isEmpty()) {
-            EmptyState(stringResource(R.string.journal_empty_title), stringResource(R.string.journal_empty_body))
-        } else {
-            Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                checkIns.take(14).forEach { c ->
-                    Column(
-                        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer)
-                            .padding(horizontal = 16.dp, vertical = 12.dp).semantics(mergeDescendants = true) {},
-                    ) {
-                        Text(LocalDate.parse(c.day).format(shortFormat), style = MaterialTheme.typography.bodyLarge)
-                        Scale(stringResource(R.string.journal_loudness), c.loudness)
-                        Scale(stringResource(R.string.journal_bother), c.bother)
-                        val parts = NoteTags.parse(c.note)
-                        val words = tagWords(parts.tags)
-                        if (words.isNotEmpty()) Text(words, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-                        if (parts.text.isNotBlank()) {
-                            Text(parts.text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 4.dp))
-                        }
-                    }
+        Row(Modifier.weight(1f).selectableGroup()) {
+            for (i in 0 until 7) {
+                val d = monday.plusDays(i.toLong())
+                val on = d == chosen
+                val future = d.isAfter(today)
+                val has = byDay.containsKey(d.toString())
+                Column(
+                    Modifier.weight(1f).heightIn(min = 64.dp).clip(MaterialTheme.shapes.medium)
+                        .then(if (on) Modifier.border(1.dp, scheme.outline, MaterialTheme.shapes.medium) else Modifier)
+                        .selectable(on, enabled = !future, role = Role.Tab) { onDay(d) }
+                        .semantics(mergeDescendants = true) { contentDescription = d.format(spoken) + if (has) ", $noted" else "" }
+                        .alpha(if (future) 0.38f else 1f),
+                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                ) {
+                    WeightSwap(d.format(initial), on, MaterialTheme.typography.labelMedium, onColor = scheme.onSurface, offColor = scheme.onSurfaceVariant)
+                    WeightSwap("${d.dayOfMonth}", on, MaterialTheme.typography.titleMedium.tabular(), onColor = scheme.onSurface, offColor = scheme.onSurface)
+                    Box(Modifier.padding(top = 4.dp).width(12.dp).height(2.dp).background(if (has) scheme.onSurface else Color.Transparent))
                 }
             }
         }
-
-        SectionTitle(stringResource(R.string.journal_export_title))
-        Column {
-            Text(stringResource(R.string.journal_export_body), style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            OutlinedButton(onClick = onExport, modifier = Modifier.padding(top = 12.dp).heightIn(min = 48.dp)) {
-                Icon(painterResource(R.drawable.ic_export), null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.journal_export))
-            }
+        val later = monday.plusWeeks(1)
+        IconButton({ onDay(minOf(today, chosen.plusWeeks(1))) }, enabled = !later.isAfter(thisMonday),
+            modifier = Modifier.semantics { contentDescription = next }) {
+            Text("›", style = MaterialTheme.typography.titleLarge, color = scheme.onSurfaceVariant.copy(alpha = if (!later.isAfter(thisMonday)) 1f else 0.38f))
         }
-        Spacer(Modifier.height(24.dp))
+    }
+}
+
+/** A day before today, read: its two scales, its tags and note, and a card to read if a tag points to one. */
+@Composable
+private fun PastDay(c: CheckIn?, onCard: (String) -> Unit) {
+    Column(Modifier.fillMaxSize()) {
+        if (c == null) {
+            Text(stringResource(R.string.journal_day_empty), style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+            return@Column
+        }
+        Scale(stringResource(R.string.journal_loudness), c.loudness)
+        Scale(stringResource(R.string.journal_bother), c.bother)
+        val parts = NoteTags.parse(c.note)
+        val words = tagWords(parts.tags)
+        if (words.isNotEmpty()) Text(words, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 16.dp))
+        if (parts.text.isNotBlank()) Text(parts.text, style = MaterialTheme.typography.bodyLarge, maxLines = 6,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp))
+        val card = parts.tags.firstOrNull()?.let { Learn.card(it.card) }
+        if (card != null) {
+            Spacer(Modifier.weight(1f))
+            Text(stringResource(R.string.journal_invite_title, stringResource(parts.tags.first().word())), style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            NavRow(cardTitle(card)) { onCard(card.id) }
+        }
     }
 }
 

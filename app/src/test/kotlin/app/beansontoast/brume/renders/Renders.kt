@@ -110,6 +110,7 @@ class Renders(private val shot: String) {
         "mixer-add-sheet-night" -> shoot(dark = true, night = true, Tab.LISTEN) { SoundsScreen(mixed, ListenActions(), onBack = {}, sheet = SoundsSheet.ADD) }
         "mixer-ears-sheet-day" -> shoot(dark = false, night = false, Tab.LISTEN) { SoundsScreen(mixed, ListenActions(), onBack = {}, sheet = SoundsSheet.EARS) }
         "mixer-many-day" -> shoot(dark = false, night = false, Tab.LISTEN) { SoundsScreen(many, ListenActions(), onBack = {}) }
+        "journal-note-sheet-night" -> shoot(dark = true, night = true, Tab.JOURNAL) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}, noteOpen = true) }
         "mixer-empty-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { SoundsScreen(PlayerUi(mix = emptyList()), ListenActions(), onBack = {}) }
         "listen-mix-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(mixed, ListenActions()) }
         "listen-idle-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
@@ -208,7 +209,7 @@ class Renders(private val shot: String) {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun shots() = listOf(
-            "mixer-night", "mixer-day", "mixer-first-visit-day", "mixer-empty-dark", "mixer-add-sheet-night", "mixer-ears-sheet-day", "mixer-many-day", "listen-mix-day",
+            "mixer-night", "mixer-day", "mixer-first-visit-day", "mixer-empty-dark", "mixer-add-sheet-night", "journal-note-sheet-night", "mixer-ears-sheet-day", "mixer-many-day", "listen-mix-day",
             "listen-idle-night", "listen-playing-night", "listen-idle-day", "listen-playing-day", "listen-empty-dark", "listen-stopped-dark", "listen-tones-night", "listen-tones-day",
             "journal-day", "journal-night", "journal-empty-dark", "about-night", "about-day", "listen-playing-open-day",
             "sync-night", "sync-day", "sync-off-day", "sync-problem-night",

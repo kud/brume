@@ -714,4 +714,9 @@
     <string name="page_previous">Page précédente</string>
     <string name="page_next">Page suivante</string>
     <string name="page_of">%1$d / %2$d</string>
+    <string name="journal_day_empty">Rien de noté ce jour-là.</string>
+    <string name="journal_day_noted">noté</string>
+    <string name="journal_week_previous">Semaine précédente</string>
+    <string name="journal_week_next">Semaine suivante</string>
+    <string name="journal_note_add">Ajouter des mots ou quelques lignes</string>
 </resources>

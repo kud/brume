@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -66,7 +67,8 @@ internal fun QuietSheet(open: Boolean, onClose: () -> Unit, title: String, conte
     if (!open && shown == 0f) return
     BackHandler(open) { onClose() }
     val scheme = MaterialTheme.colorScheme
-    Box(Modifier.fillMaxSize().graphicsLayer { alpha = shown }) {
+    // The keyboard lifts the card with it, so a field in a sheet is never under it.
+    Box(Modifier.fillMaxSize().graphicsLayer { alpha = shown }.imePadding()) {
         Box(
             Modifier.fillMaxSize().background(scheme.scrim.copy(alpha = 0.32f))
                 .clickable(remember { MutableInteractionSource() }, indication = null, enabled = open, onClick = onClose),
