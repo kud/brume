@@ -403,7 +403,7 @@
     <string name="scene_minutes">%1$d min</string>
     <string name="scene_choose">Scène</string>
 
-    <!-- Comprendre: decibel dial and quiz (Iris, 2026-10-31) -->
+    <!-- Comprendre: decibel dial (Iris, 2026-10-31) and advice cards (Iris, 2026-11-01) -->
     <string name="db_title">Combien de décibels, combien de temps ?</string>
     <string name="db_intro">On tourne la molette : le niveau, un son du quotidien, et le temps qu’une oreille tient sans protection.</string>
     <string name="db_value">%1$d dB</string>
@@ -445,38 +445,6 @@
     <string name="db_aeroplane">Avion à réaction au décollage</string>
     <string name="db_rocket">Décollage d’une fusée, à 1,5 km</string>
     <string name="learn_library">Bibliothèque</string>
-    <string name="quiz_title">Vrai ou idée reçue ?</string>
-    <string name="quiz_intro">Cinq cartes : on devine, puis on retourne.</string>
-    <string name="quiz_true">Vrai</string>
-    <string name="quiz_myth">Idée reçue</string>
-    <string name="quiz_flip">Voir la réponse</string>
-    <string name="quiz_as_thought">Comme pressenti.</string>
-    <string name="quiz_surprise">Surprenant ? Beaucoup pensent l’inverse.</string>
-    <string name="quiz_read">Lire la fiche</string>
-    <string name="quiz_position">%1$d sur %2$d</string>
-    <string name="quiz_done_title">Fin du paquet</string>
-    <string name="quiz_done">%1$d sur %2$d comme pressenti.</string>
-    <string name="quiz_again">Un autre paquet</string>
-    <string name="quiz_coffee_q">Arrêter le café rend l’acouphène moins fort.</string>
-    <string name="quiz_coffee_a">Dans un essai en double aveugle, les jours avec ou sans caféine se valaient ; l’arrêt donnait surtout des maux de tête.</string>
-    <string name="quiz_time_q">La durée d’écoute compte autant que le volume.</string>
-    <string name="quiz_time_a">Le repère hebdomadaire de l’OMS : 80 dB pendant 40 heures, et chaque +3 dB divise le temps par deux.</string>
-    <string name="quiz_in_head_q">L’acouphène, c’est dans la tête : le son n’est pas réel.</string>
-    <string name="quiz_in_head_a">Le son est réel : on l’entend vraiment. Ce qui peut changer, c’est la place qu’il prend, quand le cerveau apprend à le ranger à l’arrière-plan.</string>
-    <string name="quiz_ten_db_q">+10 dB, c’est environ deux fois plus fort à l’oreille.</string>
-    <string name="quiz_ten_db_a">Et dix fois plus d’énergie : 90 dB, ce n’est pas « un peu plus » que 80.</string>
-    <string name="quiz_plugs_always_q">Porter des bouchons toute la journée, c’est la meilleure protection.</string>
-    <string name="quiz_plugs_always_a">Privée de son, l’oreille « monte le gain » : l’acouphène ressort et les sons ordinaires peuvent devenir pénibles. Les bouchons, c’est pour le bruit fort.</string>
-    <string name="quiz_supplements_q">Le ginkgo ou le zinc peuvent rendre l’acouphène moins fort.</string>
-    <string name="quiz_supplements_a">Aucun n’a fait mieux qu’un placebo, et les recommandations les déconseillent.</string>
-    <string name="quiz_stress_q">L’acouphène peut sembler plus envahissant dans les périodes de stress.</string>
-    <string name="quiz_stress_a">Le stress ne l’a pas créé, mais il change l’attention qu’on lui porte : un « baromètre émotionnel ».</string>
-    <string name="quiz_cotton_buds_q">Le coton-tige, c’est la bonne façon d’enlever le cérumen.</string>
-    <string name="quiz_cotton_buds_a">Il le pousse plus loin. Le cérumen sort en général seul ; quelques gouttes d’huile, ou un médecin si ça dure.</string>
-    <string name="quiz_cbt_q">Toutes les recommandations retiennent les TCC.</string>
-    <string name="quiz_cbt_a">Elles ne visent pas le son, mais le poids qu’il prend : sommeil, humeur, concentration.</string>
-    <string name="quiz_aids_no_loss_q">Les appareils auditifs aident même sans perte d’audition.</string>
-    <string name="quiz_aids_no_loss_a">Sans perte d’audition, ils n’ont pas montré de bénéfice. Si l’audition a baissé, ils ramènent les sons du monde.</string>
     <string name="picker_background">Fond</string>
     <string name="picker_ambience">Ambiance</string>
     <string name="picker_none">Aucun</string>
@@ -536,4 +504,28 @@
     <string name="region_other_care">Un médecin, un ORL ou un audioprothésiste peut vérifier votre audition et vous dire ce qui existe là où vous vivez.</string>
     <string name="region_other_association">Beaucoup de pays ont une association d\'acouphéniques avec une ligne d\'écoute et des groupes de parole ; votre médecin ou votre audioprothésiste peut vous en indiquer une.</string>
     <string name="region_other_earplugs">Les bouchons moulés sur mesure sont faits par un audioprothésiste ; prix et remboursement varient selon le pays. Si votre travail est bruyant, demandez quelle protection votre employeur doit fournir.</string>
+    <string name="advice_title">Quelques conseils</string>
+    <string name="advice_intro">Une carte à la fois, à votre rythme.</string>
+    <string name="advice_position">%1$d sur %2$d</string>
+    <string name="advice_read">Lire la fiche</string>
+    <string name="advice_real_title">Faites confiance à ce que vous entendez</string>
+    <string name="advice_real_body">Le son est réel : on l’entend vraiment. Ce qui peut changer, c’est la place qu’il prend, quand le cerveau apprend à le ranger à l’arrière-plan.</string>
+    <string name="advice_stress_title">Soyez doux avec vous les jours de stress</string>
+    <string name="advice_stress_body">Le stress ne l’a pas créé, mais il change l’attention qu’on lui porte : l’acouphène peut sembler plus envahissant dans ces périodes, comme un « baromètre émotionnel ».</string>
+    <string name="advice_plugs_title">Gardez les bouchons pour le bruit fort</string>
+    <string name="advice_plugs_body">Privée de son toute la journée, l’oreille « monte le gain » : l’acouphène ressort et les sons ordinaires peuvent devenir pénibles. Les bouchons, c’est pour le bruit fort.</string>
+    <string name="advice_hours_title">Comptez les heures autant que le volume</string>
+    <string name="advice_hours_body">La durée d’écoute compte autant que le volume. Le repère hebdomadaire de l’OMS : 80 dB pendant 40 heures, et chaque +3 dB divise ce temps par deux.</string>
+    <string name="advice_notches_title">Ménagez les derniers crans</string>
+    <string name="advice_notches_body">+10 dB, c’est environ deux fois plus fort à l’oreille et dix fois plus d’énergie : 90 dB, ce n’est pas « un peu plus » que 80.</string>
+    <string name="advice_wax_title">Laissez le cérumen sortir seul</string>
+    <string name="advice_wax_body">Le coton-tige le pousse plus loin. Le cérumen sort en général seul ; quelques gouttes d’huile, ou un médecin si ça dure.</string>
+    <string name="advice_coffee_title">Gardez votre café s’il vous fait plaisir</string>
+    <string name="advice_coffee_body">Dans un essai en double aveugle, les jours avec ou sans caféine se valaient ; l’arrêt donnait surtout des maux de tête.</string>
+    <string name="advice_supplements_title">Économisez le ginkgo et le zinc</string>
+    <string name="advice_supplements_body">Aucun n’a fait mieux qu’un placebo, et les recommandations les déconseillent.</string>
+    <string name="advice_cbt_title">Sachez que les TCC existent</string>
+    <string name="advice_cbt_body">Toutes les recommandations les retiennent. Elles ne visent pas le son, mais le poids qu’il prend : sommeil, humeur, concentration.</string>
+    <string name="advice_aids_title">Parlez des appareils auditifs si l’audition a baissé</string>
+    <string name="advice_aids_body">Ils ramènent alors les sons du monde. Sans perte d’audition, ils n’ont pas montré de bénéfice.</string>
 </resources>

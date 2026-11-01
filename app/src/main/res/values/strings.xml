@@ -404,7 +404,7 @@
     <string name="scene_minutes">%1$d min</string>
     <string name="scene_choose">Scene</string>
 
-    <!-- Comprendre: decibel dial and quiz (Iris, 2026-10-31) -->
+    <!-- Comprendre: decibel dial (Iris, 2026-10-31) and advice cards (Iris, 2026-11-01) -->
     <string name="db_title">How loud, for how long?</string>
     <string name="db_intro">Turn the dial: the level, a sound you know, and how long an unprotected ear can take it.</string>
     <string name="db_value">%1$d dB</string>
@@ -446,38 +446,6 @@
     <string name="db_aeroplane">Jet plane taking off</string>
     <string name="db_rocket">Rocket launch, 1.5 km away</string>
     <string name="learn_library">Library</string>
-    <string name="quiz_title">True or myth?</string>
-    <string name="quiz_intro">Five cards: guess, then turn it over.</string>
-    <string name="quiz_true">True</string>
-    <string name="quiz_myth">Myth</string>
-    <string name="quiz_flip">Just show me</string>
-    <string name="quiz_as_thought">As you thought.</string>
-    <string name="quiz_surprise">Surprising? Many people think otherwise.</string>
-    <string name="quiz_read">Read the card</string>
-    <string name="quiz_position">%1$d of %2$d</string>
-    <string name="quiz_done_title">That’s the deck</string>
-    <string name="quiz_done">%1$d of %2$d as you thought.</string>
-    <string name="quiz_again">Another deck</string>
-    <string name="quiz_coffee_q">Giving up coffee makes tinnitus quieter.</string>
-    <string name="quiz_coffee_a">In a double-blind trial, caffeinated and decaf days came out the same; stopping mostly brought headaches.</string>
-    <string name="quiz_time_q">How long you listen counts as much as how loud.</string>
-    <string name="quiz_time_a">WHO’s weekly benchmark is 80 dB for 40 hours, and every +3 dB halves the time.</string>
-    <string name="quiz_in_head_q">Tinnitus is all in your head: the sound isn’t real.</string>
-    <string name="quiz_in_head_a">The sound is real: you really hear it. What can change is how much room it takes, as the brain learns to file it in the background.</string>
-    <string name="quiz_ten_db_q">+10 dB sounds about twice as loud.</string>
-    <string name="quiz_ten_db_a">And it’s ten times the energy, so 90 dB isn’t “a bit more” than 80.</string>
-    <string name="quiz_plugs_always_q">Wearing earplugs all day is the best way to protect your ears.</string>
-    <string name="quiz_plugs_always_a">Deprived of sound, the ear turns up the gain: tinnitus stands out and ordinary sounds can start to hurt. Earplugs are for loud noise.</string>
-    <string name="quiz_supplements_q">Ginkgo or zinc can make tinnitus quieter.</string>
-    <string name="quiz_supplements_a">Neither did better than placebo in trials, and guidelines advise against them.</string>
-    <string name="quiz_stress_q">Tinnitus can feel more intrusive in stressful times.</string>
-    <string name="quiz_stress_a">Stress didn’t create it, but it changes how much attention it gets: an “emotional barometer”.</string>
-    <string name="quiz_cotton_buds_q">Cotton buds are the way to clear earwax.</string>
-    <string name="quiz_cotton_buds_a">They push it deeper. Wax usually works its way out; a few drops of oil, or a doctor if it lasts.</string>
-    <string name="quiz_cbt_q">Every guideline recommends CBT.</string>
-    <string name="quiz_cbt_a">It doesn’t aim at the sound but at the weight it puts on sleep, mood and focus.</string>
-    <string name="quiz_aids_no_loss_q">Hearing aids help with tinnitus even without hearing loss.</string>
-    <string name="quiz_aids_no_loss_a">Without hearing loss they haven’t shown a benefit. If hearing has dropped, they bring the world’s sounds back.</string>
     <string name="picker_background">Background</string>
     <string name="picker_ambience">Ambience</string>
     <string name="picker_none">None</string>
@@ -537,4 +505,28 @@
     <string name="region_other_care">A doctor, an ENT or an audiologist can check your hearing and tell you what\'s available where you live.</string>
     <string name="region_other_association">Many countries have a tinnitus association with a listening line and support groups; your doctor or audiologist can point you to one.</string>
     <string name="region_other_earplugs">Custom-moulded plugs are made by an audiologist; prices and cover vary by country. If your work is loud, ask what protection your employer must provide.</string>
+    <string name="advice_title">A few kind tips</string>
+    <string name="advice_intro">One at a time, at your own pace.</string>
+    <string name="advice_position">%1$d of %2$d</string>
+    <string name="advice_read">Read the card</string>
+    <string name="advice_real_title">Trust what you hear</string>
+    <string name="advice_real_body">The sound is real: you really hear it. What can change is how much room it takes, as the brain learns to file it in the background.</string>
+    <string name="advice_stress_title">Go gently on stressful days</string>
+    <string name="advice_stress_body">Stress didn’t create it, but it changes how much attention it gets: tinnitus can feel more intrusive when life is heavy, like an “emotional barometer”.</string>
+    <string name="advice_plugs_title">Keep earplugs for loud places</string>
+    <string name="advice_plugs_body">Deprived of sound all day, the ear turns up its gain: tinnitus stands out and ordinary sounds can start to hurt. Earplugs are for loud noise.</string>
+    <string name="advice_hours_title">Count the hours as well as the volume</string>
+    <string name="advice_hours_body">How long you listen counts as much as how loud. WHO’s weekly benchmark is 80 dB for 40 hours, and every +3 dB halves that time.</string>
+    <string name="advice_notches_title">Go easy on the last few notches</string>
+    <string name="advice_notches_body">+10 dB sounds about twice as loud and carries ten times the energy, so 90 dB isn’t “a bit more” than 80.</string>
+    <string name="advice_wax_title">Let earwax find its own way out</string>
+    <string name="advice_wax_body">Cotton buds push it deeper. Wax usually works its way out; a few drops of oil, or a doctor if it lasts.</string>
+    <string name="advice_coffee_title">Keep your coffee if you enjoy it</string>
+    <string name="advice_coffee_body">In a double-blind trial, days with and without caffeine came out the same; stopping mostly brought headaches.</string>
+    <string name="advice_supplements_title">Save your money on ginkgo and zinc</string>
+    <string name="advice_supplements_body">Neither did better than placebo in trials, and guidelines advise against them.</string>
+    <string name="advice_cbt_title">Know that CBT is there</string>
+    <string name="advice_cbt_body">Every guideline recommends it. It doesn’t aim at the sound but at the weight it puts on sleep, mood and focus.</string>
+    <string name="advice_aids_title">Ask about hearing aids if your hearing has dropped</string>
+    <string name="advice_aids_body">Then they bring the world’s sounds back. Without hearing loss, they haven’t shown a benefit.</string>
 </resources>

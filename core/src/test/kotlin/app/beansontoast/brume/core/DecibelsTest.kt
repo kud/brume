@@ -1,14 +1,12 @@
 package app.beansontoast.brume.core
 
 import app.beansontoast.brume.core.learn.Decibels
-import app.beansontoast.brume.core.learn.Evidence
 import app.beansontoast.brume.core.learn.Learn
 import app.beansontoast.brume.core.learn.Measure
-import app.beansontoast.brume.core.learn.Quiz
+import app.beansontoast.brume.core.learn.Advice
 import app.beansontoast.brume.core.learn.Rounded
 import app.beansontoast.brume.core.learn.SafeTime
 import app.beansontoast.brume.core.learn.Strain
-import app.beansontoast.brume.core.learn.Verdict
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -74,15 +72,9 @@ class DecibelsTest {
         assertEquals(2.0, Decibels.loudness(70), 1e-9)
     }
 
-    @Test fun `every quiz card leads to a card with evidence, and a deck is five different ones`() {
-        Quiz.pool.forEach { assertTrue(it.id, Learn.card(it.card)?.evidence != null) }
-        assertEquals(Quiz.pool.size, Quiz.pool.map { it.id }.toSet().size)
-        (0..5).forEach { round ->
-            val deck = Quiz.deck(round)
-            assertEquals(Quiz.DECK, deck.toSet().size)
-            assertTrue(deck.any { it.verdict == Verdict.TRUE } && deck.any { it.verdict == Verdict.MYTH })
-        }
-        assertEquals("coffee", Quiz.deck().first().id)
-        assertEquals(Evidence.MYTH, Learn.card("c3_1")?.evidence)
+    @Test fun `every advice card leads to a Learn card, once each`() {
+        Advice.cards.forEach { assertTrue(it.id, Learn.card(it.card) != null) }
+        assertEquals(Advice.cards.size, Advice.cards.map { it.id }.toSet().size)
+        assertEquals(10, Advice.cards.size)
     }
 }

@@ -525,7 +525,7 @@ private fun duration(seconds: Long): String {
 
 /**
  * The Learn tab (Erwann, 2026-10-31: « Comprendre à la place d'À propos »): the decibel dial and the
- * « Vrai ou idée reçue ? » deck first, so play is the first thing seen (Iris, 2026-10-31); then the
+ * advice cards first (Iris, 2026-11-01; they replace the quiz); then the
  * library's seven topics, when to see a doctor, and two rows, Settings and About Brume.
  */
 @Composable
@@ -542,7 +542,7 @@ fun LearnScreen(
         Spacer(Modifier.height(12.dp))
         DecibelExplorer(still = still, onCard = onCard)
         HorizontalDivider(Modifier.padding(vertical = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
-        QuizDeck(onCard = onCard, still = still)
+        AdviceDeck(onCard = onCard)
         HorizontalDivider(Modifier.padding(top = 24.dp, bottom = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
         Text(stringResource(R.string.learn_library), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
         LearnTopics(onTopic)
