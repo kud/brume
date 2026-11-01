@@ -1,5 +1,8 @@
 package app.beansontoast.brume.ui
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import app.beansontoast.brume.core.breath.Pattern
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
@@ -133,6 +136,10 @@ class BreatheScene(
     val practice: Practice = Practice.BREATHE,
     val onPractice: (Practice) -> Unit = {},
     val minutes: Int = 5,
+    /** Set when the rhythm runs by count (4-7-8), shown instead of the minutes. */
+    val cycles: Int? = null,
+    val pattern: Pattern = Pattern.DEFAULT,
+    val onPattern: (Pattern) -> Unit = {},
     val soundName: String? = null,
     val onStart: () -> Unit = {},
     val onSetup: () -> Unit = {},
@@ -213,6 +220,7 @@ private fun SceneNames(scenes: List<Scene>, shown: Scene, onScene: (Scene) -> Un
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ScenePage(
     scene: Scene, all: PlayerUi, allActions: ListenActions,
@@ -238,7 +246,9 @@ private fun ScenePage(
         }
         Scene.BREATHE -> {
             title = stringResource(breathe.practice.label())
-            line = breathe.soundName?.let { stringResource(R.string.scene_minutes_with, breathe.minutes, it) }
+            val cycles = breathe.cycles
+            line = if (cycles != null) listOfNotNull(stringResource(R.string.breath_cycles, cycles), breathe.soundName).joinToString(" · ")
+                else breathe.soundName?.let { stringResource(R.string.scene_minutes_with, breathe.minutes, it) }
                 ?: stringResource(R.string.scene_minutes, breathe.minutes)
         }
         else -> {
@@ -279,6 +289,17 @@ private fun ScenePage(
                                 label = null) { breathe.onPractice(p) }
                         }
                     }
+                    // The rhythm is chosen here, on the scene, not behind the link (Erwann, 2026-10-31).
+                    if (breathe.practice == Practice.BREATHE) {
+                        FlowRow(Modifier.fillMaxWidth().padding(top = 10.dp).selectableGroup(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Pattern.entries.forEach { p ->
+                                Pill(stringResource(p.title()), on = p == breathe.pattern, thumb = null, role = Role.RadioButton, label = null) { breathe.onPattern(p) }
+                            }
+                        }
+                        Text(stringResource(breathe.pattern.phases()), style = MaterialTheme.typography.bodyMedium, color = muted, textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth().padding(top = 6.dp))
+                    }
                     QuietMore(stringResource(R.string.scene_breathe_setup), breathe.onSetup)
                 }
                 else -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
@@ -300,12 +321,12 @@ private fun ScenePage(
     }
 }
 
-/** "Bruit brun et pluie": the mix as words, the second name in lower case as in a sentence. */
+/** « Brun + Pluie »: both rows of the picker, background first. */
 internal fun mixName(context: android.content.Context, ui: PlayerUi): String? {
     val a = ui.noise?.let { context.getString(it.label()) }
     val b = ui.ambience?.let { context.getString(it.label()) }
     return when {
-        a != null && b != null -> context.getString(R.string.scene_mix_and, a, b.lowercase(Locale.getDefault()))
+        a != null && b != null -> context.getString(R.string.scene_mix_and, a, b)
         else -> a ?: b
     }
 }

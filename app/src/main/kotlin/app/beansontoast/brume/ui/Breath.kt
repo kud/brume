@@ -1,5 +1,6 @@
 package app.beansontoast.brume.ui
 
+import androidx.compose.foundation.selection.selectableGroup
 import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
@@ -69,34 +70,46 @@ data class BreathSetup(
     val sound: Boolean = false,
 )
 
-private fun Pattern.label() = when (this) { Pattern.LONG_OUT -> "4-6"; Pattern.EVEN -> "5-5"; Pattern.FOUR_SEVEN_EIGHT -> "4-7-8" }
-
-@StringRes private fun Pattern.hint() = when (this) {
-    Pattern.LONG_OUT -> R.string.breath_long_out_hint
-    Pattern.EVEN -> R.string.breath_even_hint
-    Pattern.FOUR_SEVEN_EIGHT -> R.string.breath_478_hint
+@StringRes internal fun Pattern.title() = when (this) {
+    Pattern.LONG_OUT -> R.string.breath_long
+    Pattern.SIGH -> R.string.breath_sigh
+    Pattern.BOX -> R.string.breath_box
+    Pattern.FOUR_SEVEN_EIGHT -> R.string.breath_478
 }
 
-@StringRes private fun Phase.word() = when (this) { Phase.IN -> R.string.breath_in; Phase.HOLD -> R.string.breath_hold; Phase.OUT -> R.string.breath_out }
+/** Every phase written out, so nothing about the rhythm is hidden. */
+@StringRes internal fun Pattern.phases() = when (this) {
+    Pattern.LONG_OUT -> R.string.breath_long_phases
+    Pattern.SIGH -> R.string.breath_sigh_phases
+    Pattern.BOX -> R.string.breath_box_phases
+    Pattern.FOUR_SEVEN_EIGHT -> R.string.breath_478_phases
+}
+
+@StringRes private fun Phase.word() = when (this) {
+    Phase.IN -> R.string.breath_in; Phase.TOP -> R.string.breath_top; Phase.HOLD -> R.string.breath_hold; Phase.OUT -> R.string.breath_out
+}
 
 /**
- * Breathe inside Calm: rhythm, length, and two options, then Start. [soundName] is the sound chosen
- * in Listen, or null when there is none to play underneath.
+ * Breathe's setup: the four rhythms in order, each with its phases, the line that holds are
+ * optional, the length (or the cycle cap), two options, then Start.
  */
 @Composable
 fun BreathPanel(setup: BreathSetup, soundName: String?, onChange: (BreathSetup) -> Unit, onStart: () -> Unit) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
     Column {
         Text(stringResource(R.string.breath_intro), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
         SectionTitle(stringResource(R.string.breath_rhythm), Modifier.padding(top = 4.dp))
-        Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Pattern.entries.forEach { SelectChip(it.label(), setup.pattern == it, { onChange(setup.copy(pattern = it)) }) }
+        Column(Modifier.selectableGroup()) {
+            Pattern.entries.forEach { ChoiceRow(stringResource(it.title()), stringResource(it.phases()), setup.pattern == it) { onChange(setup.copy(pattern = it)) } }
         }
-        Text(stringResource(setup.pattern.hint()), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-        if (setup.pattern == Pattern.FOUR_SEVEN_EIGHT) Text(stringResource(R.string.breath_478_note), style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+        Text(stringResource(R.string.breath_holds_note), style = MaterialTheme.typography.bodyMedium, color = muted, modifier = Modifier.padding(top = 4.dp))
+        if (setup.pattern.holds) Text(stringResource(R.string.breath_478_note), style = MaterialTheme.typography.bodyMedium, color = muted,
+            modifier = Modifier.padding(top = 4.dp))
 
         SectionTitle(stringResource(R.string.breath_length), Modifier.padding(top = 20.dp))
-        Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        val cycles = setup.pattern.cycles
+        if (cycles != null) Text(stringResource(R.string.breath_cycles, cycles), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
+        else Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SESSION_MINUTES.forEach { m -> SelectChip(stringResource(R.string.breath_minutes, m), setup.minutes == m, { onChange(setup.copy(minutes = m)) }) }
         }
 
@@ -106,7 +119,7 @@ fun BreathPanel(setup: BreathSetup, soundName: String?, onChange: (BreathSetup) 
                 onChange(setup.copy(sound = it))
             } else Column(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = 8.dp)) {
                 Text(stringResource(R.string.breath_sound), style = MaterialTheme.typography.bodyLarge)
-                Text(stringResource(R.string.breath_sound_none), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.breath_sound_none), style = MaterialTheme.typography.bodyMedium, color = muted)
             }
         }
         FilledTonalButton(onStart, Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp).heightIn(min = 56.dp)) {
