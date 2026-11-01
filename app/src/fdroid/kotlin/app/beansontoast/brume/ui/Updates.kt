@@ -12,4 +12,4 @@ internal fun UpdatesOnOpen(canAnnounce: () -> Boolean, onFound: () -> Unit) = Un
 internal fun UpdatesAbout(onOpen: () -> Unit) = Unit
 
 @Composable
-internal fun UpdateSheet(onDismiss: () -> Unit) = Unit
+internal fun UpdateSheet(open: Boolean, onDismiss: () -> Unit) = Unit

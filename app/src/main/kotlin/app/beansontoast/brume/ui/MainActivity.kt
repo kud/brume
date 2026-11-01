@@ -444,7 +444,8 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                 LaunchIntroOverlay(intro, firstLaunch)
                 // A newer build found on opening offers itself once, never over the introduction or a session.
                 UpdatesOnOpen(canAnnounce = { !showIntro && !breathPrelude && breathStartedAt == null && meditationStartedAt == null }, onFound = { showUpdate = true })
-                if (showUpdate) UpdateSheet(onDismiss = { showUpdate = false })
+                // Always composed, so it fades and rises like every quiet sheet rather than popping.
+                UpdateSheet(open = showUpdate, onDismiss = { showUpdate = false })
             }
         }
     }

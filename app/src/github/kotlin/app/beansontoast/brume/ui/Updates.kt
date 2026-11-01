@@ -9,23 +9,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +38,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
@@ -118,57 +114,50 @@ internal fun UpdatesAbout(onOpen: () -> Unit) {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun UpdateSheet(onDismiss: () -> Unit) {
+internal fun UpdateSheet(open: Boolean, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val updater = remember { Updater.forContext(context) }
     val state by updater.state.collectAsStateWithLifecycle()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
     // Once per opening, rotation included: nothing known yet means ask GitHub now.
     var asked by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
+    LaunchedEffect(open) {
+        if (!open) { asked = false; return@LaunchedEffect }
         if (asked) return@LaunchedEffect
         asked = true
         val now = updater.state.value
         if (now == UpdateState.Idle || now == UpdateState.UpToDate || (now is UpdateState.Failed && now.update == null)) updater.check()
     }
     // Back from Android's "Install unknown apps" page: carry on if it was allowed.
-    LifecycleResumeEffect(state) {
-        (state as? UpdateState.NeedsPermission)?.let {
+    LifecycleResumeEffect(state, open) {
+        if (open) (state as? UpdateState.NeedsPermission)?.let {
             if (context.packageManager.canRequestPackageInstalls()) updater.install(it.update)
         }
         onPauseOrDispose { }
     }
-    val close: () -> Unit = {
-        scope.launch { runCatching { sheetState.hide() } }.invokeOnCompletion { onDismiss() }
-    }
-    val scheme = MaterialTheme.colorScheme
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        containerColor = scheme.surfaceContainer,
-        contentColor = scheme.onSurface,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = scheme.outlineVariant) },
-    ) {
-        UpdateSheetContent(
-            installed = updater.current.toString(),
-            state = state,
-            onInstall = updater::startInstall,
-            onLater = { update ->
-                updater.setAside(update.version)
-                close()
-            },
-            onAllow = { update ->
-                try {
-                    context.startActivity(updater.permissionIntent())
-                } catch (_: ActivityNotFoundException) {
-                    // No such page on this phone: the install itself will ask.
-                    updater.install(update)
-                }
-            },
-            onClose = close,
-        )
+    // The same quiet sheet as every other (Iris, phase 4): it carries the title, fades on CALM and
+    // rises 32 dp, and sits above the navigation bar, since it opens over home, not inside a frame.
+    val nav = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    CompositionLocalProvider(LocalChromeBottom provides nav) {
+        QuietSheet(open, onDismiss, stringResource(R.string.update_title)) {
+            UpdateSheetContent(
+                installed = updater.current.toString(),
+                state = state,
+                onInstall = updater::startInstall,
+                onLater = { update ->
+                    updater.setAside(update.version)
+                    onDismiss()
+                },
+                onAllow = { update ->
+                    try {
+                        context.startActivity(updater.permissionIntent())
+                    } catch (_: ActivityNotFoundException) {
+                        // No such page on this phone: the install itself will ask.
+                        updater.install(update)
+                    }
+                },
+                onClose = onDismiss,
+            )
+        }
     }
 }
 
@@ -190,23 +179,12 @@ internal fun UpdateSheetContent(
     val scheme = MaterialTheme.colorScheme
     val status = statusText(context, state)
     val spoken = spokenText(context, state)
-    Column(
-        modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp)
-            .padding(top = 4.dp, bottom = 16.dp)
-            .windowInsetsPadding(WindowInsets.navigationBars),
-    ) {
-        Text(
-            stringResource(R.string.update_title),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.semantics { heading() },
-        )
+    // The sheet's own row carries the title; the installed version is the first line inside.
+    Column(modifier.fillMaxWidth()) {
         Text(
             stringResource(R.string.update_installed, installed),
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 2.dp),
         )
         Box(Modifier.padding(vertical = 14.dp).fillMaxWidth().height(1.dp).background(scheme.outlineVariant.copy(alpha = 0.6f)))
         // TalkBack says each step as it comes, the download in tens so it isn't a stream of numbers.
