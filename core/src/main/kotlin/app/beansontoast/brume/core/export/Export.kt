@@ -3,6 +3,12 @@ package app.beansontoast.brume.core.export
 import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.journal.EndedBy
 import app.beansontoast.brume.core.journal.ListeningSession
+import app.beansontoast.brume.core.finder.Character
+import app.beansontoast.brume.core.finder.PitchLadder
+import app.beansontoast.brume.core.finder.PitchMatch
+import app.beansontoast.brume.core.finder.Rhythm
+import app.beansontoast.brume.core.finder.Side
+import app.beansontoast.brume.core.finder.TinnitusProfile
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -22,6 +28,8 @@ data class ExportFile(
     val sessions: List<SessionV1>,
     /** Added for sync (2026-10-31): the settings that follow the person, not the phone. Optional. */
     val settings: SettingsV1? = null,
+    /** Added for « Mon acouphène » (2026-11-01): the person's own descriptions and searches. Optional. */
+    val profiles: List<ProfileV1>? = null,
 ) {
     companion object {
         const val FORMAT = "brume-export"
@@ -56,6 +64,28 @@ data class SettingsV1(
     val modulesAt: Long? = null,
 )
 
+/**
+ * A tinnitus described in the person's words. Enum values are written in lower case; one this Brume
+ * doesn't know reads as unset. [deleted] profiles carry only their id and time, so sync never revives them.
+ */
+@Serializable
+data class ProfileV1(
+    val id: String,
+    val name: String = "",
+    val character: String? = null,
+    val side: String? = null,
+    val rhythm: String? = null,
+    val loudness: Int? = null,
+    val bother: Int? = null,
+    val updatedAt: Long = 0L,
+    val deleted: Boolean = false,
+    val matches: List<MatchV1> = emptyList(),
+)
+
+/** One search: the day, the pitch in Hz, the sound used ("tone" or "hiss"), whether the octave check was done. */
+@Serializable
+data class MatchV1(val id: String, val day: String, val hz: Int, val sound: String, val octaveChecked: Boolean = false)
+
 /** A file from a later Brume: its schema is newer than this one reads. */
 class NewerSchemaException(schema: Int) : IllegalArgumentException("schema $schema is newer than this Brume")
 
@@ -82,10 +112,12 @@ object ExportFormat {
         sessions: List<ListeningSession>,
         stamps: Map<String, Long> = emptyMap(),
         settings: SettingsV1? = null,
+        profiles: List<TinnitusProfile> = emptyList(),
     ) = ExportFile(
         exportedAt = exportedAt,
         appVersion = appVersion,
         settings = settings,
+        profiles = profiles.takeIf { it.isNotEmpty() }?.sortedBy { it.id }?.map(::toV1),
         checkIns = checkIns.sortedBy { it.day }.map { CheckInV1(it.day, it.loudness, it.bother, it.note, stamps[it.day]) },
         sessions = sessions.sortedBy { it.startedAt }.map {
             SessionV1(
@@ -117,9 +149,35 @@ object ExportFormat {
     fun read(text: String): ExportFile {
         val file = decode(text)
         toCheckIns(file)
+        file.profiles.orEmpty().forEach { p ->
+            require(p.id.isNotBlank()) { "profile without id" }
+            p.matches.forEach { java.time.LocalDate.parse(it.day); require(it.hz > 0) { "bad pitch" } }
+        }
         file.sessions.forEach { require(it.seconds >= 0) { "negative session" }; java.time.Instant.parse(it.startedAt) }
         return file
     }
+
+    fun toV1(p: TinnitusProfile) = ProfileV1(
+        id = p.id, name = p.name, character = p.character?.wire(), side = p.side?.wire(), rhythm = p.rhythm?.wire(),
+        loudness = p.loudness, bother = p.bother, updatedAt = p.updatedAt, deleted = p.deleted,
+        matches = p.matches.sortedWith(compareBy({ it.day }, { it.id })).map { MatchV1(it.id, it.day, it.hz, it.sound.wire(), it.octaveChecked) },
+    )
+
+    fun toProfile(p: ProfileV1) = TinnitusProfile(
+        id = p.id, name = p.name,
+        character = enumOf<Character>(p.character), side = enumOf<Side>(p.side), rhythm = enumOf<Rhythm>(p.rhythm),
+        loudness = TinnitusProfile.rating(p.loudness), bother = TinnitusProfile.rating(p.bother),
+        updatedAt = p.updatedAt, deleted = p.deleted,
+        matches = p.matches.mapNotNull { m ->
+            val sound = enumOf<Character>(m.sound) ?: return@mapNotNull null
+            PitchMatch(m.id, m.day, PitchLadder.clamp(m.hz), sound, m.octaveChecked)
+        },
+    )
+
+    fun toProfiles(file: ExportFile): List<TinnitusProfile> = file.profiles.orEmpty().map(::toProfile)
+
+    private fun Enum<*>.wire() = name.lowercase()
+    private inline fun <reified E : Enum<E>> enumOf(wire: String?): E? = enumValues<E>().firstOrNull { it.name == wire?.uppercase() }
 
     fun toCheckIns(file: ExportFile): List<CheckIn> = file.checkIns.map { CheckIn(it.day, it.loudness, it.bother, it.note) }
 

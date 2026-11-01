@@ -43,6 +43,14 @@ sealed interface Sound {
         override val key get() = "nature:${ambience.name}"
     }
 
+    /**
+     * Soft noise in a band around the pitch someone found in « Mon acouphène »: a comfort layer, never
+     * a tone pattern or a notch. Carries its own numbers, so a stored mix needs no profile to play.
+     */
+    data class Band(val centre: Int, val widthTenths: Int) : Sound {
+        override val key get() = "band:$centre/$widthTenths"
+    }
+
     companion object {
         val all: List<Sound> = NoiseColour.entries.map { Noise(it) } + Ambience.entries.map { Recorded(it) }
 
@@ -51,6 +59,11 @@ sealed interface Sound {
             return when (kind) {
                 "noise" -> NoiseColour.entries.firstOrNull { it.name == name }?.let { Noise(it) }
                 "nature" -> Ambience.stored(name)?.let { Recorded(it) }
+                "band" -> name.split('/').takeIf { it.size == 2 }?.let { (c, w) ->
+                    val centre = c.toIntOrNull() ?: return null
+                    val width = w.toIntOrNull() ?: return null
+                    if (centre in 125..16_000 && width in 1..40) Band(centre, width) else null
+                }
                 else -> null
             }
         }
@@ -130,4 +143,25 @@ private fun brown(rng: Pcg32, rate: Int): Source {
         level = 0.998 * level + 0.05 * rng.nextSigned()
         dc.process(level).toFloat()
     }
+}
+
+/**
+ * White noise through two band-passes at [centre] Hz, [widthTenths] tenths of an octave wide,
+ * brought to [TARGET_RMS] like every other sound. A soft hiss shaped around a pitch.
+ */
+fun bandSource(centre: Int, widthTenths: Int, rate: Int, seed: Long): Source {
+    val make: (Long) -> Source = { s -> rawBand(centre, widthTenths, rate, s) }
+    val gain = calibrate("band$centre/$widthTenths", rate, 2, make)
+    val raw = make(seed)
+    return Source { raw.next() * gain }
+}
+
+private fun rawBand(centre: Int, widthTenths: Int, rate: Int, seed: Long): Source {
+    val rng = Pcg32.seeded(seed)
+    val n = widthTenths / 10.0
+    val q = Math.pow(2.0, n / 2) / (Math.pow(2.0, n) - 1)
+    val hz = centre.toDouble().coerceAtMost(rate * 0.45)
+    val a = Biquad().bandPass(rate, hz, q)
+    val b = Biquad().bandPass(rate, hz, q)
+    return Source { b.process(a.process(rng.nextSigned().toDouble())).toFloat() }
 }

@@ -2,6 +2,7 @@ package app.beansontoast.brume.core.sync
 
 import app.beansontoast.brume.core.export.CheckInV1
 import app.beansontoast.brume.core.export.ExportFile
+import app.beansontoast.brume.core.export.ProfileV1
 import app.beansontoast.brume.core.export.SessionV1
 import app.beansontoast.brume.core.export.SettingsV1
 import java.time.Instant
@@ -14,6 +15,8 @@ import java.time.Instant
  *   (`updatedAt`). A row with no time (a file from before sync) counts as oldest, so an old export
  *   fills gaps and never overwrites a day this phone has.
  * - Sessions: an append-only log, so the union, each session once.
+ * - Profiles (« Mon acouphène »): by id, the later save wins for the description; matches are a
+ *   log, so the union by id, unless the winner is a removal, which carries nothing.
  * - Settings: per group (night hours; tone pitch and trims together; the module switches together), the later change wins.
  *
  * Every tie is broken on the values themselves, never on which side is "local", so two phones that
@@ -29,7 +32,17 @@ object SyncMerge {
         checkIns = (local.checkIns + other.checkIns).groupBy { it.day }.values.map { it.maxWith(checkInOrder) }.sortedBy { it.day },
         sessions = (local.sessions + other.sessions).distinct().sortedWith(sessionOrder),
         settings = mergeSettings(local.settings, other.settings),
+        profiles = mergeProfiles(local.profiles.orEmpty(), other.profiles.orEmpty()),
     )
+
+    private val profileOrder = compareBy<ProfileV1>({ it.updatedAt }, { it.deleted }, { it.toString() })
+
+    private fun mergeProfiles(a: List<ProfileV1>, b: List<ProfileV1>): List<ProfileV1>? =
+        (a + b).groupBy { it.id }.map { (_, versions) ->
+            val winner = versions.maxWith(profileOrder)
+            if (winner.deleted) winner.copy(matches = emptyList())
+            else winner.copy(matches = versions.flatMap { it.matches }.distinctBy { it.id }.sortedWith(compareBy({ it.day }, { it.id })))
+        }.sortedBy { it.id }.takeIf { it.isNotEmpty() }
 
     private val sessionOrder = compareBy<SessionV1>({ runCatching { Instant.parse(it.startedAt) }.getOrNull() }, { it.toString() })
 
@@ -62,8 +75,10 @@ object SyncMerge {
         val tones: Triple<Int, List<Float>, Long>?,
         /** The module switches and their time, when they changed. */
         val modules: Pair<Map<String, Boolean>, Long>? = null,
+        /** Profiles to store as they are in the merged file (new, changed or removed). */
+        val profiles: List<ProfileV1> = emptyList(),
     ) {
-        val isEmpty get() = checkIns.isEmpty() && sessions.isEmpty() && nightHours == null && tones == null && modules == null
+        val isEmpty get() = checkIns.isEmpty() && sessions.isEmpty() && nightHours == null && tones == null && modules == null && profiles.isEmpty()
     }
 
     fun changesFor(local: ExportFile, merged: ExportFile): Changes {
@@ -81,6 +96,7 @@ object SyncMerge {
             ) Triple(s.tonePitch, s.toneTrims, s.tonesAt ?: 0L) else null,
             modules = s?.modules?.takeIf { s.modules != l?.modules || s.modulesAt != l?.modulesAt }
                 ?.let { it to (s.modulesAt ?: 0L) },
+            profiles = merged.profiles.orEmpty().filter { it !in local.profiles.orEmpty().toSet() },
         )
     }
 }

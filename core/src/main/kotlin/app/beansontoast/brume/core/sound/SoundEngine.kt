@@ -139,6 +139,7 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
         val source = when (val sound = command.sound) {
             is Sound.Noise -> TonedNoise(sound.colour, rate, seed + ++layerCount, command.tone)
             is Sound.Recorded -> LoopSource(command.loop ?: return, rate, seed + ++layerCount)
+            is Sound.Band -> bandSource(sound.centre, sound.widthTenths, rate, seed + ++layerCount)
         }
         // A layer still fading out is replaced by the new one, which starts from silence.
         if (existing != null) layers.remove(existing)
