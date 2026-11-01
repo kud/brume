@@ -228,6 +228,49 @@ internal fun LevelRow(name: String, character: String?, level: Float, onLevel: (
 @Composable
 internal fun quietSlider() = SliderDefaults.colors(activeTickColor = Color.Transparent, inactiveTickColor = Color.Transparent)
 
+/**
+ * A slider drawn as a line (Iris, 2026-11-01, phase 3): a hairline track, the part already set a
+ * little heavier, and a small open ring for the thumb. The value is told by position and in words
+ * beside it, never by colour; the touch target stays Material's full height.
+ */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+internal fun LineSlider(
+    value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = Modifier,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f, steps: Int = 0,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val ink = scheme.onSurface
+    val quiet = scheme.outline.copy(alpha = 0.45f)
+    val source = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    androidx.compose.material3.Slider(
+        value = value, onValueChange = onValueChange, modifier = modifier, steps = steps, valueRange = valueRange,
+        interactionSource = source,
+        thumb = {
+            androidx.compose.foundation.layout.Box(
+                Modifier.size(18.dp)
+                    .background(scheme.surfaceContainerLowest, androidx.compose.foundation.shape.CircleShape)
+                    .border(1.5.dp, ink, androidx.compose.foundation.shape.CircleShape),
+            )
+        },
+        track = { state ->
+            androidx.compose.foundation.Canvas(Modifier.fillMaxWidth().height(18.dp)) {
+                val span = state.valueRange.endInclusive - state.valueRange.start
+                val f = if (span <= 0f) 0f else ((state.value - state.valueRange.start) / span).coerceIn(0f, 1f)
+                val y = size.height / 2
+                drawLine(quiet, androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(size.width, y), 1.dp.toPx())
+                drawLine(ink, androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(size.width * f, y), 2.dp.toPx(),
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round)
+            }
+        },
+    )
+}
+
+/** A hairline between rows: a step lighter than the outline, one pixel. */
+@Composable
+internal fun Hairline(modifier: Modifier = Modifier) =
+    androidx.compose.foundation.layout.Box(modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)))
+
 @Composable
 internal fun Dock(ui: PlayerUi, actions: ListenActions, @StringRes timerTitle: Int = R.string.listen_timer) {
     val context = LocalContext.current

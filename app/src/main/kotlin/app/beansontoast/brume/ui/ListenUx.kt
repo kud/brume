@@ -219,7 +219,7 @@ private fun Slot(kind: String, name: String?, level: Float, onLevel: ((Float) ->
     if (name != null && onLevel != null) {
         val levelText = stringResource(R.string.listen_level, (level * 20).roundToInt())
         val label = stringResource(R.string.listen_level_label, name)
-        Slider(value = level, onValueChange = onLevel, steps = 19, colors = quietSlider(),
+        LineSlider(value = level, onValueChange = onLevel, steps = 19,
             modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp).semantics { contentDescription = label; stateDescription = levelText })
     }
 }
@@ -283,6 +283,8 @@ private fun toneWords(tone: Float): String {
 private fun MixerLayer(ui: PlayerUi, sound: Sound, actions: ListenActions, modifier: Modifier = Modifier) {
     val name = stringResource(sound.label())
     Column(modifier) {
+        // Rows part on a hairline, not on cards: the mix reads as one list (Iris, phase 3).
+        Hairline()
         Slot(stringResource(sound.kind()), name, ui.level(sound), { actions.level(sound, it) }, { actions.remove(sound) })
         if (sound is Sound.Noise) {
             val tone = ui.tone(sound)
@@ -293,7 +295,7 @@ private fun MixerLayer(ui: PlayerUi, sound: Sound, actions: ListenActions, modif
                 Text(words, style = MaterialTheme.typography.bodyMedium.tabular(), color = muted)
             }
             val label = stringResource(R.string.mixer_tone_label, name)
-            Slider(value = tone, onValueChange = { actions.tone(sound, it) }, valueRange = -1f..1f, steps = 19, colors = quietSlider(),
+            LineSlider(value = tone, onValueChange = { actions.tone(sound, it) }, valueRange = -1f..1f, steps = 19,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp).semantics { contentDescription = label; stateDescription = words })
         }
     }
@@ -349,10 +351,14 @@ fun SoundsScreen(
             ScreenLead(stringResource(if (hint) R.string.picker_hint else R.string.scene_sounds_hint))
             if (hint) LaunchedEffect(Unit) { onHintSeen() }
             MixPages(ui, actions, Modifier.weight(1f))
-            Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedButton({ open = SoundsSheet.ADD }, Modifier.heightIn(min = 48.dp)) {
-                    Icon(painterResource(R.drawable.ic_plus), null, modifier = Modifier.size(18.dp))
-                    Text(stringResource(R.string.mixer_add), modifier = Modifier.padding(start = 8.dp))
+            Hairline()
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                // « ＋ Ajouter un son » as a quiet line, not a pill: the plus and the words, a 48 dp
+                // target as wide as they are (Iris, phase 3).
+                Row(Modifier.heightIn(min = 48.dp).clip(MaterialTheme.shapes.small).clickable(role = Role.Button) { open = SoundsSheet.ADD }
+                    .padding(end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(painterResource(R.drawable.ic_plus), null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(18.dp))
+                    Text(stringResource(R.string.mixer_add), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(start = 10.dp))
                 }
                 Spacer(Modifier.weight(1f))
                 // The ears in words (« Balance · Centre »), one tap from their sheet.
