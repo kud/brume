@@ -164,6 +164,7 @@ fun LearnTopicScreen(topic: Int, onBack: () -> Unit, onCard: (String) -> Unit) {
     val cards = Learn.topic(topic)
     val pager = rememberPagerState { cards.size }
     val scope = rememberCoroutineScope()
+    SettleTick(pager)
     Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
         HorizontalPager(
             state = pager,

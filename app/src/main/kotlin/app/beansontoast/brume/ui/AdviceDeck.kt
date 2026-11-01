@@ -50,6 +50,7 @@ private fun adviceText(item: AdviceItem, part: String): String {
 fun AdviceDeck(onCard: (String) -> Unit = {}, startPage: Int = 0, titled: Boolean = true, deck: Modifier = Modifier.height(344.dp)) {
     val cards = Advice.cards
     val pager = rememberPagerState(initialPage = startPage) { cards.size }
+    SettleTick(pager)
     Column(Modifier.fillMaxWidth()) {
         if (titled) {
             Text(stringResource(R.string.advice_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })

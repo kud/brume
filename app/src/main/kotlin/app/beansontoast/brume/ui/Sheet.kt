@@ -46,6 +46,11 @@ import app.beansontoast.brume.R
 import app.beansontoast.design.Motion
 import app.beansontoast.design.WeightSwap
 import app.beansontoast.design.tabular
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import kotlinx.coroutines.launch
 
 /*
@@ -108,6 +113,7 @@ internal fun QuietSheet(open: Boolean, onClose: () -> Unit, title: String, conte
 internal fun PagerWords(pager: PagerState, names: List<String>, modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val scheme = MaterialTheme.colorScheme
+    SettleTick(pager)
     Row(modifier.fillMaxWidth().selectableGroup()) {
         names.forEachIndexed { i, name ->
             val on = pager.targetPage == i
@@ -161,4 +167,30 @@ internal fun pagesOf(heights: List<Int>, budget: Int, most: Int = 4): List<List<
         }
     }
     return pages
+}
+
+/**
+ * Which settles earn a tick: one each time a pager comes to rest on a page other than the one it
+ * last rested on. Never while it moves, never twice for one settle, never for where it starts.
+ */
+internal class SettleTicker(start: Int) {
+    private var rested = start
+
+    /** The pager has come to rest on [page]: true when that is a new page, worth one tick. */
+    fun settled(page: Int): Boolean = (page != rested).also { rested = page }
+}
+
+/**
+ * A soft tick when [pager] settles on a new page (2026-11-01, the no-scroll pass): once per settle,
+ * from the pager's settled page, never per frame. `TextHandleMove` is the lightest the platform has,
+ * the dial's own; the system's touch-feedback setting governs it, and Brume has no switch of its own
+ * for it (the vibration switches under Respirer and Méditer are about sessions).
+ */
+@Composable
+internal fun SettleTick(pager: PagerState) {
+    val haptics by rememberUpdatedState(LocalHapticFeedback.current)
+    LaunchedEffect(pager) {
+        val ticker = SettleTicker(pager.settledPage)
+        snapshotFlow { pager.settledPage }.collect { if (ticker.settled(it)) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
+    }
 }

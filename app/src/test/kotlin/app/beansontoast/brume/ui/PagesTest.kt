@@ -15,3 +15,18 @@ class PagesTest {
 
     @Test fun nothingMakesNoPages() = assertEquals(emptyList<List<Int>>(), pagesOf(emptyList(), budget = 300))
 }
+
+class SettleTickerTest {
+    @Test fun aNewPageTicksOnceAndTheStartNever() {
+        val t = SettleTicker(start = 0)
+        // Settled pages as the pager reports them: where it starts, two moves, a settle repeated, a move back.
+        val ticks = listOf(0, 1, 1, 2, 2, 2, 1).map(t::settled)
+        assertEquals(listOf(false, true, false, true, false, false, true), ticks)
+    }
+
+    @Test fun startingElsewhereIsNoMove() {
+        val t = SettleTicker(start = 2)
+        assertEquals(false, t.settled(2))
+        assertEquals(true, t.settled(0))
+    }
+}

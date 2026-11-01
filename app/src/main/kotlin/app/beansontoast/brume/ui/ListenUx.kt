@@ -361,6 +361,7 @@ private fun MixPages(ui: PlayerUi, actions: ListenActions, modifier: Modifier) {
         val sounds = ui.sounds
         val pages = pagesOf(sounds.map { (if (it is Sound.Noise) LAYER_NOISE else LAYER).value.roundToInt() }, (maxHeight - headRow).value.toInt())
         val pager = rememberPagerState { pages.size.coerceAtLeast(1) }
+        SettleTick(pager)
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().height(headRow), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.mixer_in_mix), style = MaterialTheme.typography.titleSmall,
