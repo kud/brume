@@ -71,6 +71,19 @@ class Settings(context: Context) {
         _modules.value = modules
     }
 
+    private val _country = MutableStateFlow(prefs.getString(COUNTRY, null))
+    /**
+     * The country chosen in Settings, as [app.beansontoast.brume.core.region.Country.name]; null
+     * while it follows the guess (SIM, then region). This phone only: where you live is not synced,
+     * like the language.
+     */
+    val country: StateFlow<String?> = _country
+
+    fun setCountry(name: String?) {
+        prefs.edit().apply { if (name == null) remove(COUNTRY) else putString(COUNTRY, name) }.apply()
+        _country.value = name
+    }
+
     /** The last breathing choices, this phone only: how to breathe is not worth a sync conflict. */
     var breathPattern: String?
         get() = prefs.getString(BREATH_PATTERN, null)
@@ -120,6 +133,7 @@ class Settings(context: Context) {
     fun setSceneMix(scene: String, mix: String) = prefs.edit().putString("$SCENE_MIX$scene", mix).apply()
 
     internal companion object {
+        const val COUNTRY = "country"
         const val SCENE = "scene"
         const val SCENES_SWIPED = "scenes_swiped"
         const val SCENE_MIX = "scene_mix_"

@@ -61,7 +61,6 @@
     <string name="doctor_4">Il bat au rythme de votre cœur. (Sous deux semaines)</string>
     <string name="doctor_5">Il n\'est que d\'un côté, et c\'est nouveau ou ça s\'aggrave. (Sous deux semaines)</string>
     <string name="doctor_6">Votre visage semble faible ou engourdi, ou un autre changement soudain se produit dans votre corps. (Aujourd\'hui)</string>
-    <string name="support_line">Si vous pensez à mettre fin à vos jours, appelez le 3114 (gratuit, jour et nuit) ou le 112.</string>
     <string name="about_version">Version %1$s</string>
 
     <string name="notification_channel">Lecture</string>
@@ -321,11 +320,11 @@
     <string name="learn_c6_2_title">Bientôt</string>
     <string name="learn_c6_2_body">Prenez rendez-vous si l\'acouphène bat au rythme du cœur, s\'il est d\'un seul côté et nouveau ou qui s\'aggrave, ou si l\'audition baisse sur quelques semaines.</string>
     <string name="learn_c6_3_title">Si ça devient trop lourd</string>
-    <string name="learn_c6_3_body">Si l\'acouphène pèse sur le moral ou le sommeil depuis des semaines, un médecin peut orienter vers une TCC ou une équipe spécialisée. Si vous pensez à mettre fin à vos jours, appelez le 3114 (gratuit, jour et nuit) ou le 112.</string>
+    <string name="learn_c6_3_body">Si l\'acouphène pèse sur le moral ou le sommeil depuis des semaines, un médecin peut orienter vers une TCC ou une équipe spécialisée. Si c\'est trop lourd, les lignes ci-dessous répondent.</string>
     <string name="learn_c7_1_title">Expliquer à ses proches</string>
     <string name="learn_c7_1_body">L\'acouphène ne se voit pas, ce qui le rend difficile à comprendre. Une phrase simple suffit souvent : « J\'entends un son en permanence ; certains jours il prend plus de place. » Dire ce qui aide (un fond sonore, une pause au calme) vaut mieux que décrire le son.</string>
     <string name="learn_c7_2_title">Ne pas rester seul</string>
-    <string name="learn_c7_2_body">Des associations proposent écoute et groupes de parole, entourage compris : France Acouphènes en France (01 42 05 01 46), Tinnitus UK au Royaume-Uni (0800 018 0527). Beaucoup de personnes trouvent que parler avec d\'autres qui vivent la même chose change le rapport à l\'acouphène.</string>
+    <string name="learn_c7_2_body">Des associations proposent écoute et groupes de parole, entourage compris. Beaucoup de personnes trouvent que parler avec d\'autres qui vivent la même chose change le rapport à l\'acouphène.</string>
     <string name="evidence_strong">Bien étayé</string>
     <string name="evidence_mixed">Mitigé</string>
     <string name="evidence_little">Peu étayé</string>
@@ -501,4 +500,40 @@
     <string name="med_part_sounds">Les sons</string>
     <string name="med_part_wander">Revenir</string>
     <string name="med_part_close">Ouvrir les yeux</string>
+    <!-- Pays (Erwann, 2026-10-31) : les numéros suivent le pays, les mots suivent la langue. %n$s sont les numéros de Regions dans :core. -->
+    <string name="country_title">Pays</string>
+    <string name="country_intro">Les numéros d\'urgence et d\'écoute suivent le pays où vous vivez, pas la langue.</string>
+    <string name="country_auto">Automatique (%1$s)</string>
+    <string name="country_fr">France</string>
+    <string name="country_uk">Royaume-Uni</string>
+    <string name="country_other">Autre pays</string>
+    <string name="region_for">Numéros pour : %1$s</string>
+    <string name="region_change">Changer</string>
+    <string name="region_also">Aussi dans votre langue</string>
+    <string name="region_onboarding">Numéros pour : %1$s. Le pays se change dans Comprendre, Réglages.</string>
+    <string name="about_help_title">Si vous avez besoin d\'aide maintenant</string>
+    <string name="region_uk_emergency">En cas d\'urgence, appelez le %1$s.</string>
+    <string name="region_uk_text_emergency">Si vous ne pouvez pas téléphoner, vous pouvez écrire au %1$s une fois inscrit à emergencySMS : envoyez « register » au %2$s dès maintenant, avant d\'en avoir besoin.</string>
+    <string name="region_uk_urgent">Urgent sans être une urgence vitale : appelez le %1$s du NHS, ou allez sur 111.nhs.uk.</string>
+    <string name="region_uk_crisis">Si vous pensez à mettre fin à vos jours, appelez le %1$s et choisissez l\'option santé mentale (« mental health »), ou les Samaritans au %2$s (gratuit, jour et nuit).</string>
+    <string name="region_uk_sudden">Une baisse brutale de l\'audition est urgente : demandez un rendez-vous urgent chez votre GP (médecin généraliste) ou appelez le %1$s du NHS. Allez aux urgences (A&amp;E) ou appelez le %2$s si elle s\'accompagne d\'une faiblesse du visage ou d\'un vertige rotatoire.</string>
+    <string name="region_uk_care">Commencez par votre GP, qui vérifie les causes simples comme un bouchon de cérumen et vous oriente vers l\'audiologie ou l\'ORL du NHS. Les aides auditives du NHS sont gratuites quand elles aident. Si l\'acouphène pèse sur le moral, en Angleterre vous pouvez vous adresser vous-même au soutien du NHS pour l\'anxiété et la déprime, sans passer par un GP.</string>
+    <string name="region_uk_association">Tinnitus UK : %1$s, du lundi au vendredi de 10:00 à 16:00, ou par SMS au %2$s. RNID : %3$s, du lundi au vendredi de 8:30 à 17:00, ou par SMS au %4$s. Les deux répondent en anglais.</string>
+    <string name="region_uk_earplugs">Au Royaume-Uni, des bouchons moulés sur mesure coûtent environ 135 à 190 £ la paire. Si votre travail est bruyant, votre employeur doit proposer des protections auditives dès 80 dB(A), et veiller à ce qu\'elles soient portées dès 85 dB(A).</string>
+    <string name="region_fr_emergency">En cas d\'urgence, appelez le %1$s (SAMU) ou le %2$s.</string>
+    <string name="region_fr_text_emergency">Si vous ne pouvez pas parler ou entendre au téléphone, le %1$s reçoit les SMS, gratuitement, jour et nuit.</string>
+    <string name="region_fr_urgent">Urgent sans être une urgence vitale, quand votre médecin est fermé : appelez le %1$s ou le %2$s selon votre région.</string>
+    <string name="region_fr_crisis">Si vous pensez à mettre fin à vos jours, appelez le %1$s (gratuit, jour et nuit, partout en France).</string>
+    <string name="region_fr_sudden">Une baisse brutale de l\'audition est une urgence : voyez un ORL au plus vite, idéalement sous 24 à 48 h. Si aucun ne peut vous recevoir, allez aux urgences ou appelez le %1$s.</string>
+    <string name="region_fr_care">Commencez par votre médecin traitant, qui peut vous orienter vers un ORL pour un bilan auditif. Avec Mon soutien psy, vous pouvez voir un psychologue jusqu\'à 12 séances par an, sans ordonnance.</string>
+    <string name="region_fr_association">France Acouphènes : ligne d\'écoute au %1$s, en semaine, en journée.</string>
+    <string name="region_fr_association_abroad">France Acouphènes, en français : %1$s, en semaine, en journée, heure française.</string>
+    <string name="region_fr_earplugs">En France, des bouchons moulés sur mesure coûtent environ 70 à 250 € la paire. Ils sont rarement remboursés ; votre mutuelle peut en prendre une partie, selon votre contrat. Si votre travail est bruyant, votre employeur doit fournir des protections auditives dès 80 dB(A), et elles doivent être portées dès 85 dB(A).</string>
+    <string name="region_other_emergency">En cas d\'urgence, appelez le numéro d\'urgence local ; dans l\'Union européenne, le %1$s.</string>
+    <string name="region_other_urgent">Urgent sans être une urgence vitale : voyez un médecin dans la journée.</string>
+    <string name="region_other_crisis">Si vous pensez à mettre fin à vos jours, appelez le numéro d\'urgence local ou une ligne d\'écoute de votre pays, ou allez aux urgences.</string>
+    <string name="region_other_sudden">Une baisse brutale de l\'audition est urgente : voyez un médecin ou un ORL dans la journée.</string>
+    <string name="region_other_care">Un médecin, un ORL ou un audioprothésiste peut vérifier votre audition et vous dire ce qui existe là où vous vivez.</string>
+    <string name="region_other_association">Beaucoup de pays ont une association d\'acouphéniques avec une ligne d\'écoute et des groupes de parole ; votre médecin ou votre audioprothésiste peut vous en indiquer une.</string>
+    <string name="region_other_earplugs">Les bouchons moulés sur mesure sont faits par un audioprothésiste ; prix et remboursement varient selon le pays. Si votre travail est bruyant, demandez quelle protection votre employeur doit fournir.</string>
 </resources>

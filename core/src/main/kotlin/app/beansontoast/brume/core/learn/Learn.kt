@@ -33,7 +33,7 @@ data class Card(
  * The library, in reading order: also the path the home tab walks, one card a day. Facts follow
  * atelier's learn-content.md (2026-10-31), corrected by the "Verified 2026-10-31" sections of
  * decibels.md and regional-resources.md. Left out until their facts are checked: custom plugs
- * in France (5.8, prices and cover unverified); France Acouphènes' number (7.2 names it without one).
+ * in France (5.8, prices and cover unverified). Numbers and care routes live in `:core` `region/`, by country.
  */
 object Learn {
     const val TOPICS = 7

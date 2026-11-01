@@ -62,7 +62,6 @@
     <string name="doctor_4">It beats in time with your heart. (Within two weeks)</string>
     <string name="doctor_5">It\'s in one ear only, and that\'s new or getting worse. (Within two weeks)</string>
     <string name="doctor_6">Your face feels weak or numb, or there\'s another sudden change in your body. (Today)</string>
-    <string name="support_line">If you\'re thinking about ending your life, call 3114 (France, free, day and night) or 112.</string>
     <string name="about_version">Version %1$s</string>
 
     <string name="notification_channel">Playback</string>
@@ -322,11 +321,11 @@
     <string name="learn_c6_2_title">Soon</string>
     <string name="learn_c6_2_body">Book an appointment if the tinnitus beats with your heart, if it\'s in one ear and new or getting worse, or if your hearing drops over a few weeks.</string>
     <string name="learn_c6_3_title">If it gets too heavy</string>
-    <string name="learn_c6_3_body">If tinnitus has weighed on your mood or sleep for weeks, a doctor can refer you to CBT or a specialist team. If you\'re thinking of ending your life, call 3114 (France, free, day and night) or 112.</string>
+    <string name="learn_c6_3_body">If tinnitus has weighed on your mood or sleep for weeks, a doctor can refer you to CBT or a specialist team. If it ever feels like too much, the lines below are there for that.</string>
     <string name="learn_c7_1_title">Explaining it to others</string>
     <string name="learn_c7_1_body">Tinnitus can\'t be seen, which makes it hard to understand. A simple line often does: “I hear a sound all the time; some days it takes more room.” Saying what helps (some background sound, a quiet break) works better than describing the sound.</string>
     <string name="learn_c7_2_title">You\'re not alone</string>
-    <string name="learn_c7_2_body">Associations offer listening lines and support groups, families included: France Acouphènes in France (01 42 05 01 46), Tinnitus UK in the UK (0800 018 0527). Many people find that talking with others who live with it changes how they relate to it.</string>
+    <string name="learn_c7_2_body">Associations offer listening lines and support groups, families included. Many people find that talking with others who live with it changes how they relate to it.</string>
     <string name="evidence_strong">Well supported</string>
     <string name="evidence_mixed">Mixed</string>
     <string name="evidence_little">Little evidence</string>
@@ -502,4 +501,40 @@
     <string name="med_part_sounds">The sounds</string>
     <string name="med_part_wander">Come back</string>
     <string name="med_part_close">Open your eyes</string>
+    <!-- Country (Erwann, 2026-10-31): numbers follow where you live, words follow the language. %n$s are numbers from :core Regions. -->
+    <string name="country_title">Country</string>
+    <string name="country_intro">Emergency numbers and help lines follow the country you live in, not the language.</string>
+    <string name="country_auto">Automatic (%1$s)</string>
+    <string name="country_fr">France</string>
+    <string name="country_uk">United Kingdom</string>
+    <string name="country_other">Another country</string>
+    <string name="region_for">Numbers for: %1$s</string>
+    <string name="region_change">Change</string>
+    <string name="region_also">Also in your language</string>
+    <string name="region_onboarding">Numbers for: %1$s. You can change the country in Learn, Settings.</string>
+    <string name="about_help_title">If you need help now</string>
+    <string name="region_uk_emergency">In an emergency, call %1$s.</string>
+    <string name="region_uk_text_emergency">If you can\'t make a voice call, you can text %1$s once you\'ve registered with emergencySMS: text “register” to %2$s now, before you need it.</string>
+    <string name="region_uk_urgent">Urgent but not an emergency: call NHS %1$s, or go to 111.nhs.uk.</string>
+    <string name="region_uk_crisis">If you\'re thinking about ending your life, call %1$s and select the mental health option, or Samaritans on %2$s (free, day and night).</string>
+    <string name="region_uk_sudden">Sudden hearing loss is urgent: ask for an urgent GP appointment or call NHS %1$s. Go to A&amp;E or call %2$s if it comes with facial weakness or spinning vertigo.</string>
+    <string name="region_uk_care">Start with your GP, who can check for simple causes such as earwax and refer you to NHS audiology or ENT. NHS hearing aids are free when they help. If tinnitus weighs on your mood, in England you can refer yourself to NHS support for anxiety and low mood, without a GP.</string>
+    <string name="region_uk_association">Tinnitus UK: helpline %1$s, Monday to Friday 10:00–16:00, or text %2$s. RNID: %3$s, Monday to Friday 8:30–17:00, or text %4$s.</string>
+    <string name="region_uk_earplugs">In the UK, custom-moulded plugs cost roughly £135–£190 a pair. If your work is loud, your employer must offer hearing protection from 80 dB(A), and make sure it\'s worn from 85 dB(A).</string>
+    <string name="region_fr_emergency">In an emergency, call %1$s (medical) or %2$s.</string>
+    <string name="region_fr_text_emergency">If you can\'t speak or hear on the phone, %1$s takes text messages, free, day and night.</string>
+    <string name="region_fr_urgent">Urgent but not an emergency, when your doctor is closed: call %1$s or %2$s, depending on your region.</string>
+    <string name="region_fr_crisis">If you\'re thinking about ending your life, call %1$s (free, day and night, all of France).</string>
+    <string name="region_fr_sudden">Sudden hearing loss is urgent: see an ENT doctor as soon as possible, ideally within 24 to 48 hours. If none can see you, go to A&amp;E or call %1$s.</string>
+    <string name="region_fr_care">Start with your GP (médecin traitant), who can refer you to an ENT for a hearing test. With Mon soutien psy, you can see a psychologist for up to 12 sessions a year, without a doctor\'s referral.</string>
+    <string name="region_fr_association">France Acouphènes: listening line %1$s, on weekdays, during the day.</string>
+    <string name="region_fr_association_abroad">France Acouphènes, in French: %1$s, on weekdays, during the day, French time.</string>
+    <string name="region_fr_earplugs">In France, custom-moulded plugs cost about €70–250 a pair. They\'re rarely reimbursed; your mutuelle may pay part, depending on your contract. If your work is loud, your employer must provide hearing protection from 80 dB(A), and it must be worn from 85 dB(A).</string>
+    <string name="region_other_emergency">In an emergency, call your local emergency number; in the European Union, %1$s.</string>
+    <string name="region_other_urgent">Urgent but not an emergency: see a doctor today.</string>
+    <string name="region_other_crisis">If you\'re thinking about ending your life, call your local emergency number or a helpline where you live, or go to an emergency department.</string>
+    <string name="region_other_sudden">Sudden hearing loss is urgent: see a doctor or an ear specialist within a day.</string>
+    <string name="region_other_care">A doctor, an ENT or an audiologist can check your hearing and tell you what\'s available where you live.</string>
+    <string name="region_other_association">Many countries have a tinnitus association with a listening line and support groups; your doctor or audiologist can point you to one.</string>
+    <string name="region_other_earplugs">Custom-moulded plugs are made by an audiologist; prices and cover vary by country. If your work is loud, ask what protection your employer must provide.</string>
 </resources>

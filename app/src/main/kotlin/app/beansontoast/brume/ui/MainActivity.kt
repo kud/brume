@@ -38,6 +38,7 @@ import app.beansontoast.brume.BrumeApp
 import app.beansontoast.brume.BuildConfig
 import app.beansontoast.brume.R
 import app.beansontoast.brume.core.NightHours
+import app.beansontoast.brume.core.region.Country
 import app.beansontoast.brume.core.learn.Learn
 import androidx.compose.ui.res.stringResource
 import app.beansontoast.brume.core.journal.CheckIn
@@ -81,6 +82,10 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     // Brume always opens on Listen: the sounds, chosen directly; nothing else asks for effort at night.
     var tab by rememberSaveable { mutableStateOf(Tab.LISTEN) }
     val modules by graph.settings.modules.collectAsStateWithLifecycle()
+    val chosenCountry by graph.settings.country.collectAsStateWithLifecycle()
+    val guessedCountry = remember { guessCountry(context) }
+    val chosen = chosenCountry?.let { name -> Country.entries.firstOrNull { it.name == name } }
+    val country = chosen ?: guessedCountry
     // Calm and Tones are scenes inside Listen now: only Listen, Journal and Learn are tabs.
     LaunchedEffect(Unit) { if (tab == Tab.CALM || tab == Tab.TONES) tab = Tab.LISTEN }
     // Brume reopens on the scene last used (Iris, 2026-10-31): the clock never picks one for him,
@@ -222,7 +227,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     // Read once: the launch intro lands on the introduction only on the launch that shows it.
     val firstLaunch = remember { showIntro }
     BrumeTheme(dark = isSystemInDarkTheme(), night = night) {
-        CompositionLocalProvider(LocalLaunchAnchors provides anchors) {
+        CompositionLocalProvider(LocalLaunchAnchors provides anchors, LocalCountry provides country) {
             Box(Modifier.fillMaxSize()) {
                 if (showIntro) {
                     Onboarding(onFinish = { setPitch ->
@@ -252,6 +257,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                         page == "settings" -> SettingsScreen(nightHours = nightHours, onNightHours = graph.settings::setNightHours, onBack = ::pop,
                             sync = syncState, syncMessage = syncMessage, syncActions = syncActions,
                             modules = modules, onModules = graph.settings::setModules, onOutput = { openOutputSwitcher(context) },
+                            country = CountryChoice(chosen, guessedCountry) { graph.settings.setCountry(it?.name) },
                             language = if (Build.VERSION.SDK_INT >= 33) remember { LanguageChoice(currentLanguage(context)) { applyLanguage(context, it) } } else null)
                         page?.startsWith("topic:") == true -> LearnTopicScreen(page.removePrefix("topic:").toInt(), onBack = ::pop, onCard = { push("card:$it") })
                         page == "about" -> AboutScreen(version = BuildConfig.VERSION_NAME, onIntro = { showIntro = true }, onBack = ::pop)

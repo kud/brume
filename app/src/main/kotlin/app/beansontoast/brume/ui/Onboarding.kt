@@ -62,6 +62,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.beansontoast.brume.R
+import app.beansontoast.brume.core.region.Regions
 
 /*
  * The introduction (Iris, 2026-10-31). Five quiet pages in night mist, following the splash:
@@ -220,7 +221,12 @@ private fun Doctor() {
             Text(stringResource(R.string.intro_hearing), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
         }
     }
-    Body(R.string.support_line, Modifier.padding(top = 16.dp), muted = true)
+    // The country's own numbers, with the guess said out loud and where to change it.
+    Column(gutter.padding(top = 16.dp)) {
+        RegionLines(Regions.redFlags)
+        Text(stringResource(R.string.region_onboarding, countryName(LocalCountry.current)), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
+    }
 }
 
 @Composable

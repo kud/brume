@@ -78,6 +78,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.beansontoast.brume.R
+import app.beansontoast.brume.core.region.Need
+import app.beansontoast.brume.core.region.Regions
 import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.journal.NoteTags
 import app.beansontoast.brume.core.learn.Learn
@@ -604,17 +606,7 @@ fun LearnScreen(
         Text(stringResource(R.string.learn_library), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
         LearnTopics(onTopic)
 
-        SettingsGroup(stringResource(R.string.doctor_title)) {
-            Text(stringResource(R.string.doctor_intro), style = MaterialTheme.typography.bodyMedium)
-            listOf(R.string.doctor_1, R.string.doctor_2, R.string.doctor_3, R.string.doctor_4, R.string.doctor_5, R.string.doctor_6).forEach {
-                Row(Modifier.padding(top = 4.dp)) {
-                    Text("–", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(16.dp))
-                    Text(stringResource(it), style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-            HorizontalDivider(Modifier.padding(vertical = 10.dp), color = MaterialTheme.colorScheme.outlineVariant)
-            Text(stringResource(R.string.support_line), style = MaterialTheme.typography.bodyMedium)
-        }
+        DoctorGroup(onSettings)
 
         Spacer(Modifier.height(8.dp))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -622,6 +614,26 @@ fun LearnScreen(
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         NavRow(stringResource(R.string.about_brume), stringResource(R.string.about_row_summary), onClick = onAbout)
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+/**
+ * When to see a doctor: the red flags, the same everywhere, then the country's own lines (sudden
+ * hearing loss, emergency, crisis) with tappable numbers, and which country they are for.
+ */
+@Composable
+fun DoctorGroup(onSettings: (() -> Unit)? = null) {
+    SettingsGroup(stringResource(R.string.doctor_title)) {
+        Text(stringResource(R.string.doctor_intro), style = MaterialTheme.typography.bodyMedium)
+        listOf(R.string.doctor_1, R.string.doctor_2, R.string.doctor_3, R.string.doctor_4, R.string.doctor_5, R.string.doctor_6).forEach {
+            Row(Modifier.padding(top = 4.dp)) {
+                Text("–", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(16.dp))
+                Text(stringResource(it), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        HorizontalDivider(Modifier.padding(vertical = 10.dp), color = MaterialTheme.colorScheme.outlineVariant)
+        RegionLines(Regions.redFlags)
+        RegionFor(onSettings, Modifier.padding(top = 10.dp))
     }
 }
 
@@ -639,6 +651,9 @@ fun AboutScreen(
         Text(stringResource(R.string.about_what), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
         Text(stringResource(R.string.about_disclaimer), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
+
+        SectionTitle(stringResource(R.string.about_help_title))
+        RegionLines(listOf(Need.CRISIS, Need.EMERGENCY))
 
         Card(Modifier.padding(top = 16.dp)) {
             Row(verticalAlignment = Alignment.Top) {
@@ -677,6 +692,7 @@ fun SettingsScreen(
     syncMessage: String? = null,
     syncActions: SyncActions = SyncActions(),
     language: LanguageChoice? = null,
+    country: CountryChoice? = null,
     modules: Modules = Modules(),
     onModules: (Modules) -> Unit = {},
     onOutput: () -> Unit = {},
@@ -691,6 +707,7 @@ fun SettingsScreen(
         ModuleSettings(modules, onModules)
         // Below Android 13 there is no per-app locale and no cached appcompat to stand in: no row.
         if (language != null) LanguageSettings(language)
+        if (country != null) CountrySettings(country)
         SyncSettings(sync, syncMessage, syncActions)
         // The same switcher Listen's output row opens: the system's own, so Brume never picks for you.
         SettingsGroup(stringResource(R.string.settings_output)) {

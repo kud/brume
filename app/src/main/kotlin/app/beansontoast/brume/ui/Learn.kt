@@ -38,6 +38,7 @@ import app.beansontoast.brume.R
 import app.beansontoast.brume.core.learn.Card as LearnCard
 import app.beansontoast.brume.core.learn.Evidence
 import app.beansontoast.brume.core.learn.Learn
+import app.beansontoast.brume.core.region.Regions
 
 /*
  * Learn (Iris, 2026-10-31; Erwann chose direction B the same day): short cards, each with its
@@ -166,6 +167,12 @@ fun LearnCardScreen(card: LearnCard, backLabel: String, onBack: () -> Unit, onNe
         Text(cardTitle(card), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 6.dp).semantics { heading() })
         card.evidence?.let { EvidenceMark(it, Modifier.padding(top = 10.dp)) }
         Text(learnText(context, card, "body").orEmpty(), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 14.dp))
+        // The cards that send you somewhere name the places of the country you live in.
+        val needs = Regions.forCard(card.id)
+        if (needs.isNotEmpty()) Card(Modifier.padding(top = 16.dp)) {
+            RegionLines(needs)
+            RegionFor(onChange = null, modifier = Modifier.padding(top = 10.dp))
+        }
         learnText(context, card, "try")?.let { tip ->
             Card(Modifier.padding(top = 16.dp)) {
                 Text(stringResource(R.string.learn_try), style = MaterialTheme.typography.titleSmall)
