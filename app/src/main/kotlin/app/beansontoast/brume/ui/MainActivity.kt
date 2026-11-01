@@ -321,7 +321,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                     meditationStartedAt != null -> Route(Route.MEDITATION, meditationStartedAt)
                     else -> Route(Route.HOME)
                 }
-                Crossfade(route, Modifier.fillMaxSize(), animationSpec = Motion.tween(Motion.SLOW), label = "route") { r ->
+                Crossfade(route, Modifier.fillMaxSize(), animationSpec = Motion.tween(Motion.CALM), label = "route") { r ->
                 if (r.kind == Route.INTRO) {
                     Onboarding(onFinish = { setPitch ->
                         graph.settings.setIntroSeen()

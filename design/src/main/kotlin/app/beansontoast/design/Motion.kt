@@ -32,9 +32,12 @@ import androidx.compose.ui.text.style.TextOverflow
 /*
  * Brume's one motion spec (Iris, 2026-11-01, from Erwann on dev.21: « extrêmement douce… smooth…
  * pas trop flashy… je veux pas des jumping de layout »). Written out in docs/motion.md.
- *  - One curve: a slow, symmetric ease-in-out ([Ease]). No spring, no overshoot, nothing bounces.
+ *  - Smooth but quick (Erwann, 2026-11-01: « smooth mais rapide. Là c'est lent »): anything a tap
+ *    starts is done within about 320 ms. One curve ([Ease]): a fast start and a long soft landing,
+ *    never past the target. No spring, no overshoot, nothing bounces.
  *  - Three lengths: [QUICK] for a word or a mark changing, [CALM] for content swapping or a row
- *    growing, [SLOW] for a whole screen or scene giving way to another.
+ *    growing, [SLOW] only for ambient things nobody waited on (a title card leaving, a drift);
+ *    never for an answer to a tap. The breathing orb keeps the breath's own timing.
  *  - Navigation slides (Erwann, 2026-11-01: « je préfère un slide »): a screen opened comes in
  *    from the right while the one under it moves a quarter left, and leaves the same way ([push]).
  *    Everything else cross-fades in place; nothing pops in scale.
@@ -44,11 +47,14 @@ import androidx.compose.ui.text.style.TextOverflow
  *  - Reduced motion: opacity only, resting on the final state; sizes snap, nothing travels.
  */
 object Motion {
-    /** easeInOutSine: as slow leaving as arriving, never past the target. */
-    val Ease = CubicBezierEasing(0.37f, 0f, 0.63f, 1f)
+    /** Material's standard curve: moves at once, lands softly, never past the target. */
+    val Ease = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
-    const val QUICK = 320
-    const val CALM = 560
+    /** Decelerate-heavy, for a screen sliding in: most of the way in the first third, then a soft landing. */
+    val Glide = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
+
+    const val QUICK = 180
+    const val CALM = 280
     const val SLOW = 900
 
     fun <T> tween(ms: Int = CALM): FiniteAnimationSpec<T> = androidx.compose.animation.core.tween(ms, easing = Ease)
@@ -57,7 +63,9 @@ object Motion {
     fun <T> travel(reduced: Boolean, ms: Int = CALM): FiniteAnimationSpec<T> = if (reduced) snap() else tween(ms)
 
     /** A screen pushed or popped: long enough to follow, short enough not to wait on. */
-    const val PUSH = 700
+    const val PUSH = 320
+
+    private fun <T> glide(): FiniteAnimationSpec<T> = androidx.compose.animation.core.tween(PUSH, easing = Glide)
 
     /**
      * Opening a screen ([forward]) slides it in from the right over the one before, which moves a
@@ -66,10 +74,10 @@ object Motion {
      */
     fun push(reduced: Boolean, forward: Boolean): ContentTransform = when {
         reduced -> crossfade(CALM)
-        forward -> (androidx.compose.animation.slideInHorizontally(tween(PUSH)) { it } togetherWith
-            androidx.compose.animation.slideOutHorizontally(tween(PUSH)) { -it / 4 }).apply { targetContentZIndex = 1f }
-        else -> (androidx.compose.animation.slideInHorizontally(tween(PUSH)) { -it / 4 } togetherWith
-            androidx.compose.animation.slideOutHorizontally(tween(PUSH)) { it }).apply { targetContentZIndex = -1f }
+        forward -> (androidx.compose.animation.slideInHorizontally(glide()) { it } togetherWith
+            androidx.compose.animation.slideOutHorizontally(glide()) { -it / 4 }).apply { targetContentZIndex = 1f }
+        else -> (androidx.compose.animation.slideInHorizontally(glide()) { -it / 4 } togetherWith
+            androidx.compose.animation.slideOutHorizontally(glide()) { it }).apply { targetContentZIndex = -1f }
     }
 
     /** A cross-fade, the same with reduced motion: it is opacity alone. */

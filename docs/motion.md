@@ -6,12 +6,12 @@ Brume is a relaxation app: it should feel extremely soft. Erwann on dev.21: « e
 
 | | Value | Used for |
 | --- | --- | --- |
-| Curve | `Motion.Ease`, cubic-bezier(0.37, 0, 0.63, 1), a symmetric ease-in-out | everything; never a spring, never overshoot |
-| `QUICK` | 320 ms | a word or a mark changing: selection weight, a check, a hint fading |
-| `CALM` | 560 ms | content swapping in place, a row growing, a pager settling |
-| `SLOW` | 900 ms | a screen, a session or a scene giving way to another |
+| Curve | `Motion.Ease`, cubic-bezier(0.2, 0, 0, 1): moves at once, lands softly; `Motion.Glide`, cubic-bezier(0.05, 0.7, 0.1, 1), for the slide | everything; never a spring, never overshoot |
+| `QUICK` | 180 ms | a word or a mark changing: selection weight, a check, a hint fading |
+| `CALM` | 280 ms | content swapping in place, a row growing, a pager settling |
+| `SLOW` | 900 ms | ambient only, never an answer to a tap: the title card leaving, a drift |
 
-- **Navigation slides; the rest cross-fades** (Erwann, 2026-11-01: « je préfère un slide : quand on clique sur un bouton, on ouvre la fenêtre de droite sur le côté »). Opening a function from home, or a page inside a function, pushes the new screen in from the right while the one under it moves a quarter of the width left (`Motion.push`, `PUSH` = 700 ms on `Motion.Ease`); ✕, ‹ and system Back slide it back out to the right, the leaving screen on top. No spring, no overshoot. Starting or ending a session, and the intro's title card giving way to home, still cross-fade on `SLOW`: those are scenes, not windows. Content inside a screen (a word, a page of a pager settled by a tap, a selection) cross-fades in place. Sheets (`QuietSheet`) fade on `CALM` and rise 32 dp. The scene pager travels with the finger and settles on `CALM`/`SLOW`, never a spring.
+- **Navigation slides; the rest cross-fades** (Erwann, 2026-11-01: « je préfère un slide : quand on clique sur un bouton, on ouvre la fenêtre de droite sur le côté »). Opening a function from home, or a page inside a function, pushes the new screen in from the right while the one under it moves a quarter of the width left (`Motion.push`, `PUSH` = 320 ms on `Motion.Glide`, decelerate-heavy); ✕, ‹ and system Back slide it back out to the right, the leaving screen on top. No spring, no overshoot. Starting or ending a session cross-fades on `CALM`; only the intro's title card giving way to home keeps `SLOW`, since nobody tapped for it. Smooth but quick (Erwann, 2026-11-01: « smooth mais rapide. Là c'est lent »): whatever a tap starts is done within about 320 ms. Content inside a screen (a word, a page of a pager settled by a tap, a selection) cross-fades in place. Sheets (`QuietSheet`) fade on `CALM` and rise 32 dp. The scene pager travels with the finger and settles on `CALM`/`SLOW`, never a spring.
 - **Reserve space.** A state that comes and goes keeps its room, faded by `calmAlpha`: the swipe hint, the volume hint, the journal's confirmation, the breathing rhythms under Meditate, a selection check. Words told chosen by weight are laid out in both weights at once (`WeightSwap`), so their width never changes. Text that varies by state reserves its longest form (two lines for a scene's title and purpose).
 - **When room must change, grow slowly.** The mini player joining the floating bar expands over `CALM` (`Motion.enter`/`exit`), and the pages padded by the bar follow it frame by frame.
 - **Tabular figures** for every number that ticks (`TextStyle.tabular()`): timers, levels, counts, positions.
