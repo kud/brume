@@ -678,6 +678,8 @@
     <string name="journal_week_next">Next week</string>
     <string name="journal_note_add">Add tags or a few words</string>
     <string name="learn_page_advice">Advice</string>
+    <string name="doctor_page_signs">Signs</string>
+    <string name="doctor_page_numbers">Numbers</string>
     <string name="learn_page_loudness">Loudness</string>
     <string name="learn_doctor_short">See a doctor</string>
     <string name="tones_page_session">Session</string>

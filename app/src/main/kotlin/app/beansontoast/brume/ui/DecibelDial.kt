@@ -19,6 +19,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -169,6 +170,9 @@ fun DecibelExplorer(initial: Int = 60, still: Boolean? = null, onCard: (String) 
     val strain = Decibels.strain(db)
     val sound = Decibels.nearest(db)
 
+    // On Learn's page at large text the ear, a drawing the strain word already says, steps aside and the
+    // time reads a size smaller, so the dial and every line keep their room (Iris, 2026-11-01).
+    val roomy = titled || !largeText()
     Column(Modifier.fillMaxWidth()) {
         // On Learn's Décibels page the page's word is its title, so the dial gets the room.
         if (titled) Text(stringResource(R.string.db_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
@@ -176,7 +180,7 @@ fun DecibelExplorer(initial: Int = 60, still: Boolean? = null, onCard: (String) 
         if (titled) Text(stringResource(R.string.db_intro), style = MaterialTheme.typography.bodyMedium, color = quiet, modifier = Modifier.padding(top = 4.dp))
 
         // The ear, with the sound coming in on its left and, past 85, a ringing at its back.
-        Ear(shown, phase, ink, glow, Modifier.align(Alignment.CenterHorizontally).padding(top = if (titled) 12.dp else 0.dp).size(width = if (titled) 240.dp else 136.dp, height = if (titled) 156.dp else 88.dp))
+        if (roomy) Ear(shown, phase, ink, glow, Modifier.align(Alignment.CenterHorizontally).padding(top = if (titled) 12.dp else 0.dp).size(width = if (titled) 240.dp else 136.dp, height = if (titled) 156.dp else 88.dp))
         Text(
             stringResource(strain.word()), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
@@ -190,12 +194,12 @@ fun DecibelExplorer(initial: Int = 60, still: Boolean? = null, onCard: (String) 
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.db_at, db), style = MaterialTheme.typography.labelLarge, color = quiet)
-                Text(safeTimeText(db), style = MaterialTheme.typography.headlineSmall)
+                Text(safeTimeText(db), style = if (roomy) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleLarge)
             }
         }
 
         // The everyday sound at about this level, second to the ear.
-        Row(Modifier.fillMaxWidth().padding(top = gap).height(56.dp).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(top = gap).heightIn(min = 56.dp).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(56.dp)) { if (sound != null) ScaleArt(sound.id, Modifier.size(56.dp)) }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
@@ -210,9 +214,10 @@ fun DecibelExplorer(initial: Int = 60, still: Boolean? = null, onCard: (String) 
             }
         }
 
-        Row(Modifier.fillMaxWidth().padding(top = gap), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        Row(Modifier.fillMaxWidth().padding(top = gap),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             StepButton("−", stringResource(R.string.db_decrease)) { db = (db - Decibels.STEP).coerceAtLeast(Decibels.MIN) }
-            Dial(db, onChange = { db = it }, modifier = Modifier.padding(horizontal = 12.dp).size(if (titled) 184.dp else 120.dp), strainWord = stringResource(strain.word()))
+            Dial(db, onChange = { db = it }, modifier = Modifier.padding(horizontal = 12.dp).size(if (titled) 184.dp else if (roomy) 120.dp else 104.dp), strainWord = stringResource(strain.word()))
             StepButton("+", stringResource(R.string.db_increase)) { db = (db + Decibels.STEP).coerceAtMost(Decibels.MAX) }
         }
 
@@ -360,9 +365,12 @@ private fun Dial(db: Int, onChange: (Int) -> Unit, strainWord: String, modifier:
             val a = angle(db)
             drawLine(ink, on(ring - 18.dp.toPx(), a), on(ring - 8.dp.toPx(), a), 2.dp.toPx(), StrokeCap.Round)
         }
+        // The number is part of the drawing, sized to the ring rather than the font scale, so it never runs into
+        // the ticks at large text; « À 100 dB » above says it in words that do scale (Iris, 2026-11-01).
+        val fixed = androidx.compose.ui.platform.LocalDensity.current.fontScale
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(db.toString(), style = MaterialTheme.typography.displaySmall.copy(fontSize = 40.sp).tabular(), fontWeight = FontWeight.Light)
-            Text("dB", style = MaterialTheme.typography.labelLarge, color = quiet)
+            Text(db.toString(), style = MaterialTheme.typography.displaySmall.copy(fontSize = (40f / fixed).sp, lineHeight = (44f / fixed).sp).tabular(), fontWeight = FontWeight.Light)
+            Text("dB", style = MaterialTheme.typography.labelLarge.copy(fontSize = (14f / fixed).sp, lineHeight = (20f / fixed).sp), color = quiet)
         }
     }
 }

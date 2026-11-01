@@ -676,6 +676,8 @@
     <string name="journal_week_next">Semaine suivante</string>
     <string name="journal_note_add">Ajouter des mots ou quelques lignes</string>
     <string name="learn_page_advice">Conseils</string>
+    <string name="doctor_page_signs">Signes</string>
+    <string name="doctor_page_numbers">Numéros</string>
     <string name="learn_page_loudness">Décibels</string>
     <string name="learn_doctor_short">Consulter</string>
     <string name="tones_page_session">Séance</string>

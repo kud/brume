@@ -55,6 +55,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -620,6 +621,8 @@ fun LearnScreen(
     doctorOpen: Boolean = false,
     /** Where the Décibels page's dial starts (renders and FitTest). */
     loudnessAt: Int = 60,
+    /** Which page of the doctor sheet opens at large text (renders and FitTest). */
+    doctorPage: Int = 0,
 ) {
     // One frame, no free scroll (Iris, 2026-11-01): three pages named by words, changed by a tap,
     // so a swipe always belongs to the advice cards; the doctor, settings and About sit at the foot.
@@ -627,14 +630,15 @@ fun LearnScreen(
     var doctor by remember { mutableStateOf(doctorOpen) }
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
-            ScreenLead(stringResource(R.string.learn_intro))
             PagerWords(pager, listOf(stringResource(R.string.learn_page_advice), stringResource(R.string.learn_library), stringResource(R.string.learn_page_loudness)),
                 Modifier.padding(top = 4.dp))
             HorizontalPager(pager, userScrollEnabled = false, verticalAlignment = Alignment.Top,
                 modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 12.dp).clipToBounds()) { page ->
+                // The lead speaks of the cards, so it heads the two card pages; the Décibels page keeps its room
+                // for the dial (Iris, 2026-11-01, large-text pass).
                 when (page) {
-                    0 -> AdviceDeck(onCard = onCard, titled = false, deck = Modifier.fillMaxSize())
-                    1 -> LibraryTiles(onTopic, onFinder, Modifier.fillMaxSize())
+                    0 -> Column(Modifier.fillMaxSize()) { ScreenLead(stringResource(R.string.learn_intro)); Box(Modifier.fillMaxWidth().weight(1f).padding(top = 8.dp)) { AdviceDeck(onCard = onCard, titled = false, deck = Modifier.fillMaxSize()) } }
+                    1 -> Column(Modifier.fillMaxSize()) { ScreenLead(stringResource(R.string.learn_intro)); LibraryTiles(onTopic, onFinder, Modifier.fillMaxWidth().weight(1f).padding(top = 8.dp)) }
                     else -> DecibelExplorer(initial = loudnessAt, still = still, onCard = onCard, titled = false)
                 }
             }
@@ -645,7 +649,7 @@ fun LearnScreen(
                 FootWord(stringResource(R.string.about_short), onAbout)
             }
         }
-        QuietSheet(doctor, { doctor = false }, stringResource(R.string.doctor_title)) { DoctorLines(onSettings) }
+        QuietSheet(doctor, { doctor = false }, stringResource(R.string.doctor_title)) { DoctorLines(onSettings, doctorPage) }
     }
 }
 
@@ -666,8 +670,16 @@ fun DoctorGroup(onSettings: (() -> Unit)? = null) {
 
 /** The doctor group's words, also the Learn foot's sheet. */
 @Composable
-internal fun DoctorLines(onSettings: (() -> Unit)?) {
-    run {
+internal fun DoctorLines(onSettings: (() -> Unit)?, startPage: Int = 0) {
+    // At large text the signs and the numbers are two pages, each with every word (Iris, 2026-11-01);
+    // at the default size they share one. Both chips are always in view, so the numbers are one tap away.
+    val paged = largeText()
+    var page by rememberSaveable { mutableIntStateOf(startPage.coerceIn(0, 1)) }
+    if (paged) Row(Modifier.padding(bottom = 8.dp).selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        app.beansontoast.design.SelectChip(stringResource(R.string.doctor_page_signs), page == 0, { page = 0 })
+        app.beansontoast.design.SelectChip(stringResource(R.string.doctor_page_numbers), page == 1, { page = 1 })
+    }
+    if (!paged || page == 0) {
         Text(stringResource(R.string.doctor_intro), style = MaterialTheme.typography.bodyMedium)
         listOf(R.string.doctor_1, R.string.doctor_2, R.string.doctor_3, R.string.doctor_4, R.string.doctor_5, R.string.doctor_6).forEach {
             Row(Modifier.padding(top = 4.dp)) {
@@ -675,7 +687,9 @@ internal fun DoctorLines(onSettings: (() -> Unit)?) {
                 Text(stringResource(it), style = MaterialTheme.typography.bodyMedium)
             }
         }
-        HorizontalDivider(Modifier.padding(vertical = 10.dp), color = MaterialTheme.colorScheme.outlineVariant)
+    }
+    if (!paged) HorizontalDivider(Modifier.padding(vertical = 10.dp), color = MaterialTheme.colorScheme.outlineVariant)
+    if (!paged || page == 1) {
         RegionLines(Regions.redFlags)
         RegionFor(onSettings, Modifier.padding(top = 10.dp))
     }

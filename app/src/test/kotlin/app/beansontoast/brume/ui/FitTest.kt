@@ -128,6 +128,7 @@ class FitTest(private val case: String) {
         "learn" -> (0..2).map { p -> shot { Framed(stringResource(Fn.LEARN.title)) { LearnScreen(startPage = p, still = true) } } } +
             listOf(
                 shot { Framed(stringResource(Fn.LEARN.title)) { LearnScreen(doctorOpen = true) } },
+                shot { Framed(stringResource(Fn.LEARN.title)) { LearnScreen(doctorOpen = true, doctorPage = 1) } },
                 // The rocket: the loudest step, unweighted, with its extra note.
                 shot { Framed(stringResource(Fn.LEARN.title)) { LearnScreen(startPage = 2, still = true, loudnessAt = 136) } },
                 shot { Framed(stringResource(Fn.LEARN.title)) { LearnScreen(startPage = 2, still = true, loudnessAt = 100) } },

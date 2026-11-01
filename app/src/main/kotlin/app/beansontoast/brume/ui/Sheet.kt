@@ -105,6 +105,9 @@ internal fun QuietSheet(open: Boolean, onClose: () -> Unit, title: String, conte
     }
 }
 
+/** Font scale 1.15 or more: where a sheet or a grid splits into pages, so every word stays whole and nothing scrolls. */
+@Composable internal fun largeText(): Boolean = androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.15f
+
 /**
  * The names of a pager's pages as a row of words: the shown one by weight and a short rule under
  * it, never by colour. A tap eases the pager there on CALM; a swipe moves it with the finger.
@@ -118,8 +121,9 @@ internal fun PagerWords(pager: PagerState, names: List<String>, modifier: Modifi
         names.forEachIndexed { i, name ->
             val on = pager.targetPage == i
             Column(
+                // No room after the last word, so three names still fit whole at font scale 1.3.
                 Modifier.heightIn(min = 48.dp).selectable(on, role = Role.Tab) { scope.launch { pager.animateScrollToPage(i, animationSpec = Motion.tween(Motion.CALM)) } }
-                    .padding(end = 20.dp),
+                    .padding(end = if (i < names.lastIndex) 20.dp else 0.dp),
                 verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
             ) {
                 WeightSwap(name, on, MaterialTheme.typography.titleSmall, onColor = scheme.onSurface, offColor = scheme.onSurfaceVariant, align = Alignment.CenterStart)

@@ -130,13 +130,25 @@ fun LibraryTiles(onTopic: (Int) -> Unit, onFinder: () -> Unit, modifier: Modifie
     val tiles: List<Triple<String, String, () -> Unit>> = (1..Learn.TOPICS).map { topic ->
         Triple(topicName(context, topic), stringResource(R.string.learn_count, Learn.topic(topic).size)) { onTopic(topic) }
     } + Triple(stringResource(R.string.finder_title), stringResource(R.string.learn_finder_tile), onFinder)
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        tiles.chunked(2).forEach { row ->
-            Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                row.forEach { (name, size, open) -> Tile(name, size, open, Modifier.weight(1f).fillMaxSize()) }
-                if (row.size == 1) Spacer(Modifier.weight(1f))
+    // At large text, four tiles a page with ‹ 1 / 2 ›, so every name keeps all its words (Iris, 2026-11-01).
+    val pages = tiles.chunked(if (largeText()) 4 else tiles.size)
+    val pager = rememberPagerState { pages.size }
+    val scope = rememberCoroutineScope()
+    Column(modifier) {
+        HorizontalPager(pager, pageSpacing = 12.dp, verticalAlignment = Alignment.Top,
+            flingBehavior = PagerDefaults.flingBehavior(pager, snapAnimationSpec = Motion.tween(Motion.CALM)),
+            modifier = Modifier.fillMaxWidth().weight(1f)) { p ->
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                pages[p].chunked(2).forEach { row ->
+                    Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        row.forEach { (name, size, open) -> Tile(name, size, open, Modifier.weight(1f).fillMaxSize()) }
+                        if (row.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                }
             }
         }
+        if (pages.size > 1) PageStepper(pager.currentPage, pages.size, { scope.launch { pager.animateScrollToPage(it, animationSpec = Motion.tween(Motion.CALM)) } },
+            Modifier.align(Alignment.CenterHorizontally))
     }
 }
 
@@ -149,7 +161,7 @@ private fun Tile(name: String, size: String, onClick: () -> Unit, modifier: Modi
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(name, style = MaterialTheme.typography.titleMedium,
-            maxLines = 3, overflow = TextOverflow.Ellipsis)
+            maxLines = 4, overflow = TextOverflow.Ellipsis)
         Text(size, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
     }
 }
