@@ -66,6 +66,9 @@ class DirectionRenders(private val shot: String) {
             "breathe-options" -> capture(night) {
                 FnFrame(onClose = {}, title = "Respirer") { BreatheScreen(box, {}, {}, soundName = "Bruit brun", previewAt = 1.5, options = true) }
             }
+            "breathe-options-session" -> capture(night) {
+                FnFrame(onClose = {}, title = "Respirer") { BreatheScreen(box, {}, {}, soundName = "Bruit brun", previewAt = 1.5, options = true, optionsPage = 1) }
+            }
             "breath-in" -> capture(night) { BreathSession(box.plan(), 0L, night, haptics = false, onEnd = {}, elapsed = 2.0, still = false) }
             "breath-hold" -> capture(night) { BreathSession(box.plan(), 0L, night, haptics = false, onEnd = {}, elapsed = 5.0, still = false) }
             "breath-out" -> capture(night) { BreathSession(box.plan(), 0L, night, haptics = false, onEnd = {}, elapsed = 8.0, still = false) }
@@ -162,7 +165,7 @@ class DirectionRenders(private val shot: String) {
             "about-privacy", "about-sources", "tones-session", "tones-pitch", "tones-balance", "tones-how", "prelude-478", "intro-doctor", "intro-help", "tones-dock")
             .flatMap { listOf("$it-day", "$it-night") }.filter { it != "journal-day" } +
             // Font scale 1.3, day only: the screens the large-text pass reworked.
-            listOf("tones-dock", "home", "breathe-options", "loudness", "learn-doctor", "intro-tinnitus", "intro-doctor", "intro-help", "prelude-478", "prelude-478-safety", "tones-how", "settle-playing")
+            listOf("tones-dock", "home", "breathe-options", "breathe-options-session", "loudness", "learn-doctor", "intro-tinnitus", "intro-doctor", "intro-help", "prelude-478", "prelude-478-safety", "tones-how", "settle-playing")
                 .map { "$it-big-day" }
     }
 }

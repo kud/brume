@@ -98,6 +98,8 @@ class FitTest(private val case: String) {
             shot { Framed(stringResource(Fn.BREATHE.title)) { BreatheScreen(BreathSetup(Technique.BOX), {}, {}, previewAt = 1.0) } },
             shot { Framed(stringResource(Fn.BREATHE.title)) { BreatheScreen(BreathSetup(Technique.BOX, sound = true), {}, {}, soundName = "Bruit rose + Pluie", voice = Voice.State.MISSING, previewAt = 1.0, options = true) } },
             shot { Framed(stringResource(Fn.BREATHE.title)) { BreatheScreen(BreathSetup(Technique.LONG_OUT), {}, {}, previewAt = 1.0, options = true) } },
+            shot { Framed(stringResource(Fn.BREATHE.title)) { BreatheScreen(BreathSetup(Technique.BOX, sound = true), {}, {}, soundName = "Bruit rose + Pluie", voice = Voice.State.MISSING, previewAt = 1.0, options = true, optionsPage = 1) } },
+            shot { Framed(stringResource(Fn.BREATHE.title)) { BreatheScreen(BreathSetup(Technique.LONG_OUT), {}, {}, previewAt = 1.0, options = true, optionsPage = 1) } },
         )
         "prelude" -> listOf(
             shot { BreathPrelude(BreathSetup(Technique.FOUR_SEVEN_EIGHT), safety = true, onStart = {}, onBack = {}) },

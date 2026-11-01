@@ -522,6 +522,8 @@
     <string name="cue_hold_empty">Restez poumons vides</string>
     <string name="breath_stop">Respirer normalement</string>
     <string name="breath_hold_marks">%1$d secondes retenues sur %2$d</string>
+    <string name="breath_page_rhythm">Rythme</string>
+    <string name="breath_page_session">Séance</string>
     <string name="prelude_title">Avant de commencer</string>
     <string name="prelude_hum">Assis, épaules relâchées ; oreilles fermées si vous le souhaitez.</string>
     <string name="prelude_hum_gentle">Bourdonnez tout doucement : le son ne doit jamais paraître fort dans les oreilles.</string>

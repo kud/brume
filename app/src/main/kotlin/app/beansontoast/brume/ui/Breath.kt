@@ -191,20 +191,28 @@ internal fun VoiceRow(on: Boolean, state: Voice.State, @StringRes summary: Int, 
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun ColumnScope.BreathOptions(setup: BreathSetup, soundName: String?, voice: Voice.State, onChange: (BreathSetup) -> Unit) {
+internal fun ColumnScope.BreathOptions(setup: BreathSetup, soundName: String?, voice: Voice.State, onChange: (BreathSetup) -> Unit, startPage: Int = 0) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    // Two pages, the rhythm and the session, so at font scale 1.3 every line keeps all its words
+    // and every row its summary, with nothing cut or scrolled (Iris, 2026-11-01).
+    var page by rememberSaveable { mutableStateOf(startPage.coerceIn(0, 1)) }
+    Row(Modifier.padding(bottom = 8.dp).selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        SelectChip(stringResource(R.string.breath_page_rhythm), page == 0, { page = 0 })
+        SelectChip(stringResource(R.string.breath_page_session), page == 1, { page = 1 })
+    }
+    if (page == 1) { BreathSessionOptions(setup, soundName, voice, onChange); return }
     Text(stringResource(R.string.breath_intro) + " " + stringResource(setup.technique.hint()), style = MaterialTheme.typography.bodySmall, color = muted,
-        minLines = 3, maxLines = 3, overflow = TextOverflow.Ellipsis)
-    Row(Modifier.padding(top = 8.dp).selectableGroup(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.breath_variant), style = MaterialTheme.typography.labelLarge, color = muted, modifier = Modifier.padding(end = 4.dp))
+        minLines = 3)
+    // Wraps at large text rather than clipping the last pace's name (« Standa… » at 1.3).
+    FlowRow(Modifier.padding(top = 8.dp).selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(stringResource(R.string.breath_variant), style = MaterialTheme.typography.labelLarge, color = muted, modifier = Modifier.align(Alignment.CenterVertically).padding(end = 4.dp))
         setup.technique.offered.forEach { v ->
             SelectChip(stringResource(v.label()), setup.pattern.variant == v, { onChange(setup.copy(variants = setup.variants.with(setup.technique, v))) })
         }
     }
     Text(setup.pattern.phasesText(), style = MaterialTheme.typography.bodyMedium.tabular(), modifier = Modifier.padding(top = 4.dp))
     // Always laid out, so nothing below moves when a technique without holds is chosen.
-    Text(stringResource(R.string.breath_hold_easy), style = MaterialTheme.typography.bodySmall, color = muted, minLines = 2, maxLines = 2,
-        overflow = TextOverflow.Ellipsis,
+    Text(stringResource(R.string.breath_hold_easy), style = MaterialTheme.typography.bodySmall, color = muted, minLines = 2,
         modifier = Modifier.alpha(calmAlpha(setup.pattern.holds)).then(if (setup.pattern.holds) Modifier else Modifier.clearAndSetSemantics { }))
     Text(stringResource(if (setup.byRounds) R.string.breath_rounds_title else R.string.breath_length), style = MaterialTheme.typography.labelLarge,
         color = muted, modifier = Modifier.padding(top = 8.dp))
@@ -214,6 +222,12 @@ internal fun ColumnScope.BreathOptions(setup: BreathSetup, soundName: String?, v
             SelectChip(label, setup.length == n, { onChange(setup.withLength(n)) })
         }
     }
+}
+
+/** The sheet's second page: what happens while you breathe. */
+@Composable
+private fun BreathSessionOptions(setup: BreathSetup, soundName: String?, voice: Voice.State, onChange: (BreathSetup) -> Unit) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
     VoiceRow(setup.voice, voice, R.string.voice_breath_summary) { onChange(setup.copy(voice = it)) }
     SwitchRow(stringResource(R.string.breath_haptics), stringResource(R.string.breath_haptics_summary), setup.haptics) { onChange(setup.copy(haptics = it)) }
     if (soundName != null) SwitchRow(stringResource(R.string.breath_sound), stringResource(R.string.breath_sound_summary, soundName), setup.sound) {
@@ -438,7 +452,7 @@ internal fun rememberSeconds(still: Boolean): Double {
 @Composable
 fun BreatheScreen(
     setup: BreathSetup, onChange: (BreathSetup) -> Unit, onStart: () -> Unit,
-    soundName: String? = null, voice: Voice.State = Voice.State.IDLE, previewAt: Double? = null, options: Boolean = false,
+    soundName: String? = null, voice: Voice.State = Voice.State.IDLE, previewAt: Double? = null, options: Boolean = false, optionsPage: Int = 0,
 ) {
     val scheme = MaterialTheme.colorScheme
     val still = previewAt != null || rememberReducedMotion()
@@ -474,7 +488,7 @@ fun BreatheScreen(
             Text(stringResource(R.string.scene_start), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 8.dp))
         }
     }
-    QuietSheet(open, { open = false }, stringResource(R.string.breathe_more)) { BreathOptions(setup, soundName, voice, onChange) }
+    QuietSheet(open, { open = false }, stringResource(R.string.breathe_more)) { BreathOptions(setup, soundName, voice, onChange, optionsPage) }
     }
 }
 

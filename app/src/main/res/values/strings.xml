@@ -523,6 +523,8 @@
     <string name="cue_hold_empty">Stay with empty lungs</string>
     <string name="breath_stop">Breathe normally</string>
     <string name="breath_hold_marks">%1$d of %2$d seconds held</string>
+    <string name="breath_page_rhythm">Rhythm</string>
+    <string name="breath_page_session">Session</string>
     <string name="prelude_title">Before you start</string>
     <string name="prelude_hum">Seated, shoulders relaxed; ears closed with your fingers if you like.</string>
     <string name="prelude_hum_gentle">Keep the hum gentle: it should never feel loud in the ears.</string>
