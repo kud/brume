@@ -33,7 +33,8 @@ import app.beansontoast.brume.ui.FnFrame
 import app.beansontoast.brume.ui.BrumeTheme
 import app.beansontoast.brume.ui.JournalScreen
 import app.beansontoast.brume.ui.ListenActions
-import app.beansontoast.brume.ui.ListenComfort
+import app.beansontoast.brume.ui.Scene
+import app.beansontoast.brume.ui.SoloScene
 import app.beansontoast.brume.ui.TonesScreen
 import app.beansontoast.brume.ui.Meditation
 import app.beansontoast.brume.ui.MeditationSession
@@ -112,35 +113,35 @@ class Renders(private val shot: String) {
         "mixer-many-day" -> shoot(dark = false, night = false) { SoundsScreen(many, ListenActions(), onBack = {}) }
         "journal-note-sheet-night" -> shoot(dark = true, night = true) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}, noteOpen = true) }
         "mixer-empty-dark" -> shoot(dark = true, night = false) { SoundsScreen(PlayerUi(mix = emptyList()), ListenActions(), onBack = {}) }
-        "listen-mix-day" -> shoot(dark = false, night = false) { ListenComfort(mixed, ListenActions()) }
-        "listen-idle-night" -> shoot(dark = true, night = true) { ListenComfort(idle, ListenActions()) }
-        "listen-playing-night" -> shoot(dark = true, night = true) { ListenComfort(playing, ListenActions()) }
-        "listen-idle-day" -> shoot(dark = false, night = false) { ListenComfort(idle, ListenActions()) }
-        "listen-playing-day" -> shoot(dark = false, night = false) { ListenComfort(playing, ListenActions()) }
-        "listen-empty-dark" -> shoot(dark = true, night = false) { ListenComfort(PlayerUi(mix = emptyList()), ListenActions()) }
-        "listen-stopped-dark" -> shoot(dark = true, night = false) { ListenComfort(idle.copy(status = Status.TOO_LOUD), ListenActions()) }
+        "listen-mix-day" -> shoot(dark = false, night = false) { SoloScene(Scene.SETTLE, mixed, ListenActions()) }
+        "listen-idle-night" -> shoot(dark = true, night = true) { SoloScene(Scene.SETTLE, idle, ListenActions()) }
+        "listen-playing-night" -> shoot(dark = true, night = true) { SoloScene(Scene.SETTLE, playing, ListenActions()) }
+        "listen-idle-day" -> shoot(dark = false, night = false) { SoloScene(Scene.SETTLE, idle, ListenActions()) }
+        "listen-playing-day" -> shoot(dark = false, night = false) { SoloScene(Scene.SETTLE, playing, ListenActions()) }
+        "listen-empty-dark" -> shoot(dark = true, night = false) { SoloScene(Scene.SETTLE, PlayerUi(mix = emptyList()), ListenActions()) }
+        "listen-stopped-dark" -> shoot(dark = true, night = false) { SoloScene(Scene.SETTLE, idle.copy(status = Status.TOO_LOUD), ListenActions()) }
         "listen-tones-night" -> shoot(dark = true, night = true) { TonesScreen(tones.copy(playing = true), ListenActions()) }
         "listen-tones-day" -> shoot(dark = false, night = false) { TonesScreen(tones, ListenActions()) }
-        "balance-listen-night" -> shoot(dark = true, night = true) { ListenComfort(playing.copy(balance = -0.3f, output = Output(OutputKind.BLUETOOTH, "WH-1000XM4")), ListenActions()) }
-        "balance-listen-day" -> shoot(dark = false, night = false) { ListenComfort(idle.copy(balance = 1f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
+        "balance-listen-night" -> shoot(dark = true, night = true) { SoloScene(Scene.SETTLE, playing.copy(balance = -0.3f, output = Output(OutputKind.BLUETOOTH, "WH-1000XM4")), ListenActions()) }
+        "balance-listen-day" -> shoot(dark = false, night = false) { SoloScene(Scene.SETTLE, idle.copy(balance = 1f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
         "balance-tones-night" -> shoot(dark = true, night = true) { TonesScreen(tones.copy(playing = true, balance = 0.6f, output = Output(OutputKind.BLUETOOTH, "Sleep Buds")), ListenActions()) }
         "balance-tones-day" -> shoot(dark = false, night = false) { TonesScreen(tones.copy(output = Output(OutputKind.SPEAKER, null)), ListenActions()) }
         "journal-day" -> shoot(dark = false, night = false) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-night" -> shoot(dark = true, night = true) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
         "journal-empty-dark" -> shoot(dark = true, night = false) { JournalScreen(emptyList(), 0, today, null, { _, _, _ -> }, {}) }
         "about-night" -> shoot(dark = true, night = true) { LearnScreen() }
-        "listen-playing-open-day" -> shoot(dark = false, night = false) { ListenComfort(playing, ListenActions()) }
+        "listen-playing-open-day" -> shoot(dark = false, night = false) { SoloScene(Scene.SETTLE, playing, ListenActions()) }
         "about-day" -> shoot(dark = false, night = false) { LearnScreen() }
         "about-language-night" -> shoot(dark = true, night = true) { Column(Modifier.padding(horizontal = 20.dp)) { LanguageSettings(LanguageChoice("en") {}) } }
         "about-language-day" -> shoot(dark = false, night = false) { Column(Modifier.padding(horizontal = 20.dp)) { LanguageSettings(LanguageChoice("") {}) } }
-        "balance-centre-night" -> shoot(dark = true, night = true) { ListenComfort(playing.copy(balance = 0f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
+        "balance-centre-night" -> shoot(dark = true, night = true) { SoloScene(Scene.SETTLE, playing.copy(balance = 0f, output = Output(OutputKind.WIRED, null)), ListenActions()) }
         "sync-night" -> shoot(dark = true, night = true) { syncShot() }
         "sync-day" -> shoot(dark = false, night = false) { syncShot() }
         "sync-off-day" -> shoot(dark = false, night = false) { Column(Modifier.padding(horizontal = 20.dp)) { SyncSettings(SyncState(), null, SyncActions()) } }
         "sync-problem-night" -> shoot(dark = true, night = true) {
             Column(Modifier.padding(horizontal = 20.dp)) { SyncSettings(SyncState("Brume", true, true, null, SyncProblem.UNREACHABLE), null, SyncActions()) }
         }
-        "screens-listen" -> shoot(dark = true, night = true) { ListenComfort(idle, ListenActions()) }
+        "screens-listen" -> shoot(dark = true, night = true) { SoloScene(Scene.SETTLE, idle, ListenActions()) }
         "screens-breath" -> shoot(dark = true, night = true) { breathe(BreathSetup(), soundName = "Pink noise") }
         "screens-tones" -> shoot(dark = true, night = true) { TonesScreen(tones, ListenActions()) }
         "screens-journal" -> shoot(dark = true, night = true) { JournalScreen(invented, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }

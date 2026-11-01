@@ -50,6 +50,9 @@ class DirectionRenders(private val shot: String) {
 
     private val mix = PlayerUi(NoiseColour.BROWN, Ambience.RAIN, 0.3f, 0.45f)
     private val box = BreathSetup(technique = Technique.BOX)
+    private val tonesUi = PlayerUi(mode = app.beansontoast.brume.core.sound.SoundEngine.Mode.TONES,
+        tones = app.beansontoast.brume.core.sound.ToneSettings(pitch = 6200, trims = listOf(1f, 0.85f, 0.7f, 0.6f)), toneLevel = 0.2f,
+        playing = true, timerMinutes = 20, timerRemainingMinutes = 12)
 
     @Test fun render() {
         val night = shot.endsWith("-night")
@@ -108,6 +111,18 @@ class DirectionRenders(private val shot: String) {
                     app.beansontoast.brume.ui.FinderScreen(emptyList(), app.beansontoast.brume.ui.FinderActions(), onBack = {}, start = app.beansontoast.brume.ui.FinderPlace.Journey(step))
                 }
             }
+            // Phase 5, no scroll: About and Tons in pages, the prelude and the introduction in one frame each.
+            "about-privacy" -> capture(night) { FnFrame(null, "À propos", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.AboutScreen(version = "0.1.0", startPage = 1) } }
+            "about-sources" -> capture(night) { FnFrame(null, "À propos", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.AboutScreen(version = "0.1.0", startPage = 2) } }
+            "tones-session" -> capture(night) { FnFrame(null, "Tons", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.TonesScreen(tonesUi, ListenActions()) } }
+            "tones-pitch" -> capture(night) { FnFrame(null, "Tons", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.TonesScreen(tonesUi, ListenActions(), startPage = 1) } }
+            "tones-balance" -> capture(night) {
+                FnFrame(null, "Tons", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.TonesScreen(tonesUi, ListenActions(), startPage = 2) }
+            }
+            "tones-how" -> capture(night) { FnFrame(null, "Comment ça marche", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.TonesHowScreen {} } }
+            "prelude-478" -> capture(night) { app.beansontoast.brume.ui.BreathPrelude(BreathSetup(Technique.FOUR_SEVEN_EIGHT), safety = true, onStart = {}, onBack = {}) }
+            "intro-doctor" -> capture(night) { app.beansontoast.brume.ui.Onboarding(onFinish = {}, startPage = 3) }
+            "intro-help" -> capture(night) { app.beansontoast.brume.ui.Onboarding(onFinish = {}, startPage = 4) }
             "intro-card" -> capture(night) { app.beansontoast.brume.ui.launch.TitleCard() }
             else -> error(shot)
         }
@@ -130,7 +145,8 @@ class DirectionRenders(private val shot: String) {
             "home-day", "home-night", "home-mini-day", "home-mini-night", "home-modules-off-day",
             "breathe-day", "breathe-night", "breath-in-day", "breath-hold-day", "breath-out-day", "breath-hold-night",
             "settle-day", "settle-playing-night", "journal-day",
-        ) + listOf("intro-card", "mixer", "mixer-add", "learn", "topic", "card", "about", "meditate", "meditate-options", "breathe-options", "med-session", "tones", "settings", "settings-sheet", "finder", "finder-profile", "journal", "loudness", "finder-step1", "finder-step3")
+        ) + listOf("intro-card", "mixer", "mixer-add", "learn", "topic", "card", "about", "meditate", "meditate-options", "breathe-options", "med-session", "tones", "settings", "settings-sheet", "finder", "finder-profile", "journal", "loudness", "finder-step1", "finder-step3",
+            "about-privacy", "about-sources", "tones-session", "tones-pitch", "tones-balance", "tones-how", "prelude-478", "intro-doctor", "intro-help")
             .flatMap { listOf("$it-day", "$it-night") }.filter { it != "journal-day" }
     }
 }

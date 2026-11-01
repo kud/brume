@@ -24,7 +24,8 @@ import app.beansontoast.brume.ui.JournalScreen
 import app.beansontoast.brume.ui.LearnCardScreen
 import app.beansontoast.brume.ui.LearnTopicScreen
 import app.beansontoast.brume.ui.ListenActions
-import app.beansontoast.brume.ui.ListenComfort
+import app.beansontoast.brume.ui.Scene
+import app.beansontoast.brume.ui.SoloScene
 import app.beansontoast.brume.ui.SettingsScreen
 import app.beansontoast.brume.ui.TonesScreen
 import org.junit.Assume.assumeTrue
@@ -66,8 +67,8 @@ class DirectRenders(private val shot: String) {
         val dark = night || shot.endsWith("-dark")
         val name = shot.removeSuffix("-night").removeSuffix("-day")
         when (name) {
-            "listen" -> tab(dark, night) { ListenComfort(idle, ListenActions()) }
-            "listen-playing" -> tab(dark, night) { ListenComfort(playing, ListenActions()) }
+            "listen" -> tab(dark, night) { SoloScene(Scene.SETTLE, idle, ListenActions()) }
+            "listen-playing" -> tab(dark, night) { SoloScene(Scene.SETTLE, playing, ListenActions()) }
             "breathe-options" -> tab(dark, night) { BreatheScreen(BreathSetup(), {}, {}, soundName = "Bruit brun", previewAt = 2.0, options = true) }
             "tones" -> tab(dark, night) { TonesScreen(tones, ListenActions()) }
             "tones-how" -> tab(dark, night) { TonesHowScreen {} }

@@ -24,9 +24,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -235,7 +233,6 @@ internal fun ColumnScope.BreathOptions(setup: BreathSetup, soundName: String?, v
 fun BreathPrelude(setup: BreathSetup, safety: Boolean, onStart: () -> Unit, onBack: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val muted = scheme.onSurfaceVariant
-    val scroll = rememberScrollState()
     // The session stands on the quiet landscape, sky and haze, the orb at its centre (Iris, 2026-11-01).
     Box(Modifier.fillMaxSize().background(scheme.background)) {
     Landscape(Land.QUIET)
@@ -247,7 +244,8 @@ fun BreathPrelude(setup: BreathSetup, safety: Boolean, onStart: () -> Unit, onBa
                 Text(back, style = MaterialTheme.typography.labelLarge, color = muted, modifier = Modifier.padding(start = 6.dp))
             }
         }
-        Column(Modifier.weight(1f).verticalScroll(scroll).padding(horizontal = 8.dp)) {
+        // Fits one frame for every technique, the safety note included (FitTest), so nothing scrolls.
+        Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
             Text(stringResource(setup.technique.title()), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 24.dp))
             Text(setup.pattern.phasesText(), style = MaterialTheme.typography.bodyLarge.tabular(), color = muted, modifier = Modifier.padding(top = 4.dp))
             val lines = buildList {

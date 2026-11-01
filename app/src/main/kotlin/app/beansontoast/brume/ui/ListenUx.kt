@@ -31,11 +31,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,6 +48,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -103,46 +102,35 @@ internal fun forMode(ui: PlayerUi, actions: ListenActions, mode: Mode): Pair<Pla
     )
 }
 
-/** The Listen tab: comfort sounds only. The tone pattern lives in its own tab. */
-@Composable
-fun ListenComfort(all: PlayerUi, allActions: ListenActions) {
-    val (ui, actions) = forMode(all, allActions, Mode.SOUNDS)
-    Column(Modifier.fillMaxSize()) {
-        val scroll = rememberScrollState()
-        Column(Modifier.weight(1f).scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
-            NowPlaying(ui, actions, Modifier.padding(top = 12.dp))
-            // The pickers come straight after the card, so at 360x780 the Nature heading meets the fold and
-            // reads as "more" through the scroll cue; the one-at-a-time rule closes the page with the guide.
-            AddSounds(ui, actions)
-            Text(stringResource(R.string.ux_one_at_a_time), style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
-            Spacer(Modifier.height(24.dp))
-        }
-        Dock(ui, actions)
-    }
-}
-
 /**
  * The Tones tab, one direct screen (Iris, 2026-10-31, after Erwann reversed the path): the session
  * card, a quiet « How it works » that opens its page, then the pitch, the level and the trims, and
- * the dock with its session timer. Play is one tap from the tab.
+ * the dock with its session timer. Play is one tap from the tab. No scroll (the no-scroll pass): three
+ * pages named by words, as Learn's are, above the dock: the session (its card and the two links),
+ * the pitch with the level, and the balance trims.
  */
 @Composable
-fun TonesScreen(all: PlayerUi, allActions: ListenActions, onHow: () -> Unit = {}, onFinder: () -> Unit = {}) {
+fun TonesScreen(all: PlayerUi, allActions: ListenActions, onHow: () -> Unit = {}, onFinder: () -> Unit = {}, startPage: Int = 0) {
     val (ui, actions) = forMode(all, allActions, Mode.TONES)
+    val pager = androidx.compose.foundation.pager.rememberPagerState(initialPage = startPage) { 3 }
     Column(Modifier.fillMaxSize()) {
-        val scroll = rememberScrollState()
-        Column(Modifier.weight(1f).scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
-            ScreenLead(stringResource(R.string.ux_tones_heading) + " · " + stringResource(R.string.ux_tones_session))
-            NowPlaying(ui, actions, Modifier.padding(top = 16.dp))
-            QuietLink(stringResource(R.string.tones_how), onHow)
-            QuietLink(stringResource(R.string.finder_entry), onFinder)
-            SectionTitle(stringResource(R.string.tones_pitch))
-            PitchCard(ui, actions.tones)
-            SectionTitle(stringResource(R.string.listen_levels))
-            ToneLevel(ui, actions.tones)
-            TrimsCard(ui, actions.tones)
-            Spacer(Modifier.height(24.dp))
+        Column(Modifier.weight(1f).then(gutter)) {
+            PagerWords(pager, listOf(stringResource(R.string.tones_page_session), stringResource(R.string.tones_pitch), stringResource(R.string.tones_balance)))
+            androidx.compose.foundation.pager.HorizontalPager(pager, userScrollEnabled = false, verticalAlignment = Alignment.Top,
+                modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 4.dp).then(Modifier.clipToBounds())) { page ->
+                Column(Modifier.fillMaxSize()) {
+                    when (page) {
+                        0 -> {
+                            ScreenLead(stringResource(R.string.ux_tones_heading) + " · " + stringResource(R.string.ux_tones_session))
+                            NowPlaying(ui, actions, Modifier.padding(top = 8.dp))
+                            QuietLink(stringResource(R.string.tones_how), onHow)
+                            QuietLink(stringResource(R.string.finder_entry), onFinder)
+                        }
+                        1 -> { PitchCard(ui, actions.tones); ToneLevel(ui, actions.tones) }
+                        else -> TrimsCard(ui, actions.tones, titled = false)
+                    }
+                }
+            }
         }
         Dock(ui, actions, timerTitle = R.string.ux_session_timer)
     }
@@ -233,28 +221,6 @@ private fun Empty(@StringRes text: Int) =
     is Sound.Noise -> R.string.listen_noise
     is Sound.Recorded -> R.string.mixer_recording
     is Sound.Band -> R.string.sound_band_kind
-}
-
-/**
- * Every sound as a chip, noises then recordings: a check and weight on the ones in the mix. A tap
- * adds the sound as a new layer, or takes it out; there is no limit but the list itself.
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun AddSounds(ui: PlayerUi, actions: ListenActions) {
-    SectionTitle(stringResource(R.string.mixer_add))
-    listOf(R.string.mixer_noises to NOISES, R.string.mixer_recordings to RECORDINGS).forEach { (title, sounds) ->
-        Text(stringResource(title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp, bottom = 6.dp))
-        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            sounds.forEach { s ->
-                val on = s in ui.sounds
-                SelectChip(stringResource(s.label()), on, { if (on) actions.remove(s) else actions.add(s) })
-            }
-        }
-    }
-    Text(stringResource(R.string.listen_guide), style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
 }
 
 /** The noises, deepest first, then the recordings, as the chips read them. */

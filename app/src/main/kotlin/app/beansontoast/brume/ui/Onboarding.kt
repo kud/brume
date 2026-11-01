@@ -26,9 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -58,19 +56,19 @@ import app.beansontoast.brume.R
 import app.beansontoast.brume.core.region.Regions
 
 /*
- * The introduction (Iris, 2026-10-31). Five quiet pages in night mist, following the splash:
+ * The introduction (Iris, 2026-10-31). Six quiet pages in night mist, following the splash:
  * what Brume is, that everything stays on the phone, how to listen safely, when to see a doctor,
- * and, optionally, the pitch for the tone pattern. It plays no sound: the pitch is set in Tones,
+ * the numbers for help where you are, and, optionally, the pitch for the tone pattern. It plays no sound: the pitch is set in Tones,
  * where the level, the dock and Too loud already are, so nothing is heard before the safety page
  * has been read in the place where it applies.
  *
  *  - Skippable from every page but the last, which has its own two ways out; Back steps back.
- *  - Where you are is told in words ("2 of 5") and by the marks' size and fill, never by a hue.
+ *  - Where you are is told in words ("2 of 6") and by the marks' size and fill, never by a hue.
  *  - Pages crossfade; with reduced motion (animator scale 0) they change at once.
  *  - The disclaimer, the privacy text and the red flags are About's own strings, so the two
  *    places can never say different things.
  */
-const val INTRO_PAGES = 5
+const val INTRO_PAGES = 6
 
 @Composable
 fun Onboarding(onFinish: (setPitch: Boolean) -> Unit, startPage: Int = 0) {
@@ -86,13 +84,14 @@ fun Onboarding(onFinish: (setPitch: Boolean) -> Unit, startPage: Int = 0) {
             if (!last) TextButton({ onFinish(false) }, Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.intro_skip)) }
         }
         Crossfade(page, Modifier.weight(1f), animationSpec = if (still) snap() else Motion.tween(Motion.CALM), label = "intro") { p ->
-            val scroll = rememberScrollState()
-            Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll)) {
+            // Every page fits one frame (the no-scroll pass): the red flags and the numbers are two pages.
+            Column(Modifier.fillMaxSize()) {
                 when (p) {
                     0 -> Welcome()
                     1 -> Privacy()
                     2 -> Safely()
                     3 -> Doctor()
+                    4 -> Help()
                     else -> Pitch()
                 }
                 Spacer(Modifier.height(16.dp))
@@ -111,7 +110,7 @@ fun Onboarding(onFinish: (setPitch: Boolean) -> Unit, startPage: Int = 0) {
     }
 }
 
-/** Five marks: the current one long and filled, those read short and filled, those ahead outlined. */
+/** One mark per page: the current one long and filled, those read short and filled, those ahead outlined. */
 @Composable
 private fun Steps(page: Int, modifier: Modifier) {
     val ink = MaterialTheme.colorScheme.onSurface
@@ -188,7 +187,7 @@ private fun Safely() {
     }
 }
 
-/** The red flags, calmly: About's list, then the one step worth taking anyway, then the support line. */
+/** The red flags, calmly: About's list. The hearing check and the numbers follow on their own page. */
 @Composable
 private fun Doctor() {
     Header(R.string.doctor_title, painterResource(R.drawable.ic_info))
@@ -200,12 +199,19 @@ private fun Doctor() {
                 Text(stringResource(it), style = MaterialTheme.typography.bodyMedium)
             }
         }
-        Card(Modifier.padding(top = 16.dp)) {
+    }
+}
+
+/** The one step worth taking anyway, then the country's own numbers, with the guess said out loud and where to change it: a page of its own, so nothing scrolls. */
+@Composable
+private fun Help() {
+    Header(R.string.about_help_title, painterResource(R.drawable.ic_info))
+    Column(gutter.padding(top = 16.dp)) {
+        Card {
             Text(stringResource(R.string.intro_hearing_title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
             Text(stringResource(R.string.intro_hearing), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
         }
     }
-    // The country's own numbers, with the guess said out loud and where to change it.
     Column(gutter.padding(top = 16.dp)) {
         RegionLines(Regions.redFlags)
         Text(stringResource(R.string.region_onboarding, countryName(LocalCountry.current)), style = MaterialTheme.typography.bodySmall,

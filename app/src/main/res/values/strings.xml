@@ -677,6 +677,9 @@
     <string name="learn_page_advice">Advice</string>
     <string name="learn_page_loudness">Loudness</string>
     <string name="learn_doctor_short">See a doctor</string>
+    <string name="tones_page_session">Session</string>
+    <string name="about_page_brume">Brume</string>
+    <string name="about_page_privacy">Privacy</string>
     <string name="about_short">About</string>
     <string name="learn_where">Where to turn</string>
     <string name="learn_finder_tile">Find your sound</string>

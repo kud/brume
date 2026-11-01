@@ -55,6 +55,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.draw.alpha
+import app.beansontoast.design.calmAlpha
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
@@ -174,14 +176,16 @@ fun DecibelExplorer(initial: Int = 60, still: Boolean? = null, onCard: (String) 
         if (titled) Text(stringResource(R.string.db_intro), style = MaterialTheme.typography.bodyMedium, color = quiet, modifier = Modifier.padding(top = 4.dp))
 
         // The ear, with the sound coming in on its left and, past 85, a ringing at its back.
-        Ear(shown, phase, ink, glow, Modifier.align(Alignment.CenterHorizontally).padding(top = if (titled) 12.dp else 0.dp).size(width = if (titled) 240.dp else 160.dp, height = if (titled) 156.dp else 104.dp))
+        Ear(shown, phase, ink, glow, Modifier.align(Alignment.CenterHorizontally).padding(top = if (titled) 12.dp else 0.dp).size(width = if (titled) 240.dp else 136.dp, height = if (titled) 156.dp else 88.dp))
         Text(
             stringResource(strain.word()), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
         )
 
         // Time before harm: the key readout.
-        Row(Modifier.fillMaxWidth().padding(top = 12.dp).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
+        // On Learn's page every step is a little tighter, so the dial, the rule and the card fit one frame (no scroll).
+        val gap = if (titled) 12.dp else 6.dp
+        Row(Modifier.fillMaxWidth().padding(top = gap).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
             Hourglass(Decibels.sand(db), shown, phase, reduced, ink, Modifier.size(width = 36.dp, height = 56.dp))
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
@@ -191,7 +195,7 @@ fun DecibelExplorer(initial: Int = 60, still: Boolean? = null, onCard: (String) 
         }
 
         // The everyday sound at about this level, second to the ear.
-        Row(Modifier.fillMaxWidth().padding(top = 10.dp).height(56.dp).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(top = gap).height(56.dp).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(56.dp)) { if (sound != null) ScaleArt(sound.id, Modifier.size(56.dp)) }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
@@ -206,19 +210,29 @@ fun DecibelExplorer(initial: Int = 60, still: Boolean? = null, onCard: (String) 
             }
         }
 
-        Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        Row(Modifier.fillMaxWidth().padding(top = gap), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             StepButton("−", stringResource(R.string.db_decrease)) { db = (db - Decibels.STEP).coerceAtLeast(Decibels.MIN) }
-            Dial(db, onChange = { db = it }, modifier = Modifier.padding(horizontal = 12.dp).size(if (titled) 184.dp else 140.dp), strainWord = stringResource(strain.word()))
+            Dial(db, onChange = { db = it }, modifier = Modifier.padding(horizontal = 12.dp).size(if (titled) 184.dp else 120.dp), strainWord = stringResource(strain.word()))
             StepButton("+", stringResource(R.string.db_increase)) { db = (db + Decibels.STEP).coerceAtMost(Decibels.MAX) }
         }
 
         Text(loudnessText(db), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
-        if (sound?.measure == Measure.UNWEIGHTED) {
-            Text(stringResource(R.string.db_unweighted_note), style = MaterialTheme.typography.bodySmall, color = quiet, modifier = Modifier.padding(top = 8.dp))
+        val unweighted = sound?.measure == Measure.UNWEIGHTED
+        if (titled) {
+            if (unweighted) Text(stringResource(R.string.db_unweighted_note), style = MaterialTheme.typography.bodySmall, color = quiet, modifier = Modifier.padding(top = 8.dp))
+            Text(stringResource(R.string.db_rule), style = MaterialTheme.typography.bodySmall, color = quiet, modifier = Modifier.padding(top = gap))
+        } else {
+            // On Learn's page the rule and the unweighted note share one place, laid out in both at once so
+            // nothing below moves: the note takes it for the steps measured off the dBA scale (the rocket).
+            Box(Modifier.fillMaxWidth().padding(top = gap)) {
+                Text(stringResource(R.string.db_rule), style = MaterialTheme.typography.bodySmall, color = quiet,
+                    modifier = Modifier.alpha(calmAlpha(!unweighted)).then(if (unweighted) Modifier.clearAndSetSemantics { } else Modifier))
+                Text(stringResource(R.string.db_unweighted_note), style = MaterialTheme.typography.bodySmall, color = quiet,
+                    modifier = Modifier.alpha(calmAlpha(unweighted)).then(if (unweighted) Modifier else Modifier.clearAndSetSemantics { }))
+            }
         }
-        Text(stringResource(R.string.db_rule), style = MaterialTheme.typography.bodySmall, color = quiet, modifier = Modifier.padding(top = 10.dp))
         Learn.card("c5_1")?.let { card ->
-            HorizontalDivider(Modifier.padding(top = 10.dp), color = MaterialTheme.colorScheme.outlineVariant)
+            HorizontalDivider(Modifier.padding(top = gap), color = MaterialTheme.colorScheme.outlineVariant)
             NavRow(cardTitle(card)) { onCard(card.id) }
         }
     }

@@ -22,6 +22,8 @@ Brume is a relaxation app: it should feel extremely soft. Erwann on dev.21: « e
 
 The renders (`BRUME_RENDERS=<dir> ./gradlew --offline :app:testGithubDebugUnitTest --tests '*Renders*'`) show states side by side: a state change that moves anything else on screen is a bug.
 
+Nothing scrolls (the no-scroll pass, 2026-11-01): a screen fits its frame, or pages a page at a time through `PagerWords` or `PageStepper`. `NoScrollTest` fails on any `verticalScroll(`, `horizontalScroll(` or lazy list in the app's sources; `FitTest` composes the key screens at 360x780 dp in French, font scale 1.0, and fails on anything that ends below the window or is squeezed out of it. It also measures font scale 1.3 and writes what it finds to `app/build/reports/fit/`, without failing.
+
 ## Home and the misty landscape (Iris, 2026-11-01; replaces the karesansui garden)
 
 Erwann: « des second screens pour chaque fonction, et la home, c'est un choix de trucs… on revient vers la home grâce à une croix ».

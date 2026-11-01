@@ -88,9 +88,9 @@ internal fun ToneLevel(ui: PlayerUi, actions: ToneActions) =
     LevelRow(stringResource(R.string.tones_level_label), null, ui.toneLevel, actions.level)
 
 @Composable
-internal fun TrimsCard(ui: PlayerUi, actions: ToneActions) {
+internal fun TrimsCard(ui: PlayerUi, actions: ToneActions, titled: Boolean = true) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
-    SectionTitle(stringResource(R.string.tones_balance))
+    if (titled) SectionTitle(stringResource(R.string.tones_balance))
     Card {
         Text(stringResource(R.string.tones_balance_help), style = MaterialTheme.typography.bodySmall, color = muted)
         val hz = TonePattern.frequencies(ui.tones.pitch)

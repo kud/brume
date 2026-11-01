@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.style.TextOverflow
 import app.beansontoast.design.Motion
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -241,8 +239,7 @@ fun LearnCardScreen(card: LearnCard, backLabel: String, onBack: () -> Unit, onNe
  */
 @Composable
 fun TonesHowScreen(onBack: () -> Unit) {
-    val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
+    Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
         EvidenceMark(Evidence.LITTLE, Modifier.padding(top = 4.dp))
         Text(stringResource(R.string.tones_note), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 14.dp))
         Text(stringResource(R.string.ux_tones_session), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 10.dp))

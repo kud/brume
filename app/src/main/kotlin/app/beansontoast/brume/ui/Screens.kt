@@ -34,10 +34,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -620,6 +618,8 @@ fun LearnScreen(
     onFinder: () -> Unit = {},
     startPage: Int = 0,
     doctorOpen: Boolean = false,
+    /** Where the Décibels page's dial starts (renders and FitTest). */
+    loudnessAt: Int = 60,
 ) {
     // One frame, no free scroll (Iris, 2026-11-01): three pages named by words, changed by a tap,
     // so a swipe always belongs to the advice cards; the doctor, settings and About sit at the foot.
@@ -635,7 +635,7 @@ fun LearnScreen(
                 when (page) {
                     0 -> AdviceDeck(onCard = onCard, titled = false, deck = Modifier.fillMaxSize())
                     1 -> LibraryTiles(onTopic, onFinder, Modifier.fillMaxSize())
-                    else -> DecibelExplorer(still = still, onCard = onCard, titled = false)
+                    else -> DecibelExplorer(initial = loudnessAt, still = still, onCard = onCard, titled = false)
                 }
             }
             HorizontalDivider(Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
@@ -681,7 +681,12 @@ internal fun DoctorLines(onSettings: (() -> Unit)?) {
     }
 }
 
-/** About Brume, one row away from Learn: what it is, the disclaimer, privacy, sources, the version, and the wordmark at its foot. */
+/**
+ * About Brume, one row away from Learn, in one frame (the no-scroll pass): three pages named by
+ * words, as Learn's are. Brume: what it is, the disclaimer and where to find help now. On this
+ * phone: privacy, the introduction again, and the updates (github build). Sources: the guidance,
+ * the recordings' credits, and the wordmark with the version at its foot.
+ */
 @Composable
 fun AboutScreen(
     version: String,
@@ -689,43 +694,52 @@ fun AboutScreen(
     onBack: () -> Unit = {},
     /** The github build's Updates section (src/github); the fdroid build has none. */
     updates: @Composable () -> Unit = {},
+    startPage: Int = 0,
 ) {
-    val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
-        Text(stringResource(R.string.about_what), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
-        Text(stringResource(R.string.about_disclaimer), style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
-
-        SectionTitle(stringResource(R.string.about_help_title))
-        RegionLines(listOf(Need.CRISIS, Need.EMERGENCY))
-
-        Card(Modifier.padding(top = 16.dp)) {
-            Row(verticalAlignment = Alignment.Top) {
-                Icon(painterResource(R.drawable.ic_lock), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp).size(20.dp))
-                Column(Modifier.padding(start = 12.dp)) {
-                    Text(stringResource(R.string.about_privacy_title), style = MaterialTheme.typography.titleSmall)
-                    Text(stringResource(R.string.about_privacy), style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+    val pager = rememberPagerState(initialPage = startPage) { 3 }
+    Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
+        PagerWords(pager, listOf(stringResource(R.string.about_page_brume), stringResource(R.string.about_page_privacy), stringResource(R.string.about_sources_title)))
+        HorizontalPager(pager, userScrollEnabled = false, verticalAlignment = Alignment.Top,
+            modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 8.dp).clipToBounds()) { page ->
+            Column(Modifier.fillMaxSize()) {
+                when (page) {
+                    0 -> {
+                        Text(stringResource(R.string.about_what), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
+                        Text(stringResource(R.string.about_disclaimer), style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
+                        SectionTitle(stringResource(R.string.about_help_title))
+                        RegionLines(listOf(Need.CRISIS, Need.EMERGENCY))
+                    }
+                    1 -> {
+                        Card(Modifier.padding(top = 4.dp)) {
+                            Row(verticalAlignment = Alignment.Top) {
+                                Icon(painterResource(R.drawable.ic_lock), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp).size(20.dp))
+                                Column(Modifier.padding(start = 12.dp)) {
+                                    Text(stringResource(R.string.about_privacy_title), style = MaterialTheme.typography.titleSmall)
+                                    Text(stringResource(R.string.about_privacy), style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                                }
+                            }
+                        }
+                        OutlinedButton(onIntro, Modifier.fillMaxWidth().padding(top = 16.dp).heightIn(min = 48.dp)) {
+                            Text(stringResource(R.string.about_intro))
+                        }
+                        updates()
+                    }
+                    else -> {
+                        Text(stringResource(R.string.about_sources), style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                        // The recordings' credits (SOUNDS.md lists each file, its author and its page).
+                        Text(stringResource(R.string.about_sounds_credits), style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+                        Spacer(Modifier.weight(1f))
+                        // The brand signs About at its foot, never as a title (Erwann, 2026-10-31).
+                        Text(stringResource(R.string.brand_word), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp))
+                        Text(stringResource(R.string.about_version, version), style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
-        }
-
-        SectionTitle(stringResource(R.string.about_sources_title))
-        Text(stringResource(R.string.about_sources), style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        // The recordings' credits (SOUNDS.md lists each file, its author and its page).
-        Text(stringResource(R.string.about_sounds_credits), style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
-
-        OutlinedButton(onIntro, Modifier.fillMaxWidth().padding(top = 16.dp).heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.about_intro))
-        }
-        updates()
-        // The brand signs About at its foot, never as a title (Erwann, 2026-10-31).
-        Column(Modifier.padding(top = 24.dp, bottom = 16.dp)) {
-            Text(stringResource(R.string.brand_word), style = MaterialTheme.typography.titleLarge)
-            Text(stringResource(R.string.about_version, version), style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
