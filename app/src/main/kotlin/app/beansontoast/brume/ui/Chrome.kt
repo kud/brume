@@ -120,7 +120,8 @@ fun MiniPlayer(name: String, onPause: () -> Unit, onOpen: () -> Unit = {}) {
         Column(Modifier.weight(1f).heightIn(min = 56.dp).clickable(role = Role.Button, onClick = onOpen).padding(start = 16.dp, end = 8.dp),
             verticalArrangement = Arrangement.Center) {
             Text(stringResource(R.string.home_playing), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
-            Text(name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // A mix of three names takes a second line at large text rather than losing its last one (Iris, 2026-11-01).
+            Text(name, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         Row(Modifier.heightIn(min = 48.dp).padding(end = 6.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClick = onPause)
             .padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
