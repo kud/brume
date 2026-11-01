@@ -170,27 +170,30 @@ internal fun pagesOf(heights: List<Int>, budget: Int, most: Int = 4): List<List<
 }
 
 /**
- * Which settles earn a tick: one each time a pager comes to rest on a page other than the one it
- * last rested on. Never while it moves, never twice for one settle, never for where it starts.
+ * Which settles earn a tick: one each time a pager comes to rest, after moving, on a page other
+ * than the one it last rested on. Never while it moves, never twice for one settle, never for where
+ * it starts, and never when the page changes with no move at all: a mixer losing a sound loses a
+ * page and the pager lands on the one before without anyone touching it.
  */
 internal class SettleTicker(start: Int) {
     private var rested = start
+    private var moved = false
 
-    /** The pager has come to rest on [page]: true when that is a new page, worth one tick. */
-    fun settled(page: Int): Boolean = (page != rested).also { rested = page }
+    /** The pager is moving: a drag, a fling, or a tap's eased scroll. */
+    fun moving() { moved = true }
+
+    /** The pager has come to rest on [page]: true when it moved there and that is a new page, worth one tick. */
+    fun settled(page: Int): Boolean = (moved && page != rested).also { rested = page; moved = false }
 }
 
-/**
- * A soft tick when [pager] settles on a new page (2026-11-01, the no-scroll pass): once per settle,
- * from the pager's settled page, never per frame. `TextHandleMove` is the lightest the platform has,
- * the dial's own; the system's touch-feedback setting governs it, and Brume has no switch of its own
- * for it (the vibration switches under Respirer and Méditer are about sessions).
- */
 @Composable
 internal fun SettleTick(pager: PagerState) {
     val haptics by rememberUpdatedState(LocalHapticFeedback.current)
     LaunchedEffect(pager) {
         val ticker = SettleTicker(pager.settledPage)
-        snapshotFlow { pager.settledPage }.collect { if (ticker.settled(it)) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
+        snapshotFlow { pager.isScrollInProgress to pager.settledPage }.collect { (moving, page) ->
+            if (moving) ticker.moving()
+            else if (ticker.settled(page)) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        }
     }
 }

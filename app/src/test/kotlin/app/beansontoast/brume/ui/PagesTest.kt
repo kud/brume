@@ -19,15 +19,32 @@ class PagesTest {
 class SettleTickerTest {
     @Test fun aNewPageTicksOnceAndTheStartNever() {
         val t = SettleTicker(start = 0)
-        // Settled pages as the pager reports them: where it starts, two moves, a settle repeated, a move back.
-        val ticks = listOf(0, 1, 1, 2, 2, 2, 1).map(t::settled)
+        // (moved first, settled page) as the pager reports them: where it starts, two moves, a settle repeated, a move back.
+        val ticks = listOf(false to 0, true to 1, false to 1, true to 2, false to 2, false to 2, true to 1)
+            .map { (moved, page) -> if (moved) t.moving(); t.settled(page) }
         assertEquals(listOf(false, true, false, true, false, false, true), ticks)
     }
 
     @Test fun startingElsewhereIsNoMove() {
         val t = SettleTicker(start = 2)
         assertEquals(false, t.settled(2))
+        t.moving()
         assertEquals(true, t.settled(0))
+    }
+
+    @Test fun aPageLostWithoutAMoveNeverTicks() {
+        val t = SettleTicker(start = 1)
+        // The mixer drops a sound: two pages become one, and the pager rests on page 0 untouched.
+        assertEquals(false, t.settled(0))
+        // The next real swipe, back where it is, is no new page either.
+        t.moving()
+        assertEquals(false, t.settled(0))
+    }
+
+    @Test fun aMoveBackToTheSamePageIsNoTick() {
+        val t = SettleTicker(start = 0)
+        t.moving()
+        assertEquals(false, t.settled(0))
     }
 }
 
