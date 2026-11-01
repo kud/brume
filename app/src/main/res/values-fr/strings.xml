@@ -236,12 +236,12 @@
     <string name="med_step">%1$d sur %2$d</string>
     <string name="sit_settle">Installez-vous.</string>
     <string name="sit_return">Revenez doucement.</string>
-    <string name="module_meditation_summary">De courtes séances guidées dans Calme, et un minuteur.</string>
+    <string name="module_meditation_summary">De courtes séances guidées, et un minuteur.</string>
     <string name="modules_title">Activités</string>
-    <string name="modules_intro">Désactivez ce que vous n\'utilisez pas : son onglet disparaît. Rien n\'est effacé.</string>
+    <string name="modules_intro">Désactivez ce que vous n\'utilisez pas : il quitte l\'accueil. Rien n\'est effacé.</string>
     <string name="module_listen_summary">Les sons de confort. Toujours là.</string>
     <string name="module_tones_summary">Le motif de tons, réglé sur votre hauteur.</string>
-    <string name="module_breath_summary">Respiration rythmée dans Calme, avec un son en fond si vous voulez.</string>
+    <string name="module_breath_summary">Respiration rythmée, avec un son en fond si vous voulez.</string>
     <string name="learn_topic_1">Ce qu\'est l\'acouphène</string>
     <string name="learn_topic_2">Ce qui aide le plus</string>
     <string name="learn_topic_3">Au quotidien : idées reçues et faits</string>

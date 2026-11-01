@@ -237,12 +237,12 @@
     <string name="med_step">%1$d of %2$d</string>
     <string name="sit_settle">Settle in.</string>
     <string name="sit_return">Slowly come back.</string>
-    <string name="module_meditation_summary">Short guided sessions in Calm, and a timer.</string>
+    <string name="module_meditation_summary">Short guided sessions, and a timer.</string>
     <string name="modules_title">Activities</string>
-    <string name="modules_intro">Turn off what you don\'t use and its tab goes away. Nothing is deleted.</string>
+    <string name="modules_intro">Turn off what you don\'t use and it leaves the home screen. Nothing is deleted.</string>
     <string name="module_listen_summary">Comfort sounds. Always on.</string>
     <string name="module_tones_summary">The tone pattern, set to your pitch.</string>
-    <string name="module_breath_summary">Paced breathing in Calm, with a sound underneath if you like.</string>
+    <string name="module_breath_summary">Paced breathing, with a sound underneath if you like.</string>
     <string name="learn_topic_1">What tinnitus is</string>
     <string name="learn_topic_2">What helps most</string>
     <string name="learn_topic_3">Everyday life: myths and facts</string>
