@@ -135,7 +135,7 @@ internal fun BackRow(label: String, onBack: () -> Unit) {
 
 /**
  * The library as tiles (Iris, 2026-11-01, garden second pass): the seven topics and « Mon
- * acouphène », two to a row, each a framed tile with its name in the serif and its size in words.
+ * acouphène », two to a row, each a framed tile with its name and its size in words.
  * The whole set fits one frame, so nothing scrolls.
  */
 @Composable
@@ -162,7 +162,7 @@ private fun Tile(name: String, size: String, onClick: () -> Unit, modifier: Modi
             .clickable(role = Role.Button, onClick = onClick).padding(horizontal = 14.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(name, style = MaterialTheme.typography.titleMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Serif),
+        Text(name, style = MaterialTheme.typography.titleMedium,
             maxLines = 3, overflow = TextOverflow.Ellipsis)
         Text(size, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
     }

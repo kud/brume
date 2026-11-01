@@ -26,14 +26,22 @@ private val languages = listOf("" to R.string.language_system, "en" to R.string.
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun LanguageSettings(choice: LanguageChoice) {
-    app.beansontoast.design.SettingsGroup(stringResource(R.string.language_title)) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            languages.forEach { (tag, label) ->
-                SelectChip(stringResource(label), choice.tag == tag, { if (choice.tag != tag) choice.onPick(tag) })
-            }
+    app.beansontoast.design.SettingsGroup(stringResource(R.string.language_title)) { LanguageChips(choice) }
+}
+
+/** The languages as chips: the body of Settings' language sheet. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun LanguageChips(choice: LanguageChoice) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        languages.forEach { (tag, label) ->
+            SelectChip(stringResource(label), choice.tag == tag, { if (choice.tag != tag) choice.onPick(tag) })
         }
     }
 }
+
+@Composable
+internal fun languageName(tag: String): String = stringResource(languages.firstOrNull { it.first == tag }?.second ?: R.string.language_system)
 
 @RequiresApi(33)
 internal fun currentLanguage(context: Context): String {

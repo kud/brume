@@ -78,6 +78,9 @@ class DirectRenders(private val shot: String) {
             "journal" -> tab(dark, night, Tab.JOURNAL) { JournalScreen(week, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
             "journal-saved" -> tab(dark, night, Tab.JOURNAL) { JournalScreen(noted, 4 * 3600 + 25 * 60, today, "Enregistré", { _, _, _ -> }, {}) }
             "learn" -> tab(dark, night, Tab.LEARN) { LearnScreen() }
+            "settings-modules-sheet" -> tab(dark, night, Tab.LEARN) { SettingsScreen(true, {}, {}, language = LanguageChoice("fr") {}, sheet = app.beansontoast.brume.ui.SettingsSheet.MODULES) }
+            "settings-sync-sheet" -> tab(dark, night, Tab.LEARN) { SettingsScreen(true, {}, {}, sync = app.beansontoast.brume.sync.SyncState(folderName = "Brume", hasFolder = true, auto = true, lastSyncedAt = 1_768_900_000_000), language = LanguageChoice("fr") {}, sheet = app.beansontoast.brume.ui.SettingsSheet.SYNC) }
+            "settings-country-sheet" -> tab(dark, night, Tab.LEARN) { SettingsScreen(true, {}, {}, language = LanguageChoice("fr") {}, country = app.beansontoast.brume.ui.CountryChoice(null, app.beansontoast.brume.core.region.Regions.supported.first()) {}, sheet = app.beansontoast.brume.ui.SettingsSheet.COUNTRY) }
             "learn-library" -> tab(dark, night, Tab.LEARN) { LearnScreen(startPage = 1) }
             "learn-loudness" -> tab(dark, night, Tab.LEARN) { LearnScreen(startPage = 2, still = true) }
             "learn-doctor-sheet" -> tab(dark, night, Tab.LEARN) { LearnScreen(doctorOpen = true) }
@@ -108,7 +111,7 @@ class DirectRenders(private val shot: String) {
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun shots() = listOf(
             "listen", "listen-playing", "calm", "tones", "tones-how", "journal", "journal-saved",
-            "learn", "learn-library", "learn-loudness", "learn-doctor-sheet", "learn-topic", "card-coffee", "settings", "about",
+            "learn", "learn-library", "learn-loudness", "learn-doctor-sheet", "learn-topic", "card-coffee", "settings", "settings-modules-sheet", "settings-sync-sheet", "settings-country-sheet", "about",
         ).flatMap { listOf("$it-night", "$it-day") }.map { arrayOf<Any>(it) }
     }
 }

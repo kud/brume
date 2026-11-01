@@ -725,4 +725,6 @@
     <string name="about_short">À propos</string>
     <string name="learn_where">Vers qui se tourner</string>
     <string name="learn_finder_tile">Trouver son son</string>
+    <string name="modules_count">%1$d sur %2$d</string>
+    <string name="sync_row_off">Pas encore configurée</string>
 </resources>

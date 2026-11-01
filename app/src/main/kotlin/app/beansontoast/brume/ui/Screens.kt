@@ -705,7 +705,11 @@ fun AboutScreen(
     }
 }
 
-/** Settings, one row away from Learn: night hours, activities, language, sync, where the sound plays. */
+/**
+ * Settings, one row away from Learn, in one frame (Iris, 2026-11-01): night hours as a switch, and
+ * one row per setting, its current value written beside it, each opening a quiet sheet of five rows
+ * at most. Where the sound plays opens the system's own switcher, so Brume never picks for you.
+ */
 @Composable
 fun SettingsScreen(
     nightHours: Boolean,
@@ -719,26 +723,42 @@ fun SettingsScreen(
     modules: Modules = Modules(),
     onModules: (Modules) -> Unit = {},
     onOutput: () -> Unit = {},
+    sheet: SettingsSheet? = null,
 ) {
-    val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
-        BackRow(stringResource(R.string.tab_learn), onBack)
-        Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
-        SettingsGroup(stringResource(R.string.settings_display), Modifier.padding(top = 8.dp)) {
+    var open by remember { mutableStateOf(sheet) }
+    val line = MaterialTheme.colorScheme.outlineVariant
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
+            BackRow(stringResource(R.string.tab_learn), onBack)
+            Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp).semantics { heading() })
             SwitchRow(stringResource(R.string.settings_night), stringResource(R.string.settings_night_summary), nightHours, onNightHours)
+            HorizontalDivider(color = line)
+            val on = listOf(modules.breath, modules.meditation, modules.tones).count { it } + 1
+            NavRow(stringResource(R.string.modules_title), trailing = stringResource(R.string.modules_count, on, 4)) { open = SettingsSheet.MODULES }
+            if (language != null) {
+                HorizontalDivider(color = line)
+                NavRow(stringResource(R.string.language_title), trailing = languageName(language.tag)) { open = SettingsSheet.LANGUAGE }
+            }
+            if (country != null) {
+                HorizontalDivider(color = line)
+                NavRow(stringResource(R.string.country_title), trailing = countryName(country.chosen ?: country.guess)) { open = SettingsSheet.COUNTRY }
+            }
+            HorizontalDivider(color = line)
+            NavRow(stringResource(R.string.sync_title), if (sync.hasFolder) syncSummary(sync) else stringResource(R.string.sync_row_off)) { open = SettingsSheet.SYNC }
+            HorizontalDivider(color = line)
+            NavRow(stringResource(R.string.import_title)) { open = SettingsSheet.IMPORT }
+            HorizontalDivider(color = line)
+            NavRow(stringResource(R.string.settings_output), onClick = onOutput)
         }
-        ModuleSettings(modules, onModules)
-        // Below Android 13 there is no per-app locale and no cached appcompat to stand in: no row.
-        if (language != null) LanguageSettings(language)
-        if (country != null) CountrySettings(country)
-        SyncSettings(sync, syncMessage, syncActions)
-        // The same switcher Listen's output row opens: the system's own, so Brume never picks for you.
-        SettingsGroup(stringResource(R.string.settings_output)) {
-            NavRow(stringResource(R.string.output_change_label), onClick = onOutput)
-        }
-        Spacer(Modifier.height(24.dp))
+        QuietSheet(open == SettingsSheet.MODULES, { open = null }, stringResource(R.string.modules_title)) { ModuleLines(modules, onModules) }
+        if (language != null) QuietSheet(open == SettingsSheet.LANGUAGE, { open = null }, stringResource(R.string.language_title)) { LanguageChips(language) }
+        if (country != null) QuietSheet(open == SettingsSheet.COUNTRY, { open = null }, stringResource(R.string.country_title)) { CountryChips(country) }
+        QuietSheet(open == SettingsSheet.SYNC, { open = null }, stringResource(R.string.sync_title)) { SyncLines(sync, syncMessage, syncActions) }
+        QuietSheet(open == SettingsSheet.IMPORT, { open = null }, stringResource(R.string.import_title)) { ImportLines(syncActions, syncMessage) }
     }
 }
+
+enum class SettingsSheet { MODULES, LANGUAGE, COUNTRY, SYNC, IMPORT }
 
 /**
  * The switchable modules. Listen is always there, said in words rather than shown as a switch
@@ -746,7 +766,13 @@ fun SettingsScreen(
  */
 @Composable
 fun ModuleSettings(modules: Modules, onModules: (Modules) -> Unit) {
-    SettingsGroup(stringResource(R.string.modules_title)) {
+    SettingsGroup(stringResource(R.string.modules_title)) { ModuleLines(modules, onModules) }
+}
+
+/** The intro, Listen in words and a switch per other module: the body of Settings' modules sheet. */
+@Composable
+internal fun ModuleLines(modules: Modules, onModules: (Modules) -> Unit) {
+    run {
         Text(stringResource(R.string.modules_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f).padding(end = 12.dp)) {

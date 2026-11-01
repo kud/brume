@@ -64,13 +64,18 @@ internal fun countryName(country: Country): String = stringResource(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun CountrySettings(choice: CountryChoice) {
-    SettingsGroup(stringResource(R.string.country_title)) {
-        Text(stringResource(R.string.country_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SelectChip(stringResource(R.string.country_auto, countryName(choice.guess)), choice.chosen == null, { if (choice.chosen != null) choice.onPick(null) })
-            (Regions.supported + Country.OTHER).forEach { c ->
-                SelectChip(countryName(c), choice.chosen == c, { if (choice.chosen != c) choice.onPick(c) })
-            }
+    SettingsGroup(stringResource(R.string.country_title)) { CountryChips(choice) }
+}
+
+/** The intro and the countries as chips: the body of Settings' country sheet. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun CountryChips(choice: CountryChoice) {
+    Text(stringResource(R.string.country_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SelectChip(stringResource(R.string.country_auto, countryName(choice.guess)), choice.chosen == null, { if (choice.chosen != null) choice.onPick(null) })
+        (Regions.supported + Country.OTHER).forEach { c ->
+            SelectChip(countryName(c), choice.chosen == c, { if (choice.chosen != c) choice.onPick(c) })
         }
     }
 }

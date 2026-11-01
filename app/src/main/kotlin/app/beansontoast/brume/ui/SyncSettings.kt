@@ -37,46 +37,66 @@ class SyncActions(
  * Settings › Back up and sync. Every state is a sentence (Iris's night-mist rules: nothing rests
  * on colour or on a switch alone): which folder, whether it's on, when it last worked, or why not.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SyncSettings(state: SyncState, message: String?, actions: SyncActions, zone: ZoneId = ZoneId.systemDefault()) {
     SettingsGroup(stringResource(R.string.sync_title)) {
-        val muted = MaterialTheme.colorScheme.onSurfaceVariant
-        if (!state.hasFolder) {
-            Text(stringResource(R.string.sync_off_body), style = MaterialTheme.typography.bodyMedium)
-        } else {
-            val name = state.folderName ?: stringResource(R.string.sync_folder_unnamed)
-            Text(stringResource(if (state.auto) R.string.sync_on else R.string.sync_paused, name), style = MaterialTheme.typography.bodyMedium)
-            val problem = when (state.problem) {
-                SyncProblem.UNREACHABLE -> R.string.sync_problem_unreachable
-                SyncProblem.NEWER -> R.string.sync_problem_newer
-                SyncProblem.NOT_BRUME -> R.string.sync_problem_not_brume
-                null -> null
-            }
-            Text(
-                when {
-                    problem != null -> stringResource(problem)
-                    state.lastSyncedAt != null -> stringResource(R.string.sync_last, synced(state.lastSyncedAt, zone))
-                    else -> stringResource(R.string.sync_never)
-                },
-                style = MaterialTheme.typography.bodyMedium, color = muted,
-            )
-            SwitchRow(stringResource(R.string.sync_auto), stringResource(R.string.sync_auto_summary), state.auto, actions.auto)
-        }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
-            OutlinedButton(actions.chooseFolder, Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(if (state.hasFolder) R.string.sync_choose_other else R.string.sync_choose))
-            }
-            if (state.hasFolder) OutlinedButton(actions.syncNow, Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.sync_now)) }
-        }
+        SyncLines(state, message = null, actions, zone)
         HorizontalDivider(Modifier.padding(vertical = 10.dp), color = MaterialTheme.colorScheme.outlineVariant)
-        Text(stringResource(R.string.import_title), style = MaterialTheme.typography.bodyLarge)
-        Text(stringResource(R.string.import_body), style = MaterialTheme.typography.bodyMedium, color = muted)
-        OutlinedButton(actions.import, Modifier.padding(top = 8.dp).heightIn(min = 48.dp)) { Text(stringResource(R.string.import_action)) }
-        if (message != null) {
-            Text(message, style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 8.dp).semantics { liveRegion = LiveRegionMode.Polite })
+        ImportLines(actions, message)
+    }
+}
+
+/** Where the backup goes, whether it's on, when it last worked: the body of Settings' sync sheet. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun SyncLines(state: SyncState, message: String?, actions: SyncActions, zone: ZoneId = ZoneId.systemDefault()) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    Text(syncSummary(state, zone), style = MaterialTheme.typography.bodyMedium)
+    if (state.hasFolder) {
+        val problem = when (state.problem) {
+            SyncProblem.UNREACHABLE -> R.string.sync_problem_unreachable
+            SyncProblem.NEWER -> R.string.sync_problem_newer
+            SyncProblem.NOT_BRUME -> R.string.sync_problem_not_brume
+            null -> null
         }
+        Text(
+            when {
+                problem != null -> stringResource(problem)
+                state.lastSyncedAt != null -> stringResource(R.string.sync_last, synced(state.lastSyncedAt, zone))
+                else -> stringResource(R.string.sync_never)
+            },
+            style = MaterialTheme.typography.bodyMedium, color = muted,
+        )
+        SwitchRow(stringResource(R.string.sync_auto), stringResource(R.string.sync_auto_summary), state.auto, actions.auto)
+    }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+        OutlinedButton(actions.chooseFolder, Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(if (state.hasFolder) R.string.sync_choose_other else R.string.sync_choose))
+        }
+        if (state.hasFolder) OutlinedButton(actions.syncNow, Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.sync_now)) }
+    }
+    SyncMessage(message)
+}
+
+/** The sentence that says where the backup stands, also the sync row's summary. */
+@Composable
+internal fun syncSummary(state: SyncState, zone: ZoneId = ZoneId.systemDefault()): String =
+    if (!state.hasFolder) stringResource(R.string.sync_off_body)
+    else stringResource(if (state.auto) R.string.sync_on else R.string.sync_paused, state.folderName ?: stringResource(R.string.sync_folder_unnamed))
+
+/** Import from a file: the body of Settings' import sheet. */
+@Composable
+internal fun ImportLines(actions: SyncActions, message: String?) {
+    Text(stringResource(R.string.import_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    OutlinedButton(actions.import, Modifier.padding(top = 8.dp).heightIn(min = 48.dp)) { Text(stringResource(R.string.import_action)) }
+    SyncMessage(message)
+}
+
+@Composable
+private fun SyncMessage(message: String?) {
+    if (message != null) {
+        Text(message, style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 8.dp).semantics { liveRegion = LiveRegionMode.Polite })
     }
 }
 
