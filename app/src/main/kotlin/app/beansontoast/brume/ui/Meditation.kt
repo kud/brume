@@ -17,6 +17,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
+import androidx.compose.ui.semantics.heading
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -245,6 +249,88 @@ fun MeditationPanel(setup: MeditationSetup, soundName: String?, voice: Voice.Sta
     }
 }
 
+/**
+ * The resting orb for Méditer (Iris, 2026-11-01, phase 3): Respirer's orb, but nothing paces it. It
+ * swells a few percent over sixteen seconds and its edge drifts at half speed, as in a hold, so the
+ * eye has somewhere soft to land without being asked to follow. Reduced motion: still, half size.
+ */
+@Composable
+internal fun RestingOrb(seconds: Double, still: Boolean, modifier: Modifier = Modifier, content: @Composable () -> Unit = {}) {
+    val t = if (still) 0.0 else seconds
+    val swell = if (still) 0.5f else 0.5f + 0.06f * kotlin.math.sin(2 * Math.PI * t / 16.0).toFloat()
+    BreathOrb(swell, holding = true, seconds = t * 0.5, modifier = modifier, content = content)
+}
+
+/**
+ * Méditer's own screen, one frame, no scroll (Iris, phase 3; the shape of Respirer's): the resting
+ * orb with the length at its centre, the four meditations as light rows (ground, hairline and a
+ * check on the chosen one, never colour alone), the chosen one's line in a reserved three-line
+ * place, the lengths, a link to what happens during the session (voice, vibrations, sound, in a
+ * sheet), and Start. [previewAt] fixes the orb's clock for renders.
+ */
+@Composable
+fun MeditateScreen(
+    setup: MeditationSetup, soundName: String?, voice: Voice.State, onChange: (MeditationSetup) -> Unit, onStart: () -> Unit,
+    previewAt: Double? = null, options: Boolean = false,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val reduced = rememberReducedMotion()
+    val clock = rememberSeconds(previewAt != null || reduced)
+    var open by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(options) }
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 16.dp).padding(bottom = LocalChromeBottom.current + 12.dp)) {
+            RestingOrb(previewAt ?: clock, still = reduced && previewAt == null, modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 32.dp)) {
+                Text(stringResource(R.string.breath_minutes, setup.length), style = MaterialTheme.typography.titleLarge.tabular(), textAlign = TextAlign.Center)
+            }
+            Text(stringResource(R.string.med_choose), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 12.dp, top = 8.dp, bottom = 4.dp).semantics { heading() })
+            Column(Modifier.fillMaxWidth().selectableGroup()) {
+                Meditation.entries.forEach { m ->
+                    RhythmRow(stringResource(m.title()), null, setup.meditation == m) { onChange(setup.copy(meditation = m)) }
+                }
+            }
+            // The chosen one's line keeps three lines whichever it is, so nothing under it moves.
+            Crossfade(setup.meditation, Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                animationSpec = app.beansontoast.design.Motion.tween(app.beansontoast.design.Motion.QUICK), label = "hint") { m ->
+                Text(stringResource(m.hint()), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, minLines = 3, maxLines = 3,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            }
+            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.breath_length), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant, maxLines = 1)
+                Spacer(Modifier.weight(1f))
+                setup.meditation.lengths.forEach { m -> SelectChip(stringResource(R.string.breath_minutes, m), setup.length == m, { onChange(setup.copy(minutes = m)) }) }
+            }
+            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                .clickable(role = Role.Button) { open = true }.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.med_options), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                Text("›", style = MaterialTheme.typography.titleMedium, color = scheme.onSurfaceVariant)
+            }
+            androidx.compose.material3.Button(onStart, Modifier.fillMaxWidth().padding(top = 4.dp).heightIn(min = 52.dp),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)) {
+                Icon(painterResource(R.drawable.ic_play), null, modifier = Modifier.size(20.dp))
+                Text(stringResource(R.string.scene_start), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 8.dp))
+            }
+        }
+        QuietSheet(open, { open = false }, stringResource(R.string.med_options)) {
+            // The unguided timer has no words: the row keeps its place, faded and out of reach.
+            val guided = setup.meditation.guided != null
+            Box(Modifier.alpha(calmAlpha(guided)).then(if (guided) Modifier else Modifier.clearAndSetSemantics { })) {
+                VoiceRow(setup.voice, voice, R.string.voice_med_summary) { if (guided) onChange(setup.copy(voice = it)) }
+            }
+            SwitchRow(stringResource(R.string.med_haptics_guided), stringResource(R.string.med_haptics_guided_summary), setup.haptics) { onChange(setup.copy(haptics = it)) }
+            if (soundName != null) SwitchRow(stringResource(R.string.breath_sound), stringResource(R.string.breath_sound_summary, soundName), setup.sound) {
+                onChange(setup.copy(sound = it))
+            } else Column(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = 8.dp)) {
+                Text(stringResource(R.string.breath_sound), style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.breath_sound_none), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+            }
+            Text(stringResource(R.string.med_bells_note) + " " + stringResource(R.string.med_stop_note), style = MaterialTheme.typography.bodySmall,
+                color = scheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+        }
+    }
+}
+
 /** One choice of a list: a check glyph and weight say which is chosen, never a hue. */
 @Composable
 internal fun ChoiceRow(title: String, hint: String, selected: Boolean, onClick: () -> Unit) {
@@ -307,7 +393,7 @@ fun MeditationSession(
 
     val scheme = MaterialTheme.colorScheme
     val muted = scheme.onSurfaceVariant
-    val fade = if (night) 0.55f else 1f
+    val fade = if (night) 0.7f else 1f
     val dim = if (place.done) 0f else 0.86f * (1f - place.light(timeline))
     Column(Modifier.fillMaxSize().background(scheme.background)
         .drawWithContent { drawContent(); if (dim > 0f) drawRect(Color.Black, alpha = dim) }
@@ -324,8 +410,11 @@ fun MeditationSession(
                     textAlign = TextAlign.End, modifier = Modifier.weight(1f).padding(end = 8.dp))
             }
         }
+        // The resting orb from the setup carries on, slower than any breath; nothing to follow.
+        val orbClock = rememberSeconds(reduced || elapsed != null)
+        val orbAt = elapsed ?: orbClock
         if (place.done) {
-            Canvas(Modifier.weight(1f).fillMaxWidth()) { mistBand(0f, muted, fade) }
+            RestingOrb(orbAt, still = true, modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 40.dp).alpha(fade))
             Text(stringResource(R.string.breath_done), style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite })
             Text(stringResource(R.string.breath_done_body), style = MaterialTheme.typography.bodyLarge, color = muted, textAlign = TextAlign.Center,
@@ -335,7 +424,7 @@ fun MeditationSession(
             }
         } else {
             Box(Modifier.weight(1f).fillMaxWidth()) {
-                Canvas(Modifier.fillMaxSize()) { mistBand(0.15f, muted, fade) }
+                RestingOrb(orbAt, still = reduced, modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp, vertical = 24.dp).alpha(fade))
                 Crossfade(place.part.word(setup.meditation), Modifier.align(Alignment.Center), animationSpec = tween(if (reduced) 0 else 1500), label = "part") { id ->
                     if (id != null) Text(stringResource(id), style = MaterialTheme.typography.titleMedium, color = muted, textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth())

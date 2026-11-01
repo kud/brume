@@ -416,12 +416,8 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                         )
                         Fn.BREATHE -> BreatheScreen(breath, onChange = ::keepBreath,
                             onStart = ::startBreath, onMore = { push("calm") })
-                        Fn.MEDITATE -> CalmScreen(
-                            modules = modules.copy(breath = false), practice = Practice.MEDITATE, onPractice = {},
-                            breath = breath, meditation = meditation, soundName = chosenSound(context, player).ifEmpty { null },
-                            onBreath = {}, onMeditation = ::keepMeditation,
-                            onStartBreath = ::startBreath, onStartMeditation = ::startMeditation, voice = voiceState,
-                        )
+                        Fn.MEDITATE -> MeditateScreen(meditation, chosenSound(context, player).ifEmpty { null }, voiceState,
+                            onChange = ::keepMeditation, onStart = ::startMeditation)
                         Fn.EAR -> finderPage(::home)
                         Fn.JOURNAL -> JournalScreen(
                             checkIns = checkIns,
@@ -454,12 +450,12 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     }
 }
 
+/** Where the app stands: the introduction, a session started at [at], or home. */
+private data class Route(val kind: Int, val at: Long? = null) {
+    companion object { const val INTRO = 0; const val BREATH = 1; const val MEDITATION = 2; const val HOME = 3; const val PRELUDE = 4 }
+}
 
 /** Where navigation stands: home ([fn] null), a function, or a page [depth] deep inside it. */
 private data class Place(val fn: Fn?, val page: String?, val pages: Int) {
     val depth get() = if (fn == null) 0 else 1 + pages
-}
-/** Where the app stands: the introduction, a session started at [at], or home. */
-private data class Route(val kind: Int, val at: Long? = null) {
-    companion object { const val INTRO = 0; const val BREATH = 1; const val MEDITATION = 2; const val HOME = 3; const val PRELUDE = 4 }
 }

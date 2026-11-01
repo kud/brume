@@ -472,7 +472,7 @@ fun BreatheScreen(setup: BreathSetup, onChange: (BreathSetup) -> Unit, onStart: 
 
 /** One rhythm: its name and phases; chosen, it gains a light ground, a hairline and a check. Both weights laid out at once. */
 @Composable
-private fun RhythmRow(name: String, phases: String, on: Boolean, onClick: () -> Unit) {
+internal fun RhythmRow(name: String, phases: String?, on: Boolean, onClick: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(14.dp)
     Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).clip(shape)
@@ -482,7 +482,7 @@ private fun RhythmRow(name: String, phases: String, on: Boolean, onClick: () -> 
         verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             WeightSwap(name, on, onStyle = MaterialTheme.typography.titleMedium, onColor = scheme.onSurface, offColor = scheme.onSurface)
-            Text(phases, style = MaterialTheme.typography.bodySmall.tabular(), color = scheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (phases != null) Text(phases, style = MaterialTheme.typography.bodySmall.tabular(), color = scheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = scheme.onSurface,
             modifier = Modifier.size(20.dp).alpha(calmAlpha(on, Motion.QUICK)))

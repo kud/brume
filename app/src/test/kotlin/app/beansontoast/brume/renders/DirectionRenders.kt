@@ -75,15 +75,27 @@ class DirectionRenders(private val shot: String) {
             "topic" -> capture(night) { FnFrame(null, "Le son", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.LearnTopicScreen(1, {}, {}) } }
             "card" -> capture(night) { FnFrame(null, "Le son", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.LearnCardScreen(app.beansontoast.brume.core.learn.Learn.cards.first(), backLabel = "", onBack = {}) } }
             "about" -> capture(night) { FnFrame(null, "À propos", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.AboutScreen(version = "0.1.0") } }
+            // Phase 3 (Iris): Méditer around the resting orb, its options sheet, and the session.
             "meditate" -> capture(night) {
-                FnFrame(onClose = {}, title = "Méditer", land = Land.SKY) {
-                    app.beansontoast.brume.ui.CalmScreen(Modules(breath = false), app.beansontoast.brume.ui.Practice.MEDITATE, {}, box, app.beansontoast.brume.ui.MeditationSetup(), "Bruit brun", {}, {}, {}, {})
-                }
+                FnFrame(onClose = {}, title = "Méditer") { app.beansontoast.brume.ui.MeditateScreen(app.beansontoast.brume.ui.MeditationSetup(), "Bruit brun", app.beansontoast.brume.voice.Voice.State.IDLE, {}, {}, previewAt = 4.0) }
             }
+            "meditate-options" -> capture(night) {
+                FnFrame(onClose = {}, title = "Méditer") { app.beansontoast.brume.ui.MeditateScreen(app.beansontoast.brume.ui.MeditationSetup(), "Bruit brun", app.beansontoast.brume.voice.Voice.State.IDLE, {}, {}, previewAt = 4.0, options = true) }
+            }
+            "med-session" -> capture(night) { app.beansontoast.brume.ui.MeditationSession(app.beansontoast.brume.ui.MeditationSetup(), 0L, night, onEnd = {}, elapsed = 2.0, still = false) }
             "tones" -> capture(night) { FnFrame(onClose = {}, title = "Tons", land = Land.SKY) { app.beansontoast.brume.ui.TonesScreen(PlayerUi(mode = app.beansontoast.brume.core.sound.SoundEngine.Mode.TONES), ListenActions()) } }
             "settings" -> capture(night) { FnFrame(onClose = {}, title = "Réglages", land = Land.SKY) { app.beansontoast.brume.ui.SettingsScreen(true, {}, {}, language = app.beansontoast.brume.ui.LanguageChoice("fr") {}) } }
             "settings-sheet" -> capture(night) { FnFrame(onClose = {}, title = "Réglages", land = Land.SKY) { app.beansontoast.brume.ui.SettingsScreen(true, {}, {}, language = app.beansontoast.brume.ui.LanguageChoice("fr") {}, sheet = app.beansontoast.brume.ui.SettingsSheet.MODULES) } }
             "finder" -> capture(night) { FnFrame(onClose = {}, title = "Mon acouphène", land = Land.SKY) { app.beansontoast.brume.ui.FinderScreen(emptyList(), app.beansontoast.brume.ui.FinderActions(), onBack = {}) } }
+            // Phase 3: a saved profile, invented; the frame's corner reads ‹ and there is no back row.
+            "finder-profile" -> capture(night) {
+                val p = app.beansontoast.brume.core.finder.TinnitusProfile("demo", "Sifflement",
+                    character = app.beansontoast.brume.core.finder.Character.TONE,
+                    matches = listOf(app.beansontoast.brume.core.finder.PitchMatch("m1", "2026-01-18", 4000, app.beansontoast.brume.core.finder.Character.TONE, false)))
+                FnFrame(onClose = {}, title = "Mon acouphène", land = Land.SKY) {
+                    app.beansontoast.brume.ui.FinderScreen(listOf(p), app.beansontoast.brume.ui.FinderActions(), onBack = {}, start = app.beansontoast.brume.ui.FinderPlace.Profile("demo"))
+                }
+            }
             "intro-card" -> capture(night) { app.beansontoast.brume.ui.launch.TitleCard() }
             else -> error(shot)
         }
@@ -106,7 +118,7 @@ class DirectionRenders(private val shot: String) {
             "home-day", "home-night", "home-mini-day", "home-mini-night", "home-modules-off-day",
             "breathe-day", "breathe-night", "breath-in-day", "breath-hold-day", "breath-out-day", "breath-hold-night",
             "settle-day", "settle-playing-night", "journal-day",
-        ) + listOf("intro-card", "mixer", "mixer-add", "learn", "topic", "card", "about", "meditate", "tones", "settings", "settings-sheet", "finder", "journal")
+        ) + listOf("intro-card", "mixer", "mixer-add", "learn", "topic", "card", "about", "meditate", "meditate-options", "med-session", "tones", "settings", "settings-sheet", "finder", "finder-profile", "journal")
             .flatMap { listOf("$it-day", "$it-night") }.filter { it != "journal-day" }
     }
 }
