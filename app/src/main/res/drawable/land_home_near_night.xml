@@ -1,6 +1,0 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="360dp" android:height="780dp" android:viewportWidth="360" android:viewportHeight="780">
-    <!-- Placeholder: a near hill at the foot. Replaced by Sacha's land_home_near_night.png. -->
-    <path android:fillColor="#2B2E4C" android:fillAlpha="0.7" android:pathData="M0,700C60,668 120,672 170,690C220,708 280,676 360,684V780H0Z"/>
-    <path android:fillColor="#232741" android:fillAlpha="0.8" android:pathData="M0,735C70,715 140,722 200,738C260,752 310,730 360,728V780H0Z"/>
-</vector>
