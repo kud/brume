@@ -168,7 +168,9 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     // Moving to a sound scene brings its mix back. A swipe is his own gesture, and levels stay his,
     // per headphones, so a scene never makes anything louder. Never on the first visit: the scene
     // then starts from the mix already chosen, so nothing is lost when scenes arrive.
+    var swipeHint by remember { mutableStateOf(!graph.settings.scenesSwiped) }
     fun goScene(next: Scene) {
+        if (next != scene && swipeHint) { swipeHint = false; graph.settings.scenesSwiped = true }
         scene = next
         graph.settings.scene = next.name
         if (!next.sounds) return
@@ -288,6 +290,12 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                             scenes = modules.scenes(), scene = scene, onScene = ::goScene,
                             ui = player, actions = actions, night = night,
                             onSounds = { push("sounds") }, onTonesSetup = { push("tones") },
+                            swipeHint = swipeHint,
+                            // An empty scene's suggestion, on his tap: its sounds and timer become the scene's mix, then it starts, fading in.
+                            onSuggest = { mix ->
+                                graph.player.selectNoise(mix.noise); graph.player.selectAmbience(mix.ambience); graph.player.setTimer(mix.timer)
+                                keepMix(); graph.player.play()
+                            },
                             breathe = BreatheScene(
                                 practices = listOfNotNull(Practice.BREATHE.takeIf { modules.breath }, Practice.MEDITATE.takeIf { modules.meditation }),
                                 practice = if (!modules.breath) Practice.MEDITATE else if (!modules.meditation) Practice.BREATHE else practice,

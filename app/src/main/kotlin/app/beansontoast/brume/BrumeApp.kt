@@ -102,6 +102,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean(MEDITATION_SOUND, false)
         set(v) = prefs.edit().putBoolean(MEDITATION_SOUND, v).apply()
 
+    /** True once the scenes have been changed: the swipe hint has done its job and goes. */
+    var scenesSwiped: Boolean
+        get() = prefs.getBoolean(SCENES_SWIPED, false)
+        set(v) = prefs.edit().putBoolean(SCENES_SWIPED, v).apply()
+
     /** The scene last used, this phone only: Brume reopens where it was left, never on a guess. */
     var scene: String?
         get() = prefs.getString(SCENE, null)
@@ -116,6 +121,7 @@ class Settings(context: Context) {
 
     internal companion object {
         const val SCENE = "scene"
+        const val SCENES_SWIPED = "scenes_swiped"
         const val SCENE_MIX = "scene_mix_"
         const val MODULE_TONES = "module_tones"
         const val MODULE_BREATH = "module_breath"

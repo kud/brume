@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -94,11 +96,23 @@ import java.util.Locale
  *  - Sacha's art drops into [art] and [thumb]; until then the mist stands in.
  */
 
-enum class Scene(@StringRes val title: Int, val sounds: Boolean) {
-    SLEEP(R.string.scene_sleep, true),
-    SETTLE(R.string.scene_settle, true),
-    BREATHE(R.string.scene_breathe, false),
-    TONES(R.string.scene_tones, false),
+enum class Scene(@StringRes val title: Int, val sounds: Boolean, @StringRes val purpose: Int) {
+    SLEEP(R.string.scene_sleep, true, R.string.scene_sleep_purpose),
+    SETTLE(R.string.scene_settle, true, R.string.scene_settle_purpose),
+    BREATHE(R.string.scene_breathe, false, R.string.scene_breathe_purpose),
+    TONES(R.string.scene_tones, false, R.string.scene_tones_purpose),
+}
+
+/**
+ * What an empty sound scene offers (Iris, 2026-11-01, from Erwann on dev.15: « ça peut être
+ * improve »): one tap on the disc plays it, so the first visit is never a dead end, and Sleep and
+ * Settle no longer look the same. Sleep is deep and stops by itself; Settle is lighter, with no
+ * timer. Nothing plays without that tap, levels stay his own, and the start fades in as always.
+ */
+fun Scene.suggestion(): SceneMix? = when (this) {
+    Scene.SLEEP -> SceneMix(NoiseColour.BROWN, Ambience.RAIN, 45)
+    Scene.SETTLE -> SceneMix(NoiseColour.PINK, Ambience.SURF, null)
+    else -> null
 }
 
 /** The scenes the modules leave on: Breathe while Breathe or Meditation is on, Tones while Tones is. */
@@ -160,6 +174,10 @@ fun SceneScreen(
     breathe: BreatheScene = BreatheScene(),
     night: Boolean = false,
     peek: Float = 0f,
+    /** Plays an empty scene's [suggestion]: the disc's one tap on a first visit. */
+    onSuggest: (SceneMix) -> Unit = {},
+    /** The swipe hint shows until the scenes have been changed once, then never again. */
+    swipeHint: Boolean = true,
 ) {
     val scheme = MaterialTheme.colorScheme
     val start = scenes.indexOf(scene).coerceAtLeast(0)
@@ -185,14 +203,18 @@ fun SceneScreen(
             .onGloballyPositioned { anchors?.mist = MistAnchor(it.boundsInWindow(), strength, mistInk) }, strength = strength, color = mistInk)
         Column(Modifier.fillMaxSize()) {
             SceneNames(scenes, shown) { onScene(it) }
-            Text(stringResource(R.string.scene_swipe), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant,
+            // What the scene is for, so Sleep and Settle read apart before anything is chosen.
+            Text(stringResource(shown.purpose), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 20.dp))
+            if (swipeHint) Text(stringResource(R.string.scene_swipe), style = MaterialTheme.typography.bodySmall,
+                color = scheme.onSurfaceVariant.copy(alpha = 0.75f), modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp))
             HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { scenes[it].name }) { page ->
-                ScenePage(scenes[page], ui, actions, onSounds, onTonesSetup, breathe, night)
+                ScenePage(scenes[page], ui, actions, onSounds, onTonesSetup, breathe, night, onSuggest)
             }
             val (view, mine) = forMode(ui, actions, if (shown == Scene.TONES) Mode.TONES else Mode.SOUNDS)
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (shown != Scene.BREATHE) TimerWord(view, mine.timer) else Spacer(Modifier.height(48.dp))
+                // Every scene has its length bottom left: the timer, or Breathe's minutes, which open its setup.
+                if (shown != Scene.BREATHE) TimerWord(view, mine.timer) else LengthWord(breathe)
                 Spacer(Modifier.weight(1f))
                 TooLoudWord(actions.tooLoud)
             }
@@ -201,12 +223,14 @@ fun SceneScreen(
 }
 
 /** The scenes by name, in the serif: the one you are on larger and heavier, the others there to tap. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SceneNames(scenes: List<Scene>, shown: Scene, onScene: (Scene) -> Unit) {
     val scroll = rememberScrollState()
-    val density = LocalDensity.current
-    // Keep the shown name in view as the swipe moves on.
-    LaunchedEffect(shown) { scroll.animateScrollTo((scenes.indexOf(shown) * with(density) { 96.dp.toPx() }).toInt().coerceAtMost(scroll.maxValue)) }
+    // Keep the shown name in view as the swipe moves on, scrolling no further than it needs: a fixed
+    // step per name cut « Dormir » in half on « Se poser » in French (Iris, 2026-11-01).
+    val requesters = remember(scenes) { scenes.associateWith { androidx.compose.foundation.relocation.BringIntoViewRequester() } }
+    LaunchedEffect(shown) { requesters[shown]?.bringIntoView() }
     Row(Modifier.fillMaxWidth().horizontalScroll(scroll).padding(horizontal = 12.dp).selectableGroup(),
         verticalAlignment = Alignment.Bottom) {
         scenes.forEach { s ->
@@ -215,7 +239,7 @@ private fun SceneNames(scenes: List<Scene>, shown: Scene, onScene: (Scene) -> Un
                 style = if (on) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineSmall,
                 color = if (on) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = if (on) FontWeight.Normal else FontWeight.Light, maxLines = 1,
-                modifier = Modifier.heightIn(min = 48.dp).selectable(on, role = Role.Tab) { onScene(s) }.padding(horizontal = 8.dp, vertical = 6.dp))
+                modifier = Modifier.bringIntoViewRequester(requesters.getValue(s)).heightIn(min = 48.dp).selectable(on, role = Role.Tab) { onScene(s) }.padding(horizontal = 8.dp, vertical = 6.dp))
         }
     }
 }
@@ -225,6 +249,7 @@ private fun SceneNames(scenes: List<Scene>, shown: Scene, onScene: (Scene) -> Un
 private fun ScenePage(
     scene: Scene, all: PlayerUi, allActions: ListenActions,
     onSounds: () -> Unit, onTonesSetup: () -> Unit, breathe: BreatheScene, night: Boolean,
+    onSuggest: (SceneMix) -> Unit,
 ) {
     val (ui, actions) = forMode(all, allActions, if (scene == Scene.TONES) Mode.TONES else Mode.SOUNDS)
     val context = LocalContext.current
@@ -237,23 +262,31 @@ private fun ScenePage(
     val levels = layers.map { it.first }
     val set: (List<Float>) -> Unit = { new -> layers.forEachIndexed { i, layer -> new.getOrNull(i)?.let(layer.second) } }
     val word = stringResource(volumeWord(Volume.band(levels)))
+    // An empty sound scene shows its suggestion, ready to play; once anything is chosen, the mix is his.
+    val suggestion = scene.suggestion()?.takeIf { !ui.hasSound }
     val title: String
     val line: String
+    // "Ready" said nothing: the line now holds only what is true and useful (Erwann, dev.15).
     when (scene) {
         Scene.TONES -> {
             title = stringResource(R.string.ux_tone_kind)
-            line = listOf(stringResource(R.string.tones_pitch_value, ui.tones.pitch), stateWord(ui), word).joinToString(" · ")
+            line = listOfNotNull(stateWord(ui), stringResource(R.string.tones_at, ui.tones.pitch), word).joinToString(" · ")
         }
         Scene.BREATHE -> {
-            title = stringResource(breathe.practice.label())
-            val cycles = breathe.cycles
-            line = if (cycles != null) listOfNotNull(stringResource(R.string.breath_cycles, cycles), breathe.soundName).joinToString(" · ")
-                else breathe.soundName?.let { stringResource(R.string.scene_minutes_with, breathe.minutes, it) }
-                ?: stringResource(R.string.scene_minutes, breathe.minutes)
+            // The rhythm is the title: « Breathing » already sits on its own toggle below.
+            val breathing = breathe.practice == Practice.BREATHE
+            title = stringResource(if (breathing) breathe.pattern.title() else breathe.practice.label())
+            line = listOfNotNull(
+                if (breathing) stringResource(breathe.pattern.phases()) else null,
+                breathe.soundName?.let { stringResource(R.string.scene_with, it) },
+            ).joinToString(" · ").ifEmpty { stringResource(R.string.scene_breathe_quiet) }
         }
-        else -> {
+        else -> if (suggestion != null) {
+            title = mixName(context, PlayerUi(suggestion.noise, suggestion.ambience)) ?: ""
+            line = suggestion.timer?.let { stringResource(R.string.scene_suggest_timer, it) } ?: stringResource(R.string.scene_suggest_open)
+        } else {
             title = mixName(context, ui) ?: stringResource(R.string.scene_no_sound)
-            line = if (!ui.hasSound) stringResource(R.string.scene_no_sound_line) else listOf(stateWord(ui), word).joinToString(" · ")
+            line = listOfNotNull(stateWord(ui), word).joinToString(" · ")
         }
     }
     Box(Modifier.fillMaxSize()) {
@@ -273,6 +306,8 @@ private fun ScenePage(
                 Spacer(Modifier.weight(1f).height(1.dp))
                 Spacer(Modifier.width(56.dp))
                 if (scene == Scene.BREATHE) Disc(ui.copy(playing = false), ring = null, word = R.string.scene_start, onClick = breathe.onStart, always = true)
+                else if (suggestion != null) Disc(ui, ring = suggestion.timer?.let { 1f }, word = R.string.scene_suggest_play,
+                    onClick = { onSuggest(suggestion) }, always = true)
                 else Disc(ui, ring(ui), word = null, onClick = if (ui.hasSound) actions.toggle else onSounds)
                 VolumeTrack(levels, set, word, Modifier.width(56.dp))
                 Spacer(Modifier.weight(1f).height(1.dp))
@@ -283,26 +318,23 @@ private fun ScenePage(
             when (scene) {
                 Scene.TONES -> QuietMore(stringResource(R.string.scene_tones_setup), onTonesSetup)
                 Scene.BREATHE -> {
-                    if (breathe.practices.size > 1) Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        breathe.practices.forEach { p ->
-                            Pill(stringResource(p.label()), on = p == breathe.practice, thumb = null, role = Role.RadioButton,
-                                label = null) { breathe.onPractice(p) }
-                        }
+                    // Two levels, two looks (Iris, 2026-11-01): the practice is a pair of words, like
+                    // the scene names; only the rhythms are pills. Selection is a check and weight.
+                    if (breathe.practices.size > 1) Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        breathe.practices.forEach { p -> PracticeWord(stringResource(p.label()), on = p == breathe.practice) { breathe.onPractice(p) } }
                     }
                     // The rhythm is chosen here, on the scene, not behind the link (Erwann, 2026-10-31).
                     if (breathe.practice == Practice.BREATHE) {
-                        FlowRow(Modifier.fillMaxWidth().padding(top = 10.dp).selectableGroup(),
+                        FlowRow(Modifier.fillMaxWidth().padding(top = 6.dp).selectableGroup(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Pattern.entries.forEach { p ->
                                 Pill(stringResource(p.title()), on = p == breathe.pattern, thumb = null, role = Role.RadioButton, label = null) { breathe.onPattern(p) }
                             }
                         }
-                        Text(stringResource(breathe.pattern.phases()), style = MaterialTheme.typography.bodyMedium, color = muted, textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth().padding(top = 6.dp))
                     }
-                    QuietMore(stringResource(R.string.scene_breathe_setup), breathe.onSetup)
                 }
-                else -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+                else -> if (suggestion != null) QuietMore(stringResource(R.string.scene_choose_other), onSounds)
+                else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically) {
                     ui.noise?.let { n -> val name = stringResource(n.label())
                         Pill(name, on = true, thumb = { texture(n, null, it) }, label = stringResource(R.string.scene_in_mix, name), onClick = onSounds) }
@@ -332,11 +364,11 @@ internal fun mixName(context: android.content.Context, ui: PlayerUi): String? {
 }
 
 @Composable
-private fun stateWord(ui: PlayerUi): String = when {
+private fun stateWord(ui: PlayerUi): String? = when {
     ui.status != null && !ui.playing -> stringResource(ui.status.message())
     ui.playing && ui.timerRemainingMinutes != null -> stringResource(R.string.play_state_playing) + " · " + stringResource(R.string.timer_left, ui.timerRemainingMinutes)
     ui.playing -> stringResource(R.string.play_state_playing)
-    else -> stringResource(R.string.scene_ready)
+    else -> null
 }
 
 @StringRes private fun volumeWord(band: Int) = when (band) {
@@ -503,6 +535,38 @@ private fun TimerWord(ui: PlayerUi, onTimer: (Int?) -> Unit) {
     ) {
         Icon(painterResource(R.drawable.ic_timer), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
         Text(value, style = MaterialTheme.typography.labelLarge.tabular(), modifier = Modifier.padding(start = 8.dp))
+    }
+}
+
+/** Breathe's length where the other scenes keep their timer: the hourglass and the minutes (or cycles). It opens the setup. */
+@Composable
+private fun LengthWord(breathe: BreatheScene) {
+    val value = breathe.cycles?.let { stringResource(R.string.breath_cycles, it) } ?: stringResource(R.string.scene_minutes, breathe.minutes)
+    val title = stringResource(R.string.scene_breathe_setup)
+    Row(
+        Modifier.heightIn(min = 48.dp).clip(CircleShape)
+            .clickable(role = Role.Button, onClickLabel = title, onClick = breathe.onSetup)
+            .semantics(mergeDescendants = true) { contentDescription = title; stateDescription = value }
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(painterResource(R.drawable.ic_timer), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        Text("$value  ›", style = MaterialTheme.typography.labelLarge.tabular(), modifier = Modifier.padding(start = 8.dp))
+    }
+}
+
+/** Breathing or Meditation, as words: the chosen one in ink with a check, the other muted. */
+@Composable
+private fun PracticeWord(text: String, on: Boolean, onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        Modifier.heightIn(min = 48.dp).clip(CircleShape).selectable(on, role = Role.RadioButton, onClick = onClick).padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (on) Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = scheme.onSurface,
+            modifier = Modifier.padding(end = 6.dp).size(16.dp))
+        Text(text, style = MaterialTheme.typography.titleMedium, color = if (on) scheme.onSurface else scheme.onSurfaceVariant,
+            fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal)
     }
 }
 

@@ -368,6 +368,17 @@
     <string name="scene_breathe">Respirer</string>
     <string name="scene_tones">Tons</string>
     <string name="scene_swipe">Glissez de côté pour changer de scène</string>
+    <string name="scene_sleep_purpose">Pour s\'endormir, avec une minuterie</string>
+    <string name="scene_settle_purpose">Pour se poser en journée, sans minuterie</string>
+    <string name="scene_breathe_purpose">Respirer en rythme, ou une séance au calme</string>
+    <string name="scene_tones_purpose">Une suite de tons à la fréquence choisie</string>
+    <string name="tones_at">À %1$,d Hz</string>
+    <string name="scene_with">avec %1$s</string>
+    <string name="scene_breathe_quiet">En silence</string>
+    <string name="scene_suggest_timer">Une suggestion · s\'arrête après %1$d min</string>
+    <string name="scene_suggest_open">Une suggestion · sans minuterie</string>
+    <string name="scene_suggest_play">Lancer cette suggestion</string>
+    <string name="scene_choose_other">Choisir d\'autres sons</string>
     <string name="scene_volume_hint">Glissez vers le haut ou le bas pour le volume</string>
     <string name="volume_0">très doux</string>
     <string name="volume_1">doux</string>
@@ -379,8 +390,6 @@
     <string name="volume_down">Plus doux</string>
     <string name="scene_mix_and">%1$s + %2$s</string>
     <string name="scene_no_sound">Aucun son</string>
-    <string name="scene_no_sound_line">Touchez + pour en choisir un</string>
-    <string name="scene_ready">Prêt</string>
     <string name="scene_add">Ajouter ou changer un son</string>
     <string name="scene_in_mix">%1$s, dans le mélange. Changer les sons</string>
     <string name="scene_sounds">Sons</string>

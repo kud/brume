@@ -406,10 +406,13 @@ fun JournalScreen(
         ScreenTitle(R.string.tab_journal, stringResource(R.string.journal_listened, duration(weekSeconds)))
 
         SectionTitle(stringResource(R.string.journal_today) + " · " + today.format(dayFormat))
-        Card {
+        // Today's entry sits on the ground like Listen, not in a card (Iris, 2026-11-01, dev.15):
+        // the questions are the structure, and it all fits above the fold, Save included, so the
+        // scroll cue never fades over the button.
+        Column {
             Question(stringResource(R.string.journal_q_loud), stringResource(R.string.journal_loudness), loudness,
                 stringResource(R.string.journal_q_loud_low), stringResource(R.string.journal_q_loud_high)) { loudness = it }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(4.dp))
             Question(stringResource(R.string.journal_q_place), stringResource(R.string.journal_bother), bother,
                 stringResource(R.string.journal_q_place_low), stringResource(R.string.journal_q_place_high)) { bother = it }
             Text(stringResource(R.string.journal_q_note), style = MaterialTheme.typography.titleMedium,
@@ -426,7 +429,7 @@ fun JournalScreen(
             // The screen's one ink action.
             Button(
                 onClick = { onSave(loudness, bother, NoteTags.compose(note, tags)) },
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp).heightIn(min = 52.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp).heightIn(min = 52.dp), shape = CircleShape,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.inverseSurface, contentColor = MaterialTheme.colorScheme.inverseOnSurface),
             ) {
                 Text(stringResource(if (todays == null) R.string.journal_save else R.string.journal_update), style = MaterialTheme.typography.labelLarge)
@@ -455,7 +458,7 @@ fun JournalScreen(
 
         SectionTitle(stringResource(R.string.journal_recent))
         if (checkIns.isEmpty()) {
-            Card { EmptyState(stringResource(R.string.journal_empty_title), stringResource(R.string.journal_empty_body)) }
+            EmptyState(stringResource(R.string.journal_empty_title), stringResource(R.string.journal_empty_body))
         } else {
             Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 checkIns.take(14).forEach { c ->
@@ -479,7 +482,7 @@ fun JournalScreen(
         }
 
         SectionTitle(stringResource(R.string.journal_export_title))
-        Card {
+        Column {
             Text(stringResource(R.string.journal_export_body), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedButton(onClick = onExport, modifier = Modifier.padding(top = 12.dp).heightIn(min = 48.dp)) {
@@ -515,15 +518,16 @@ private fun Scale(name: String, value: Int) {
 @Composable
 private fun Question(question: String, name: String, value: Int, low: String, high: String, onChange: (Int) -> Unit) {
     val text = stringResource(R.string.journal_rating, name, value)
-    Text(question, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
-    Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.Bottom) {
-        Text("$value", style = MaterialTheme.typography.headlineMedium.tabular())
-        Text(stringResource(R.string.journal_of_ten), style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 6.dp, bottom = 6.dp))
+    // The number stays written, on the question's own line, in the serif like Listen's titles.
+    Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.Bottom) {
+        Text(question, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).padding(bottom = 4.dp).semantics { heading() })
+        Text("$value", style = MaterialTheme.typography.headlineSmall.tabular(), modifier = Modifier.padding(start = 12.dp))
+        Text(stringResource(R.string.journal_of_ten), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 5.dp))
     }
     Slider(
         value = value.toFloat(), onValueChange = { onChange(it.roundToInt()) }, valueRange = 0f..10f, steps = 9, colors = quietSlider(),
-        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).semantics { contentDescription = question; stateDescription = text },
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics { contentDescription = question; stateDescription = text },
     )
     Row(Modifier.fillMaxWidth()) {
         Text(low, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
@@ -541,30 +545,29 @@ private fun Question(question: String, name: String, value: Int, low: String, hi
 @Composable
 private fun tagWords(tags: Set<Tag>): String = Tag.entries.filter { it in tags }.map { stringResource(it.word()) }.joinToString(" · ")
 
-/** Tags to notice, each a toggle told by a check glyph and weight, never by colour alone. */
+/**
+ * Tags to notice, as Listen's pills (Iris, 2026-11-01): round, in one flowing row, with a glyph in
+ * both states, + to add and a check once added, and weight, so the state never rests on colour.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun TagChips(tags: Set<Tag>, onToggle: (Tag) -> Unit) {
     val s = MaterialTheme.colorScheme
-    Column(Modifier.padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Tag.entries.chunked(2).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                row.forEach { tag ->
-                    val on = tag in tags
-                    val word = stringResource(tag.word())
-                    Row(
-                        Modifier.weight(1f).clip(MaterialTheme.shapes.medium)
-                            .then(if (on) Modifier.background(s.secondaryContainer) else Modifier.border(1.dp, s.outlineVariant, MaterialTheme.shapes.medium))
-                            .toggleable(value = on, role = Role.Checkbox) { onToggle(tag) }
-                            .heightIn(min = 48.dp).padding(horizontal = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (on) Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = s.onSecondaryContainer,
-                            modifier = Modifier.padding(end = 6.dp).size(16.dp))
-                        Text(word, style = MaterialTheme.typography.labelLarge, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
-                            color = if (on) s.onSecondaryContainer else s.onSurface)
-                    }
-                }
-                if (row.size == 1) Spacer(Modifier.weight(1f))
+    androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth().padding(top = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Tag.entries.forEach { tag ->
+            val on = tag in tags
+            val ink = if (on) s.onSecondaryContainer else s.onSurface
+            Row(
+                Modifier.clip(CircleShape)
+                    .then(if (on) Modifier.background(s.secondaryContainer) else Modifier.border(1.dp, s.outlineVariant, CircleShape))
+                    .toggleable(value = on, role = Role.Checkbox) { onToggle(tag) }
+                    .heightIn(min = 48.dp).padding(start = 12.dp, end = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(painterResource(if (on) app.beansontoast.design.R.drawable.ic_check else R.drawable.ic_plus), null,
+                    tint = if (on) ink else s.onSurfaceVariant, modifier = Modifier.padding(end = 6.dp).size(16.dp))
+                Text(stringResource(tag.word()), style = MaterialTheme.typography.labelLarge, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, color = ink)
             }
         }
     }

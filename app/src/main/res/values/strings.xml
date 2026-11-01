@@ -369,6 +369,17 @@
     <string name="scene_breathe">Breathe</string>
     <string name="scene_tones">Tones</string>
     <string name="scene_swipe">Swipe sideways for another scene</string>
+    <string name="scene_sleep_purpose">To fall asleep, with a timer</string>
+    <string name="scene_settle_purpose">To settle during the day, no timer</string>
+    <string name="scene_breathe_purpose">A paced breath, or a quiet session</string>
+    <string name="scene_tones_purpose">A tone pattern at the pitch you set</string>
+    <string name="tones_at">At %1$,d Hz</string>
+    <string name="scene_with">with %1$s</string>
+    <string name="scene_breathe_quiet">In silence</string>
+    <string name="scene_suggest_timer">A suggestion · stops after %1$d min</string>
+    <string name="scene_suggest_open">A suggestion · no timer</string>
+    <string name="scene_suggest_play">Play this suggestion</string>
+    <string name="scene_choose_other">Choose other sounds</string>
     <string name="scene_volume_hint">Slide up or down for the volume</string>
     <string name="volume_0">very soft</string>
     <string name="volume_1">soft</string>
@@ -380,8 +391,6 @@
     <string name="volume_down">Softer</string>
     <string name="scene_mix_and">%1$s + %2$s</string>
     <string name="scene_no_sound">No sound yet</string>
-    <string name="scene_no_sound_line">Tap + to choose one</string>
-    <string name="scene_ready">Ready</string>
     <string name="scene_add">Add or change a sound</string>
     <string name="scene_in_mix">%1$s, in the mix. Change the sounds</string>
     <string name="scene_sounds">Sounds</string>
