@@ -59,7 +59,7 @@ class GuidanceRenders(private val shot: String) {
             "hold-box" -> bare(dark, night) { BreathSession(BreathPlan.of(Technique.BOX.pattern(Variant.STANDARD), 5), 0L, night, haptics = false, onEnd = {}, elapsed = 6.3) }
             "hold-478" -> bare(dark, night) { BreathSession(BreathPlan.of(Technique.FOUR_SEVEN_EIGHT.pattern(), 4), 0L, night, haptics = false, onEnd = {}, elapsed = 4.2) }
             "hum-out" -> bare(dark, night) { BreathSession(BreathPlan.of(Technique.HUM.pattern(), 7), 0L, night, haptics = false, onEnd = {}, elapsed = 7.0) }
-            "safety" -> bare(dark, night) { BreathPrelude(BreathSetup(Technique.FOUR_SEVEN_EIGHT), safety = true, onStart = {}, onBack = {}) }
+            "safety" -> bare(dark, night) { BreathPrelude(BreathSetup(Technique.FOUR_SEVEN_EIGHT), safety = true, onStart = {}, onBack = {}, startStep = 1) }
             "prelude-hum" -> bare(dark, night) { BreathPrelude(BreathSetup(Technique.HUM), safety = false, onStart = {}, onBack = {}) }
             "meditate-setup" -> tab(dark, night) {
                 MeditateScreen(MeditationSetup(Meditation.SOUNDS, 5), "Brun + Pluie", Voice.State.READY, {}, {}, previewAt = 2.0, options = true)

@@ -122,6 +122,7 @@ class DirectionRenders(private val shot: String) {
             }
             "tones-how" -> capture(night) { FnFrame(null, "Le principe", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.TonesHowScreen {} } }
             "prelude-478" -> capture(night) { app.beansontoast.brume.ui.BreathPrelude(BreathSetup(Technique.FOUR_SEVEN_EIGHT), safety = true, onStart = {}, onBack = {}) }
+            "prelude-478-safety" -> capture(night) { app.beansontoast.brume.ui.BreathPrelude(BreathSetup(Technique.FOUR_SEVEN_EIGHT), safety = true, onStart = {}, onBack = {}, startStep = 1) }
             "learn-doctor" -> capture(night) { FnFrame(onClose = {}, title = "Comprendre", land = Land.SKY) { app.beansontoast.brume.ui.LearnScreen(doctorOpen = true) } }
             "intro-tinnitus" -> capture(night) { app.beansontoast.brume.ui.Onboarding(onFinish = {}, startPage = 2) }
             "intro-doctor" -> capture(night) { app.beansontoast.brume.ui.Onboarding(onFinish = {}, startPage = 3) }
@@ -161,7 +162,7 @@ class DirectionRenders(private val shot: String) {
             "about-privacy", "about-sources", "tones-session", "tones-pitch", "tones-balance", "tones-how", "prelude-478", "intro-doctor", "intro-help", "tones-dock")
             .flatMap { listOf("$it-day", "$it-night") }.filter { it != "journal-day" } +
             // Font scale 1.3, day only: the screens the large-text pass reworked.
-            listOf("tones-dock", "home", "breathe-options", "loudness", "learn-doctor", "intro-tinnitus", "intro-doctor", "intro-help", "prelude-478", "tones-how", "settle-playing")
+            listOf("tones-dock", "home", "breathe-options", "loudness", "learn-doctor", "intro-tinnitus", "intro-doctor", "intro-help", "prelude-478", "prelude-478-safety", "tones-how", "settle-playing")
                 .map { "$it-big-day" }
     }
 }

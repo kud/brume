@@ -101,6 +101,8 @@ class FitTest(private val case: String) {
         )
         "prelude" -> listOf(
             shot { BreathPrelude(BreathSetup(Technique.FOUR_SEVEN_EIGHT), safety = true, onStart = {}, onBack = {}) },
+            shot { BreathPrelude(BreathSetup(Technique.FOUR_SEVEN_EIGHT), safety = true, onStart = {}, onBack = {}, startStep = 1) },
+            shot { BreathPrelude(BreathSetup(Technique.BOX), safety = true, onStart = {}, onBack = {}) },
             shot { BreathPrelude(BreathSetup(Technique.HUM), safety = false, onStart = {}, onBack = {}) },
         )
         "meditate" -> listOf(

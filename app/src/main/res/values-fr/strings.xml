@@ -527,7 +527,8 @@
     <string name="prelude_hum_gentle">Bourdonnez tout doucement : le son ne doit jamais paraître fort dans les oreilles.</string>
     <string name="prelude_478">Langue derrière les dents du haut.</string>
     <string name="prelude_safety_title">À propos des temps retenus</string>
-    <string name="prelude_safety">Retenez sans forcer. Si vous avez la tête qui tourne, des fourmillements ou un malaise, arrêtez et respirez normalement. À éviter dans l\'eau ou en conduisant ; en cas de grossesse, de problème cardiaque ou de crises de panique, mieux vaut en parler à un professionnel de santé.</string>
+    <string name="prelude_safety">Tête qui tourne, fourmillements ou malaise : arrêtez et respirez normalement.</string>
+    <string name="prelude_safety_who">Jamais dans l\'eau ni au volant. Grossesse, problème cardiaque ou crises de panique : parlez-en d\'abord à un professionnel de santé.</string>
     <string name="prelude_start">Commencer</string>
     <string name="voice_language">fr</string>
     <string name="voice_title">Voix</string>

@@ -230,7 +230,7 @@ internal fun ColumnScope.BreathOptions(setup: BreathSetup, soundName: String?, v
  * safety note. Nothing is spoken here; it is read with the eyes open. Start begins the session.
  */
 @Composable
-fun BreathPrelude(setup: BreathSetup, safety: Boolean, onStart: () -> Unit, onBack: () -> Unit) {
+fun BreathPrelude(setup: BreathSetup, safety: Boolean, onStart: () -> Unit, onBack: () -> Unit, startStep: Int = 0) {
     val scheme = MaterialTheme.colorScheme
     val muted = scheme.onSurfaceVariant
     // The session stands on the quiet landscape, sky and haze, the orb at its centre (Iris, 2026-11-01).
@@ -244,26 +244,36 @@ fun BreathPrelude(setup: BreathSetup, safety: Boolean, onStart: () -> Unit, onBa
                 Text(back, style = MaterialTheme.typography.labelLarge, color = muted, modifier = Modifier.padding(start = 6.dp))
             }
         }
-        // Fits one frame for every technique, the safety note included (FitTest), so nothing scrolls.
+        // Fits one frame for every technique (FitTest), so nothing scrolls. With both the how-to-sit lines
+        // and the safety note, they take two steps: the note comes second, the last thing read, and
+        // Start is only on it, so it can never be skipped; at font scale 1.3 it keeps every word
+        // (Iris, 2026-11-01). The hold line opens the note rather than repeating it above.
+        val lines = buildList {
+            if (setup.technique == Technique.HUM) { add(R.string.prelude_hum); add(R.string.prelude_hum_gentle) }
+            if (setup.technique == Technique.FOUR_SEVEN_EIGHT) add(R.string.prelude_478)
+            if (setup.pattern.holds && !safety) add(R.string.breath_hold_easy)
+        }
+        val steps = if (safety && lines.isNotEmpty()) 2 else 1
+        var step by rememberSaveable { mutableStateOf(startStep.coerceIn(0, steps - 1)) }
+        val showLines = lines.isNotEmpty() && (steps == 1 || step == 0)
+        val showSafety = safety && (steps == 1 || step == 1)
         Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
-            Text(stringResource(setup.technique.title()), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 24.dp))
+            Text(stringResource(setup.technique.title()), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp))
             Text(setup.pattern.phasesText(), style = MaterialTheme.typography.bodyLarge.tabular(), color = muted, modifier = Modifier.padding(top = 4.dp))
-            val lines = buildList {
-                if (setup.technique == Technique.HUM) { add(R.string.prelude_hum); add(R.string.prelude_hum_gentle) }
-                if (setup.technique == Technique.FOUR_SEVEN_EIGHT) add(R.string.prelude_478)
-                if (setup.pattern.holds) add(R.string.breath_hold_easy)
-            }
-            if (lines.isNotEmpty()) {
+            if (showLines) {
                 SectionTitle(stringResource(R.string.prelude_title), Modifier.padding(top = 20.dp))
                 lines.forEach { Text(stringResource(it), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 6.dp)) }
             }
-            if (safety) {
+            if (showSafety) {
                 SectionTitle(stringResource(R.string.prelude_safety_title), Modifier.padding(top = 20.dp))
-                Text(stringResource(R.string.prelude_safety), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 6.dp))
+                listOf(R.string.breath_hold_easy, R.string.prelude_safety, R.string.prelude_safety_who).forEach {
+                    Text(stringResource(it), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
+                }
             }
         }
-        FilledTonalButton(onStart, Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp).heightIn(min = 56.dp)) {
-            Text(stringResource(R.string.prelude_start), style = MaterialTheme.typography.titleMedium)
+        val last = step >= steps - 1
+        FilledTonalButton({ if (last) onStart() else step++ }, Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp).heightIn(min = 56.dp)) {
+            Text(stringResource(if (last) R.string.prelude_start else R.string.intro_next), style = MaterialTheme.typography.titleMedium)
         }
     }
     }

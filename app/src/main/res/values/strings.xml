@@ -528,7 +528,8 @@
     <string name="prelude_hum_gentle">Keep the hum gentle: it should never feel loud in the ears.</string>
     <string name="prelude_478">Tongue resting just behind the upper front teeth.</string>
     <string name="prelude_safety_title">About holding the breath</string>
-    <string name="prelude_safety">Hold without forcing. If you feel dizzy, tingling or unwell, stop and breathe normally. Avoid this in water or while driving; if you are pregnant, or have a heart problem or panic attacks, it is best to talk to a health professional first.</string>
+    <string name="prelude_safety">If you feel dizzy, tingling or unwell, stop and breathe normally.</string>
+    <string name="prelude_safety_who">Not in water or while driving. Pregnant, a heart problem or panic attacks: talk to a health professional first.</string>
     <string name="prelude_start">Start</string>
     <!-- The voice speaks the language the words are in: this file's. -->
     <string name="voice_language">en</string>
