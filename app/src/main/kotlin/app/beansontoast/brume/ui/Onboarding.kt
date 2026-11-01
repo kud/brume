@@ -94,10 +94,10 @@ fun Onboarding(onFinish: (setPitch: Boolean) -> Unit, startPage: Int = 0) {
                     4 -> Help()
                     else -> Pitch()
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(if (largeText()) 4.dp else 16.dp))
             }
         }
-        Row(gutter.fillMaxWidth().padding(top = 8.dp, bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(gutter.fillMaxWidth().padding(top = if (largeText()) 4.dp else 8.dp, bottom = if (largeText()) 8.dp else 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             val tall = Modifier.weight(1f).heightIn(min = 52.dp)
             if (last) {
                 OutlinedButton({ onFinish(false) }, tall) { Text(stringResource(R.string.intro_pitch_later)) }
@@ -135,12 +135,15 @@ private fun Steps(page: Int, modifier: Modifier) {
 /** The mist band every page opens on, its icon and title at the foot, like About's. */
 @Composable
 private fun Header(@StringRes title: Int, icon: Painter) {
-    Box(Modifier.fillMaxWidth().height(148.dp)) {
-        Mist(Modifier.fillMaxSize(), strength = 0.5f)
-        Column(gutter.align(Alignment.BottomStart).padding(bottom = 4.dp)) {
-            Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(28.dp))
+    // At large text the band is only as tall as its title and the icon, a drawing, steps aside, so the
+    // page's words keep their room: the red flags and the numbers are never cut (Iris, 2026-11-01).
+    val large = largeText()
+    Box(Modifier.fillMaxWidth().then(if (large) Modifier else Modifier.height(148.dp))) {
+        Mist(Modifier.matchParentSize(), strength = 0.5f)
+        Column(gutter.align(Alignment.BottomStart).padding(top = if (large) 8.dp else 0.dp, bottom = 4.dp)) {
+            if (!large) Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(28.dp))
             Text(stringResource(title), style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(top = 8.dp).semantics { heading() })
+                modifier = Modifier.padding(top = if (large) 0.dp else 8.dp).semantics { heading() })
         }
     }
 }
@@ -191,10 +194,13 @@ private fun Safely() {
 @Composable
 private fun Doctor() {
     Header(R.string.doctor_title, painterResource(R.drawable.ic_info))
-    Body(R.string.intro_doctor_intro, Modifier.padding(top = 16.dp))
+    val large = largeText()
+    // At large text the lead takes the list's size, so the last red flag keeps all its words.
+    if (large) Text(stringResource(R.string.intro_doctor_intro), style = MaterialTheme.typography.bodyMedium, modifier = gutter.padding(top = 8.dp))
+    else Body(R.string.intro_doctor_intro, Modifier.padding(top = 16.dp))
     Column(gutter.padding(top = 4.dp)) {
         listOf(R.string.doctor_1, R.string.doctor_2, R.string.doctor_3, R.string.doctor_4, R.string.doctor_5, R.string.doctor_6).forEach {
-            Row(Modifier.padding(top = 6.dp)) {
+            Row(Modifier.padding(top = if (large) 2.dp else 6.dp)) {
                 Text("–", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(16.dp))
                 Text(stringResource(it), style = MaterialTheme.typography.bodyMedium)
             }
@@ -206,13 +212,14 @@ private fun Doctor() {
 @Composable
 private fun Help() {
     Header(R.string.about_help_title, painterResource(R.drawable.ic_info))
-    Column(gutter.padding(top = 16.dp)) {
+    val gap = if (largeText()) 8.dp else 16.dp
+    Column(gutter.padding(top = gap)) {
         Card {
             Text(stringResource(R.string.intro_hearing_title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
             Text(stringResource(R.string.intro_hearing), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
         }
     }
-    Column(gutter.padding(top = 16.dp)) {
+    Column(gutter.padding(top = gap)) {
         RegionLines(Regions.redFlags)
         Text(stringResource(R.string.region_onboarding, countryName(LocalCountry.current)), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
