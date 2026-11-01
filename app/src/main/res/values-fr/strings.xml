@@ -324,7 +324,7 @@
     <string name="settings_output">Sortie du son</string>
     <string name="about_sources_title">Sources</string>
     <string name="about_sources">Brume s\'appuie sur des recommandations cliniques et des associations de patients : NICE NG155, la recommandation AAO-HNSF, OMS–UIT H.870, France Acouphènes et Tinnitus UK. Chaque fiche de Comprendre cite ses propres sources.</string>
-    <string name="tones_how">Comment ça marche</string>
+    <string name="tones_how">Le principe</string>
     <!-- The scene (Iris, 2026-10-31) -->
     <string name="scene_sleep">Dormir</string>
     <string name="scene_settle">Se poser</string>
@@ -687,15 +687,15 @@
     <string name="home_moment">Choisissez votre moment</string>
     <string name="home_close">Retour à l\'accueil</string>
     <string name="home_playing">En cours</string>
-    <string name="fn_sleep_line">Pour s\'endormir, avec minuterie</string>
-    <string name="fn_settle_line">Votre mélange de sons, en journée</string>
+    <string name="fn_sleep_line">S\'endormir, avec minuterie</string>
+    <string name="fn_settle_line">Votre mélange, en journée</string>
     <string name="fn_breathe_line">Un souffle guidé, cinq rythmes</string>
     <string name="fn_meditate">Méditer</string>
-    <string name="fn_meditate_line">Une séance calme, guidée ou non</string>
-    <string name="fn_tones_line">Une suite de tons à votre fréquence</string>
-    <string name="fn_ear_line">Trouver sa fréquence, garder un profil</string>
-    <string name="fn_journal_line">Une note par jour, et votre semaine</string>
-    <string name="fn_learn_line">De courtes lectures sur l\'acouphène</string>
+    <string name="fn_meditate_line">Séance calme, guidée ou non</string>
+    <string name="fn_tones_line">Des tons à votre fréquence</string>
+    <string name="fn_ear_line">Trouver, garder sa fréquence</string>
+    <string name="fn_journal_line">Note du jour, votre semaine</string>
+    <string name="fn_learn_line">L\'acouphène, en bref</string>
     <string name="breathe_rhythm">Rythme</string>
     <string name="breathe_more">Allure, durée et voix</string>
     <string name="intro_card_words">Écouter · Respirer · Noter</string>

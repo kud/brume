@@ -120,7 +120,7 @@ class DirectionRenders(private val shot: String) {
             "tones-balance" -> capture(night) {
                 FnFrame(null, "Tons", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.TonesScreen(tonesUi, ListenActions(), startPage = 2) }
             }
-            "tones-how" -> capture(night) { FnFrame(null, "Comment ça marche", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.TonesHowScreen {} } }
+            "tones-how" -> capture(night) { FnFrame(null, "Le principe", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.TonesHowScreen {} } }
             "prelude-478" -> capture(night) { app.beansontoast.brume.ui.BreathPrelude(BreathSetup(Technique.FOUR_SEVEN_EIGHT), safety = true, onStart = {}, onBack = {}) }
             "learn-doctor" -> capture(night) { FnFrame(onClose = {}, title = "Comprendre", land = Land.SKY) { app.beansontoast.brume.ui.LearnScreen(doctorOpen = true) } }
             "intro-tinnitus" -> capture(night) { app.beansontoast.brume.ui.Onboarding(onFinish = {}, startPage = 2) }

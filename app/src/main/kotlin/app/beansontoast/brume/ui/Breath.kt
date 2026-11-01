@@ -480,7 +480,8 @@ internal fun RhythmRow(name: String, phases: String?, on: Boolean, onClick: () -
         verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             WeightSwap(name, on, onStyle = MaterialTheme.typography.titleMedium, onColor = scheme.onSurface, offColor = scheme.onSurface)
-            if (phases != null) Text(phases, style = MaterialTheme.typography.bodySmall.tabular(), color = scheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // Two lines at most: at large text a four-phase rhythm wraps rather than losing its last phase.
+            if (phases != null) Text(phases, style = MaterialTheme.typography.bodySmall.tabular(), color = scheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = scheme.onSurface,
             modifier = Modifier.size(20.dp).alpha(calmAlpha(on, Motion.QUICK)))
