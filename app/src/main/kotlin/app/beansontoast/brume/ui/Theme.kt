@@ -135,7 +135,7 @@ fun DrawScope.texture(noise: NoiseColour?, ambience: Ambience?, color: Color) {
                 drawLine(color, Offset(x, y), Offset(x - l * 0.25f, y + l), 1.3f * px, StrokeCap.Round)
             }
         }
-        ambience == Ambience.SURF -> for (i in 0 until 3) {
+        ambience == Ambience.SEA -> for (i in 0 until 3) {
             val y = h * (0.3f + 0.25f * i)
             val path = Path().apply {
                 moveTo(0f, y)

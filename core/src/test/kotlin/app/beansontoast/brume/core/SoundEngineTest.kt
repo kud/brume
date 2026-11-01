@@ -1,8 +1,6 @@
 package app.beansontoast.brume.core
 
-import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.LevelRules
-import app.beansontoast.brume.core.sound.NoiseColour
 import app.beansontoast.brume.core.sound.SoundEngine
 import app.beansontoast.brume.core.sound.SoundEngine.Command
 import org.junit.Assert.assertEquals
@@ -16,8 +14,7 @@ class SoundEngineTest {
     private val buffer = FloatArray(block * 2)
 
     private fun engine(level: Float = 0.6f) = SoundEngine(RATE, 3).apply {
-        post(Command.Noise(NoiseColour.PINK)); post(Command.Nature(Ambience.RAIN))
-        post(Command.NoiseLevel(level)); post(Command.NatureLevel(level))
+        post(Command.Add(PINK, level)); post(Command.Add(RAIN, level, loop = testLoop()))
     }
 
     /** Renders [seconds] and returns the peak per block. */
@@ -87,7 +84,7 @@ class SoundEngineTest {
         val track: (FloatArray) -> Unit = { b -> for (i in b.indices step 2) { worst = maxOf(worst, abs(b[i] - prev)); prev = b[i] } }
         e.run(4.0, track)
         val bed = worst; worst = 0f
-        e.post(Command.NoiseLevel(0.1f)); e.run(1.0, track)
+        e.post(Command.Level(PINK, 0.1f)); e.run(1.0, track)
         e.post(Command.Pause); e.run(1.0, track)
         assertTrue("step $worst against the sound's own $bed", worst <= bed * 1.5f)
     }

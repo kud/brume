@@ -88,6 +88,7 @@ import app.beansontoast.brume.core.learn.Tag
 import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.LevelRules
 import app.beansontoast.brume.core.sound.NoiseColour
+import app.beansontoast.brume.core.sound.Sound
 import app.beansontoast.brume.core.sound.SoundEngine.Mode
 import app.beansontoast.brume.playback.PlayerUi
 import app.beansontoast.brume.playback.Status
@@ -126,28 +127,37 @@ fun Modules.shows(tab: Tab) = when (tab) { Tab.TONES -> tones; Tab.CALM -> calm;
 
 @StringRes fun Ambience.label() = when (this) {
     Ambience.RAIN -> R.string.nature_rain
-    Ambience.SURF -> R.string.nature_surf
+    Ambience.RAIN_TERRACE -> R.string.nature_rain_terrace
+    Ambience.STORM -> R.string.nature_storm
     Ambience.WIND -> R.string.nature_wind
+    Ambience.SEA -> R.string.nature_sea
+    Ambience.STREAM -> R.string.nature_stream
+    Ambience.BIRDS -> R.string.nature_birds
+    Ambience.NIGHT -> R.string.nature_night
+    Ambience.FIRE -> R.string.nature_fire
+    Ambience.CAFE -> R.string.nature_cafe
+    Ambience.TRAIN -> R.string.nature_train
 }
 
-@StringRes private fun Ambience.hint() = when (this) {
-    Ambience.RAIN -> R.string.nature_rain_hint
-    Ambience.SURF -> R.string.nature_surf_hint
-    Ambience.WIND -> R.string.nature_wind_hint
+@StringRes fun Sound.label() = when (this) {
+    is Sound.Noise -> colour.label()
+    is Sound.Recorded -> ambience.label()
 }
+
 
 internal fun chosenSound(context: Context, ui: PlayerUi): String = chosen(context, ui)
 
 private fun chosen(context: Context, ui: PlayerUi): String =
-    if (ui.mode == Mode.TONES) context.getString(R.string.mode_tones) else listOfNotNull(ui.noise?.label(), ui.ambience?.label()).joinToString(" + ") { context.getString(it) }
+    if (ui.mode == Mode.TONES) context.getString(R.string.mode_tones) else ui.sounds.joinToString(" + ") { context.getString(it.label()) }
 
 fun soundLabel(context: Context, ui: PlayerUi): String = chosen(context, ui).ifEmpty { context.getString(R.string.app_name) }
 
 class ListenActions(
-    val noise: (NoiseColour?) -> Unit = {},
-    val ambience: (Ambience?) -> Unit = {},
-    val noiseLevel: (Float) -> Unit = {},
-    val ambienceLevel: (Float) -> Unit = {},
+    /** The mixer: add a sound as a new layer, take one out, set one's level or (a noise's) tone. */
+    val add: (Sound) -> Unit = {},
+    val remove: (Sound) -> Unit = {},
+    val level: (Sound, Float) -> Unit = { _, _ -> },
+    val tone: (Sound, Float) -> Unit = { _, _ -> },
     val timer: (Int?) -> Unit = {},
     val toggle: () -> Unit = {},
     val tooLoud: () -> Unit = {},
@@ -612,6 +622,9 @@ fun AboutScreen(
         SectionTitle(stringResource(R.string.about_sources_title))
         Text(stringResource(R.string.about_sources), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // The recordings' credits (SOUNDS.md lists each file, its author and its page).
+        Text(stringResource(R.string.about_sounds_credits), style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
 
         OutlinedButton(onIntro, Modifier.fillMaxWidth().padding(top = 16.dp).heightIn(min = 48.dp)) {
             Text(stringResource(R.string.about_intro))

@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import app.beansontoast.brume.R
 import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.NoiseColour
+import app.beansontoast.brume.core.sound.Sound
 import app.beansontoast.brume.core.sound.SoundEngine.Mode
 import app.beansontoast.brume.playback.PlayerUi
 import app.beansontoast.design.tabular
@@ -77,15 +78,19 @@ fun PlayingView(ui: PlayerUi, night: Boolean, onPause: () -> Unit, onBack: () ->
     val t = time ?: clock
     val scheme = MaterialTheme.colorScheme
     val muted = scheme.onSurfaceVariant
+    val noise = ui.noise
+    val ambience = ui.ambience
+    val titled = noise?.let { Sound.Noise(it) } ?: ambience?.let { Sound.Recorded(it) }
     val title = when {
         ui.mode == Mode.TONES -> stringResource(R.string.ux_tone_kind)
-        ui.noise != null -> stringResource(ui.noise.label())
-        ui.ambience != null -> stringResource(ui.ambience.label())
+        noise != null -> stringResource(noise.label())
+        ambience != null -> stringResource(ambience.label())
         else -> ""
     }
     val detail = when {
         ui.mode == Mode.TONES -> stringResource(R.string.tones_pitch_value, ui.tones.pitch)
-        ui.noise != null && ui.ambience != null -> stringResource(R.string.play_with, stringResource(ui.ambience.label()))
+        // Every layer after the first, by name: « with Rain + Café ».
+        ui.sounds.size > 1 -> stringResource(R.string.play_with, ui.sounds.filter { it != titled }.joinToString(" + ") { context.getString(it.label()) })
         else -> null
     }
     Column(Modifier.fillMaxSize().background(scheme.background).safeDrawingPadding().padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -183,7 +188,7 @@ internal fun DrawScope.drift(ui: PlayerUi, t: Float, ink: Color, fade: Float) {
                 drawLine(over, Offset(x, y), Offset(x - l * 0.25f, y + l), 1.2f * px, StrokeCap.Round)
             }
         }
-        ui.ambience == Ambience.SURF -> horizon(mid - h * 0.12f, h * (0.03f + 0.015f * wander(t, 40)), w * 0.55f, t * 0.03f, w * 0.05f, w * 0.95f, over, 1.6f * px)
+        ui.ambience == Ambience.SEA -> horizon(mid - h * 0.12f, h * (0.03f + 0.015f * wander(t, 40)), w * 0.55f, t * 0.03f, w * 0.05f, w * 0.95f, over, 1.6f * px)
         ui.ambience == Ambience.WIND -> {
             val r = java.util.Random(3)
             repeat(6) { i ->

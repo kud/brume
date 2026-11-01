@@ -56,6 +56,8 @@ import app.beansontoast.brume.R
 import androidx.compose.foundation.clickable
 import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.NoiseColour
+import app.beansontoast.brume.core.sound.Sound
+import app.beansontoast.brume.core.sound.Tone
 import app.beansontoast.brume.core.sound.SoundEngine.Mode
 import app.beansontoast.brume.playback.PlayerUi
 import app.beansontoast.design.tabular
@@ -78,9 +80,9 @@ internal fun forMode(ui: PlayerUi, actions: ListenActions, mode: Mode): Pair<Pla
     fun claim() { if (!mine) actions.mode(mode) }
     val view = ui.copy(mode = mode, playing = ui.playing && mine, timerRemainingMinutes = if (mine) ui.timerRemainingMinutes else null)
     return view to ListenActions(
-        noise = { claim(); actions.noise(it) },
-        ambience = { claim(); actions.ambience(it) },
-        noiseLevel = actions.noiseLevel, ambienceLevel = actions.ambienceLevel, timer = actions.timer,
+        add = { claim(); actions.add(it) },
+        remove = { claim(); actions.remove(it) },
+        level = actions.level, tone = actions.tone, timer = actions.timer,
         toggle = { if (mine) actions.toggle() else { actions.mode(mode); if (!ui.playing) actions.toggle() } },
         tooLoud = actions.tooLoud, mode = actions.mode, open = actions.open, balance = actions.balance, output = actions.output,
         tones = ToneActions(
@@ -101,7 +103,7 @@ fun ListenComfort(all: PlayerUi, allActions: ListenActions) {
             NowPlaying(ui, actions, Modifier.padding(top = 12.dp))
             // The pickers come straight after the card, so at 360x780 the Nature heading meets the fold and
             // reads as "more" through the scroll cue; the one-at-a-time rule closes the page with the guide.
-            ComfortPickers(ui, actions)
+            AddSounds(ui, actions)
             Text(stringResource(R.string.ux_one_at_a_time), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
             Spacer(Modifier.height(24.dp))
@@ -171,12 +173,10 @@ internal fun NowPlaying(ui: PlayerUi, actions: ListenActions, modifier: Modifier
         if (ui.mode == Mode.TONES) {
             Slot(stringResource(R.string.ux_tone_kind), stringResource(R.string.tones_pitch_value, ui.tones.pitch), ui.toneLevel, null, null)
         } else {
-            val noise = ui.noise?.let { stringResource(it.label()) }
-            Slot(stringResource(R.string.listen_noise), noise, ui.noiseLevel, actions.noiseLevel, { actions.noise(null) })
-            if (noise == null) Empty(R.string.ux_slot_empty_noise)
-            val ambience = ui.ambience?.let { stringResource(it.label()) }
-            Slot(stringResource(R.string.listen_nature), ambience, ui.ambienceLevel, actions.ambienceLevel, { actions.ambience(null) })
-            if (ambience == null) Empty(R.string.ux_slot_empty_nature)
+            ui.sounds.forEach { s ->
+                Slot(stringResource(s.kind()), stringResource(s.label()), ui.level(s), { actions.level(s, it) }, { actions.remove(s) })
+            }
+            if (ui.mix.isEmpty()) Empty(R.string.mixer_empty)
         }
         EarsRows(ui.balance, ui.output, actions.balance, actions.output)
     }
@@ -218,26 +218,70 @@ private fun Empty(@StringRes text: Int) =
     Text(stringResource(text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = 4.dp))
 
-/** Noise, then nature, each a one-of-a-kind choice with its rule written under the heading. */
+@StringRes internal fun Sound.kind() = if (this is Sound.Noise) R.string.listen_noise else R.string.mixer_recording
+
+/**
+ * Every sound as a chip, noises then recordings: a check and weight on the ones in the mix. A tap
+ * adds the sound as a new layer, or takes it out; there is no limit but the list itself.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ComfortPickers(ui: PlayerUi, actions: ListenActions, modifier: Modifier = Modifier) {
-    SectionTitle(stringResource(R.string.listen_noise), modifier)
-    Rule(R.string.ux_noise_rule)
-    Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        NoiseColour.entries.forEach { c ->
-            ChoiceCard(stringResource(c.label()), ui.noise == c, { actions.noise(if (ui.noise == c) null else c) }, Modifier.weight(1f)) { texture(c, null, it) }
+private fun AddSounds(ui: PlayerUi, actions: ListenActions) {
+    SectionTitle(stringResource(R.string.mixer_add))
+    listOf(R.string.mixer_noises to NOISES, R.string.mixer_recordings to RECORDINGS).forEach { (title, sounds) ->
+        Text(stringResource(title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp, bottom = 6.dp))
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            sounds.forEach { s ->
+                val on = s in ui.sounds
+                SelectChip(stringResource(s.label()), on, { if (on) actions.remove(s) else actions.add(s) })
+            }
         }
-    }
-    SectionTitle(stringResource(R.string.listen_nature))
-    Rule(R.string.ux_nature_rule)
-    Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Ambience.entries.forEach { a ->
-            ChoiceCard(stringResource(a.label()), ui.ambience == a, { actions.ambience(if (ui.ambience == a) null else a) }, Modifier.weight(1f)) { texture(null, a, it) }
-        }
-        Spacer(Modifier.weight(1f))
     }
     Text(stringResource(R.string.listen_guide), style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
+}
+
+/** The noises, deepest first, then the recordings, as the chips read them. */
+private val NOISES: List<Sound> = listOf(NoiseColour.BROWN, NoiseColour.PINK, NoiseColour.GREY, NoiseColour.WHITE).map { Sound.Noise(it) }
+private val RECORDINGS: List<Sound> = listOf(
+    Ambience.RAIN, Ambience.RAIN_TERRACE, Ambience.STORM, Ambience.SEA, Ambience.STREAM, Ambience.WIND,
+    Ambience.BIRDS, Ambience.NIGHT, Ambience.FIRE, Ambience.CAFE, Ambience.TRAIN,
+).map { Sound.Recorded(it) }
+
+/** A tone told in words: « Soft 4 », « Even », « Bright 2 », never a bare number or a colour. */
+@Composable
+private fun toneWords(tone: Float): String {
+    val steps = (tone / Tone.STEP).roundToInt()
+    return when {
+        steps < 0 -> stringResource(R.string.mixer_tone_soft, -steps)
+        steps > 0 -> stringResource(R.string.mixer_tone_bright, steps)
+        else -> stringResource(R.string.mixer_tone_even)
+    }
+}
+
+/**
+ * One layer of the mixer: its name, its level in words and Remove, the level slider, and for a
+ * noise its tone, from soft to bright. Rows keep their height whatever the values say.
+ */
+@Composable
+private fun MixerLayer(ui: PlayerUi, sound: Sound, actions: ListenActions) {
+    val name = stringResource(sound.label())
+    Column(Modifier.padding(top = 8.dp)) {
+        Slot(stringResource(sound.kind()), name, ui.level(sound), { actions.level(sound, it) }, { actions.remove(sound) })
+        if (sound is Sound.Noise) {
+            val tone = ui.tone(sound)
+            val words = toneWords(tone)
+            val muted = MaterialTheme.colorScheme.onSurfaceVariant
+            Row(Modifier.fillMaxWidth().heightIn(min = 32.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.mixer_tone), style = MaterialTheme.typography.labelLarge, color = muted, modifier = Modifier.weight(1f))
+                Text(words, style = MaterialTheme.typography.bodyMedium.tabular(), color = muted)
+            }
+            val label = stringResource(R.string.mixer_tone_label, name)
+            Slider(value = tone, onValueChange = { actions.tone(sound, it) }, valueRange = -1f..1f, steps = 19, colors = quietSlider(),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp).semantics { contentDescription = label; stateDescription = words })
+        }
+    }
 }
 
 @Composable
@@ -283,34 +327,15 @@ fun SoundsScreen(all: PlayerUi, allActions: ListenActions, onBack: () -> Unit, h
             Icon(painterResource(R.drawable.ic_back), null, modifier = Modifier.size(20.dp))
             Text(stringResource(R.string.learn_back), modifier = Modifier.padding(start = 4.dp))
         }
-        // The first visit says what the two rows are for, once; after that the shorter rule.
+        // The mixer (Erwann, 2026-11-01: « jouer plusieurs sons en même temps avec des volumes
+        // différents pour chaque son »): the layers in the mix, each with its level, then every sound to add.
         ScreenTitle(R.string.scene_sounds, stringResource(if (hint) R.string.picker_hint else R.string.scene_sounds_hint))
-        // Two named rows, each one choice with None (Erwann, 2026-10-31). Before, all seven sat in one
-        // grid of checkboxes, and a second noise silently replaced the first: the engine holds one of each.
         if (hint) LaunchedEffect(Unit) { onHintSeen() }
-        PickerRow(stringResource(R.string.picker_background), stringResource(R.string.picker_none),
-            BACKGROUNDS.map { it to stringResource(it.label()) }, ui.noise, actions.noise, ui.noiseLevel, actions.noiseLevel)
-        PickerRow(stringResource(R.string.picker_ambience), stringResource(R.string.picker_none_ambience),
-            Ambience.entries.map { it to stringResource(it.label()) }, ui.ambience, actions.ambience, ui.ambienceLevel, actions.ambienceLevel)
+        SectionTitle(stringResource(R.string.mixer_in_mix))
+        ui.sounds.forEach { MixerLayer(ui, it, actions) }
+        if (ui.mix.isEmpty()) Empty(R.string.mixer_empty)
+        AddSounds(ui, actions)
         EarsRows(ui.balance, ui.output, actions.balance, actions.output)
         Spacer(Modifier.height(32.dp))
     }
-}
-
-/** The backgrounds, deepest first, as the row reads them. */
-private val BACKGROUNDS = listOf(NoiseColour.BROWN, NoiseColour.PINK, NoiseColour.WHITE, NoiseColour.GREY)
-
-/**
- * One named row of the picker: a single choice that includes None. Tapping a sound replaces the
- * row's last one, so the check moves; the chosen one is told by the check glyph and weight. Its own
- * level sits under it while something is chosen.
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun <T : Any> PickerRow(title: String, none: String, options: List<Pair<T, String>>, chosen: T?, onPick: (T?) -> Unit, level: Float, onLevel: (Float) -> Unit) {
-    SectionTitle(title)
-    FlowRow(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        (listOf<Pair<T?, String>>(null to none) + options).forEach { (value, name) -> SelectChip(name, chosen == value, { onPick(value) }) }
-    }
-    if (chosen != null) Slot(title, options.firstOrNull { it.first == chosen }?.second, level, onLevel, null)
 }

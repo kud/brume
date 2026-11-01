@@ -7,7 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import app.beansontoast.brume.core.journal.CheckIn
 import app.beansontoast.brume.core.sound.Ambience
+import app.beansontoast.brume.core.sound.MixLayer
 import app.beansontoast.brume.core.sound.NoiseColour
+import app.beansontoast.brume.core.sound.Sound
+import app.beansontoast.brume.ui.SoundsScreen
 import app.beansontoast.brume.core.sound.SoundEngine
 import app.beansontoast.brume.core.sound.ToneSettings
 import app.beansontoast.brume.playback.Output
@@ -83,12 +86,24 @@ class Renders(private val shot: String) {
 
     private val tones = PlayerUi(mode = SoundEngine.Mode.TONES, tones = ToneSettings(pitch = 6200, trims = listOf(1f, 0.85f, 0.7f, 0.6f)), toneLevel = 0.2f)
 
+    // Three layers, each at its own level; the pink noise turned two steps soft (invented).
+    private val mixed = PlayerUi(
+        mix = listOf(MixLayer(Sound.Noise(NoiseColour.PINK), -0.2f), MixLayer(Sound.Recorded(Ambience.RAIN)), MixLayer(Sound.Recorded(Ambience.CAFE))),
+        levels = mapOf(Sound.Noise(NoiseColour.PINK) to 0.3f, Sound.Recorded(Ambience.RAIN) to 0.5f, Sound.Recorded(Ambience.CAFE) to 0.2f),
+        playing = true, timerMinutes = 45, timerRemainingMinutes = 38,
+    )
+
     @Test fun render() = when (shot) {
+        "mixer-night" -> shoot(dark = true, night = true, Tab.LISTEN) { SoundsScreen(mixed, ListenActions(), onBack = {}) }
+        "mixer-day" -> shoot(dark = false, night = false, Tab.LISTEN) { SoundsScreen(mixed, ListenActions(), onBack = {}) }
+        "mixer-first-visit-day" -> shoot(dark = false, night = false, Tab.LISTEN) { SoundsScreen(idle, ListenActions(), onBack = {}, hint = true) }
+        "mixer-empty-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { SoundsScreen(PlayerUi(mix = emptyList()), ListenActions(), onBack = {}) }
+        "listen-mix-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(mixed, ListenActions()) }
         "listen-idle-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
         "listen-playing-night" -> shoot(dark = true, night = true, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
         "listen-idle-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(idle, ListenActions()) }
         "listen-playing-day" -> shoot(dark = false, night = false, Tab.LISTEN) { ListenComfort(playing, ListenActions()) }
-        "listen-empty-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenComfort(PlayerUi(noise = null, ambience = null), ListenActions()) }
+        "listen-empty-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenComfort(PlayerUi(mix = emptyList()), ListenActions()) }
         "listen-stopped-dark" -> shoot(dark = true, night = false, Tab.LISTEN) { ListenComfort(idle.copy(status = Status.TOO_LOUD), ListenActions()) }
         "listen-tones-night" -> shoot(dark = true, night = true, Tab.TONES) { TonesScreen(tones.copy(playing = true), ListenActions()) }
         "listen-tones-day" -> shoot(dark = false, night = false, Tab.TONES) { TonesScreen(tones, ListenActions()) }
@@ -180,6 +195,7 @@ class Renders(private val shot: String) {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun shots() = listOf(
+            "mixer-night", "mixer-day", "mixer-first-visit-day", "mixer-empty-dark", "listen-mix-day",
             "listen-idle-night", "listen-playing-night", "listen-idle-day", "listen-playing-day", "listen-empty-dark", "listen-stopped-dark", "listen-tones-night", "listen-tones-day",
             "journal-day", "journal-night", "journal-empty-dark", "about-night", "about-day", "listen-playing-open-day",
             "sync-night", "sync-day", "sync-off-day", "sync-problem-night",

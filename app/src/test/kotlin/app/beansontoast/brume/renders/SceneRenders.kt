@@ -69,7 +69,7 @@ class SceneRenders(private val shot: String) {
     )
     private val idle = PlayerUi(NoiseColour.BROWN, Ambience.RAIN, 0.3f, 0.45f, timerMinutes = 45)
     private val playing = idle.copy(playing = true, timerRemainingMinutes = 38)
-    private val louder = playing.copy(noiseLevel = 0.6f, ambienceLevel = 0.75f)
+    private val louder = playing.copy(levels = playing.levels.mapValues { (s, _) -> if (s is app.beansontoast.brume.core.sound.Sound.Noise) 0.6f else 0.75f })
     private val tones = PlayerUi(mode = SoundEngine.Mode.TONES, tones = ToneSettings(pitch = 6200, trims = listOf(1f, 0.85f, 0.7f, 0.6f)), toneLevel = 0.2f)
     private val scenes = Modules().scenes()
     private val breathe = BreatheScene(minutes = 5, soundName = "Bruit brun")
@@ -81,7 +81,7 @@ class SceneRenders(private val shot: String) {
         when {
             name == "sleep-playing" -> scene(dark, night, Scene.SLEEP, playing)
             name == "settle" -> scene(dark, night, Scene.SETTLE, idle)
-            name == "settle-empty" -> scene(dark, night, Scene.SETTLE, PlayerUi(noise = null))
+            name == "settle-empty" -> scene(dark, night, Scene.SETTLE, PlayerUi(mix = emptyList()))
             name == "breathe" -> scene(dark, night, Scene.BREATHE, idle)
             name == "tones" -> scene(dark, night, Scene.TONES, tones)
             name == "volume" -> scene(dark, night, Scene.SLEEP, louder)

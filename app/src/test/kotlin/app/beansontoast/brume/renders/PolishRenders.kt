@@ -45,7 +45,7 @@ class PolishRenders(private val shot: String) {
     @Before fun only() = assumeTrue(System.getenv("BRUME_RENDERS") != null)
 
     private val scenes = Modules().scenes()
-    private val empty = PlayerUi(noise = null)
+    private val empty = PlayerUi(mix = emptyList())
     private val suggested = PlayerUi(NoiseColour.BROWN, Ambience.RAIN, 0.3f, 0.3f, timerMinutes = 45, playing = true, timerRemainingMinutes = 45)
     private val tones = PlayerUi(mode = SoundEngine.Mode.TONES, tones = ToneSettings(pitch = 4000), toneLevel = 0.1f)
 

@@ -8,8 +8,9 @@ import kotlin.math.sign
 import kotlin.math.tanh
 
 /**
- * The whole sound, as samples: two layers (one noise, one ambience), their levels, the fade-in, the
- * pause and "Too loud" fades, the sleep timer and the left/right [Balance]. The app only pumps [render] into an AudioTrack.
+ * The whole sound, as samples: the mix (any number of layers, noises and recordings, each sound at
+ * most once, each with its own level and fading in on its own), the headroom that keeps a stack of
+ * layers from clipping, the fade-in, the pause and "Too loud" fades, the sleep timer and the left/right [Balance]. The app only pumps [render] into an AudioTrack.
  *
  * Threading: the UI [post]s commands from any thread; the render thread applies them at the start of
  * each block. The sleep timer counts rendered frames, so Doze can never make it late.
@@ -17,10 +18,16 @@ import kotlin.math.tanh
 class SoundEngine(val rate: Int, private val seed: Long = 1L) {
 
     sealed interface Command {
-        data class Noise(val colour: NoiseColour?) : Command
-        data class Nature(val ambience: Ambience?) : Command
-        data class NoiseLevel(val level: Float) : Command
-        data class NatureLevel(val level: Float) : Command
+        /**
+         * Adds a layer, or changes the tone of one already there. It fades in from silence over
+         * [LevelRules.FADE_IN_SECONDS] whatever else plays. A recording needs its decoded [loop];
+         * without one it is ignored.
+         */
+        data class Add(val sound: Sound, val level: Float, val tone: Float = Tone.DEFAULT, val loop: Loop? = null) : Command
+        /** Fades a layer out over [LevelRules.REMOVE_FADE_SECONDS], then drops it. */
+        data class Remove(val sound: Sound) : Command
+        data class Level(val sound: Sound, val level: Float) : Command
+        data class ToneOf(val sound: Sound, val tone: Float) : Command
         /** Sounds (noise and ambience) or the tone pattern: the other group ramps to silence. */
         data class Play(val mode: Mode) : Command
         data class Tones(val settings: ToneSettings) : Command
@@ -52,12 +59,19 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
     internal val rightGainNow get() = rightGain
 
     private var layerCount = 0L
-    private var noise: Source? = null
-    private var nature: Source? = null
-    private var noiseTarget = 0f; private var noiseGain = 0f
-    private var natureTarget = 0f; private var natureGain = 0f
-    private var noiseLevel = LevelRules.DEFAULT_LEVEL
-    private var natureLevel = LevelRules.DEFAULT_LEVEL
+
+    private class Layer(val sound: Sound, val source: Source, var level: Float) {
+        var target = 0f; var gain = 0f
+        /** 0..1: the layer's own cosine fade-in, then its fade-out on removal. */
+        var fade = 0f; var fadeAt = 0L
+        var removing = false
+    }
+
+    /** Touched only on the render thread. Never shrinks while rendering: dropped layers go at the next block. */
+    private val layers = ArrayList<Layer>()
+    /** The sounds in the mix as the render thread last saw them, for tests and the UI's sanity checks. */
+    @Volatile var sounds: List<Sound> = emptyList(); private set
+    private var trimTarget = 1f; private var trim = 1f
     private var mode = Mode.SOUNDS
     private var tones: ToneSource? = null
     private var tonesTarget = 0f; private var tonesGain = 0f
@@ -68,6 +82,7 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
 
     private val rampStep = (1.0 / (rate * LevelRules.GAIN_RAMP_SECONDS)).toFloat()
     private val fadeInFrames = (rate * LevelRules.FADE_IN_SECONDS).toLong()
+    private val removeFrames = (rate * LevelRules.REMOVE_FADE_SECONDS).toLong()
     private var fadeInAt = 0L
     private var master = 0f
     private var outStep = 0f
@@ -81,10 +96,12 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
 
     private fun apply(command: Command) {
         when (command) {
-            is Command.Noise -> { noise = command.colour?.let { noiseSource(it, rate, seed + ++layerCount) }; noiseGain = 0f; aim() }
-            is Command.Nature -> { nature = command.ambience?.let { ambienceSource(it, rate, seed + ++layerCount) }; natureGain = 0f; aim() }
-            is Command.NoiseLevel -> { noiseLevel = LevelRules.clampLevel(command.level); aim() }
-            is Command.NatureLevel -> { natureLevel = LevelRules.clampLevel(command.level); aim() }
+            is Command.Add -> add(command)
+            is Command.Remove -> layers.firstOrNull { it.sound == command.sound && !it.removing }?.let {
+                it.removing = true; it.fadeAt = 0L; aim()
+            }
+            is Command.Level -> layers.firstOrNull { it.sound == command.sound }?.let { it.level = LevelRules.clampLevel(command.level); aim() }
+            is Command.ToneOf -> (layers.firstOrNull { it.sound == command.sound }?.source as? TonedNoise)?.setTone(command.tone)
             is Command.Play -> { mode = command.mode; aim() }
             is Command.Tones -> {
                 val source = tones
@@ -113,11 +130,36 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
         }
     }
 
+    private fun add(command: Command.Add) {
+        val existing = layers.firstOrNull { it.sound == command.sound }
+        if (existing != null && !existing.removing) {
+            (existing.source as? TonedNoise)?.setTone(command.tone)
+            return
+        }
+        val source = when (val sound = command.sound) {
+            is Sound.Noise -> TonedNoise(sound.colour, rate, seed + ++layerCount, command.tone)
+            is Sound.Recorded -> LoopSource(command.loop ?: return, rate, seed + ++layerCount)
+        }
+        // A layer still fading out is replaced by the new one, which starts from silence.
+        if (existing != null) layers.remove(existing)
+        layers.add(Layer(command.sound, source, LevelRules.clampLevel(command.level)))
+        sounds = layers.filterNot { it.removing }.map { it.sound }
+        aim()
+    }
+
     private fun aim() {
-        val sounds = mode == Mode.SOUNDS
-        noiseTarget = if (noise == null || !sounds) 0f else LevelRules.gainFor(noiseLevel)
-        natureTarget = if (nature == null || !sounds) 0f else LevelRules.gainFor(natureLevel)
-        tonesTarget = if (tones == null || sounds) 0f else LevelRules.gainFor(tonesLevel)
+        val playSounds = mode == Mode.SOUNDS
+        var sum = 0f
+        for (layer in layers) {
+            // A layer on its way out keeps its level: its own fade takes it down, never a 20 ms cut.
+            layer.target = if (!playSounds) 0f else LevelRules.gainFor(layer.level)
+            sum += layer.target
+        }
+        // Headroom: the layers together never ask for more than one layer at full level. Below that
+        // nothing changes; above it every layer comes down together, keeping the balance between them.
+        trimTarget = if (sum > HEADROOM) HEADROOM / sum else 1f
+        tonesTarget = if (tones == null || playSounds) 0f else LevelRules.gainFor(tonesLevel)
+        sounds = layers.filterNot { it.removing }.map { it.sound }
     }
 
     private fun fadeOut(seconds: Double, reason: StopReason) {
@@ -151,20 +193,36 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
                 timerDone = remaining <= 0
             }
 
-            noiseGain = toward(noiseGain, noiseTarget)
-            natureGain = toward(natureGain, natureTarget)
+            trim = toward(trim, trimTarget)
             tonesGain = toward(tonesGain, tonesTarget)
             leftGain = toward(leftGain, leftTarget)
             rightGain = toward(rightGain, rightTarget)
-            val n = noise?.next() ?: 0f
-            val a = nature?.next() ?: 0f
+            var mixed = 0f
+            for (l in layers.indices) {
+                val layer = layers[l]
+                layer.gain = toward(layer.gain, layer.target)
+                if (layer.removing) {
+                    if (layer.fadeAt < removeFrames) layer.fadeAt++
+                    layer.fade = minOf(layer.fade, ((1 + cos(PI * layer.fadeAt / removeFrames)) / 2).toFloat())
+                } else if (layer.fadeAt < fadeInFrames && state != State.STOPPED) {
+                    layer.fadeAt++
+                    layer.fade = ((1 - cos(PI * layer.fadeAt / fadeInFrames)) / 2).toFloat()
+                }
+                // Every layer runs on even while silent, so its place in the loop or the noise moves on.
+                val x = layer.source.next()
+                mixed += x * layer.gain * layer.fade
+            }
             // The tone layer advances only while it can be heard; it resumes under the 20 ms gain ramp.
             val t = if (tonesGain > 0f) tones?.next() ?: 0f else 0f
-            val y = if (state == State.STOPPED) 0f else limit(n * noiseGain + a * natureGain + t * tonesGain) * master * timerGain
+            val y = if (state == State.STOPPED) 0f else limit(mixed * trim + t * tonesGain) * master * timerGain
             // Every source is mono: one signal, then the balance stage splits it to the two channels.
             out[2 * i] = y * leftGain; out[2 * i + 1] = y * rightGain
             if (state != State.STOPPED) playedFrames++
             if (timerDone) { timerTotal = 0; timerRemainingFrames = null; stop(StopReason.TIMER) }
+        }
+        if (layers.any { it.removing && it.fadeAt >= removeFrames }) {
+            layers.removeAll { it.removing && it.fadeAt >= removeFrames }
+            aim()
         }
     }
 
@@ -181,11 +239,14 @@ class SoundEngine(val rate: Int, private val seed: Long = 1L) {
             val remaining = timerTotal - timerElapsed
             if (remaining < timerFade) ((1 - cos(PI * remaining / timerFade)) / 2).toFloat() else 1f
         } else 1f
-        return if (state == State.STOPPED) 0f else master * timer * (noiseGain + natureGain + tonesGain)
+        val mixed = layers.sumOf { (it.gain * it.fade).toDouble() }.toFloat()
+        return if (state == State.STOPPED) 0f else master * timer * (mixed * trim + tonesGain)
     }
 
     companion object {
         private const val SILENT = 1e-4f
+        /** The most the layers may ask for together: one layer at full level. */
+        val HEADROOM = LevelRules.gainFor(1f)
         private const val KNEE = 0.5f
         private const val ROOM = 0.45f
 

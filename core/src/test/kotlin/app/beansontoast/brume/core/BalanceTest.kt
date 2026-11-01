@@ -1,9 +1,7 @@
 package app.beansontoast.brume.core
 
-import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.Balance
 import app.beansontoast.brume.core.sound.LevelRules
-import app.beansontoast.brume.core.sound.NoiseColour
 import app.beansontoast.brume.core.sound.SoundEngine
 import app.beansontoast.brume.core.sound.SoundEngine.Command
 import app.beansontoast.brume.core.sound.ToneSettings
@@ -16,8 +14,7 @@ class BalanceTest {
     private val block = 480
 
     private fun engine(mode: SoundEngine.Mode = SoundEngine.Mode.SOUNDS) = SoundEngine(RATE, 7).apply {
-        post(Command.Noise(NoiseColour.PINK)); post(Command.Nature(Ambience.RAIN))
-        post(Command.NoiseLevel(0.8f)); post(Command.NatureLevel(0.8f))
+        post(Command.Add(PINK, 0.8f)); post(Command.Add(RAIN, 0.8f, loop = testLoop()))
         post(Command.Tones(ToneSettings())); post(Command.ToneLevel(0.8f)); post(Command.Play(mode))
         post(Command.Start)
     }

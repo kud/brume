@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import app.beansontoast.design.Motion
 import androidx.compose.animation.Crossfade
 import app.beansontoast.brume.playback.Bells
+import app.beansontoast.brume.core.sound.Mix
+import app.beansontoast.brume.core.sound.LevelRules
 import app.beansontoast.brume.core.sound.Bell
 import app.beansontoast.brume.playback.openOutputSwitcher
 import android.os.Build
@@ -174,7 +176,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     var showUpdate by rememberSaveable { mutableStateOf(false) }
 
     // A sound scene keeps its own mix: any change to its sounds or timer is saved to it at once.
-    fun keepMix() { if (scene.sounds) graph.settings.setSceneMix(scene.name, SceneMix.of(graph.player.ui.value).encode()) }
+    fun keepMix() { if (scene.sounds) graph.settings.setSceneMix(scene.name, Mix.of(graph.player.ui.value).encode()) }
     // Moving to a sound scene brings its mix back. A swipe is his own gesture, and levels stay his,
     // per headphones, so a scene never makes anything louder. Never on the first visit: the scene
     // then starts from the mix already chosen, so nothing is lost when scenes arrive.
@@ -184,18 +186,17 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
         scene = next
         graph.settings.scene = next.name
         if (!next.sounds) return
-        val mix = SceneMix.decode(graph.settings.sceneMix(next.name)) ?: return keepMix()
+        val mix = Mix.decode(graph.settings.sceneMix(next.name)) ?: return keepMix()
         val now = graph.player.ui.value
-        if (mix.noise != now.noise) graph.player.selectNoise(mix.noise)
-        if (mix.ambience != now.ambience) graph.player.selectAmbience(mix.ambience)
+        graph.player.setMix(mix.layers)
         // The tone pattern playing keeps its own timer until a sound scene is played.
         if (mix.timer != now.timerMinutes && !(now.playing && now.mode == SoundEngine.Mode.TONES)) graph.player.setTimer(mix.timer)
     }
     val actions = ListenActions(
-        noise = { graph.player.selectNoise(it); keepMix() },
-        ambience = { graph.player.selectAmbience(it); keepMix() },
-        noiseLevel = graph.player::setNoiseLevel,
-        ambienceLevel = graph.player::setAmbienceLevel,
+        add = { graph.player.add(it); keepMix() },
+        remove = { graph.player.remove(it); keepMix() },
+        level = graph.player::setLevel,
+        tone = { s, t -> graph.player.setTone(s, t); keepMix() },
         timer = { graph.player.setTimer(it); keepMix() },
         toggle = graph.player::toggle,
         tooLoud = graph.player::tooLoud,
@@ -258,8 +259,8 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                     BackHandler { endBreath() }
                     // The bell follows the session's level: the sound under it, or the listening level when none plays.
                     val sessionLevel = if (player.playing && player.mode == SoundEngine.Mode.SOUNDS)
-                        listOfNotNull(player.noise?.let { player.noiseLevel }, player.ambience?.let { player.ambienceLevel }).maxOrNull() ?: player.noiseLevel
-                    else player.noiseLevel
+                        player.levels.values.maxOrNull() ?: LevelRules.DEFAULT_LEVEL
+                    else player.levels.values.maxOrNull() ?: LevelRules.DEFAULT_LEVEL
                     MeditationSession(meditation, r.at!!, night, onEnd = ::endBreath, onBell = { bells.ring(Bell.gain(sessionLevel, it.strength)) })
                 } else BrumeScaffold(tab = tab, onTab = { tab = it; pages = "" }, modules = modules,
                     mini = if (tab != Tab.LISTEN && player.playing && player.mode == SoundEngine.Mode.SOUNDS) {
@@ -323,7 +324,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                             swipeHint = swipeHint,
                             // An empty scene's suggestion, on his tap: its sounds and timer become the scene's mix, then it starts, fading in.
                             onSuggest = { mix ->
-                                graph.player.selectNoise(mix.noise); graph.player.selectAmbience(mix.ambience); graph.player.setTimer(mix.timer)
+                                graph.player.setMix(mix.layers); graph.player.setTimer(mix.timer)
                                 keepMix(); graph.player.play()
                             },
                             breathe = BreatheScene(

@@ -2,8 +2,6 @@ package app.beansontoast.brume.core.sound
 
 import app.beansontoast.brume.core.dsp.Biquad
 import app.beansontoast.brume.core.rng.Pcg32
-import kotlin.math.PI
-import kotlin.math.cos
 import kotlin.math.sqrt
 
 /** A mono generator. Never allocates in [next]: it runs on the render thread. */
@@ -13,8 +11,51 @@ fun interface Source {
 
 enum class NoiseColour { WHITE, PINK, BROWN, GREY }
 
-/** Generated, not recorded: no assets, no licences, never a loop seam. Birds wait for CC0 recordings. */
-enum class Ambience { RAIN, SURF, WIND }
+/**
+ * Recorded ambiences (Erwann, 2026-11-01: « j'ai pas envie de prétendre un wind ou la pluie »): CC0
+ * field recordings, made into seamless loops by tools/sounds/build_loops.py and credited in
+ * SOUNDS.md. [file] is the raw resource's name. RAIN and WIND keep their names from the synthesised
+ * ones they replace, so a stored choice carries over; SURF became [SEA] ([stored]).
+ */
+enum class Ambience(val file: String) {
+    RAIN("sound_rain"), RAIN_TERRACE("sound_rain_terrace"), STORM("sound_storm"), WIND("sound_wind"),
+    SEA("sound_sea"), STREAM("sound_stream"), BIRDS("sound_birds"), NIGHT("sound_night"),
+    FIRE("sound_fire"), CAFE("sound_cafe"), TRAIN("sound_train");
+
+    companion object {
+        /** A name stored by any version: the synthesised surf is now the recorded sea. */
+        fun stored(name: String?): Ambience? = when (name) {
+            "SURF" -> SEA
+            else -> entries.firstOrNull { it.name == name }
+        }
+    }
+}
+
+/** One sound in the mix: a synthesised noise colour or a recorded ambience. Each plays at most once. */
+sealed interface Sound {
+    val key: String
+
+    data class Noise(val colour: NoiseColour) : Sound {
+        override val key get() = "noise:${colour.name}"
+    }
+
+    data class Recorded(val ambience: Ambience) : Sound {
+        override val key get() = "nature:${ambience.name}"
+    }
+
+    companion object {
+        val all: List<Sound> = NoiseColour.entries.map { Noise(it) } + Ambience.entries.map { Recorded(it) }
+
+        fun parse(key: String?): Sound? {
+            val (kind, name) = key?.split(':', limit = 2)?.takeIf { it.size == 2 } ?: return null
+            return when (kind) {
+                "noise" -> NoiseColour.entries.firstOrNull { it.name == name }?.let { Noise(it) }
+                "nature" -> Ambience.stored(name)?.let { Recorded(it) }
+                else -> null
+            }
+        }
+    }
+}
 
 /** Every source plays at about this RMS, so changing sound never jumps in loudness. */
 const val TARGET_RMS = 0.2f
@@ -41,19 +82,6 @@ private const val CALIBRATION_SEED = 0x5EEDL
 fun noiseSource(colour: NoiseColour, rate: Int, seed: Long): Source {
     val make: (Long) -> Source = { s -> rawNoise(colour, rate, s) }
     val gain = calibrate(colour.name, rate, 4, make)
-    val raw = make(seed)
-    return Source { raw.next() * gain }
-}
-
-fun ambienceSource(ambience: Ambience, rate: Int, seed: Long): Source {
-    val make: (Long) -> Source = { s ->
-        when (ambience) {
-            Ambience.RAIN -> rain(rate, s)
-            Ambience.SURF -> surf(rate, s)
-            Ambience.WIND -> wind(rate, s)
-        }
-    }
-    val gain = calibrate(ambience.name, rate, 60, make)
     val raw = make(seed)
     return Source { raw.next() * gain }
 }
@@ -101,74 +129,5 @@ private fun brown(rng: Pcg32, rate: Int): Source {
     return Source {
         level = 0.998 * level + 0.05 * rng.nextSigned()
         dc.process(level).toFloat()
-    }
-}
-
-/** A slow random wander in [lo, hi], a new target every [seconds], eased with a raised cosine. */
-private class Drift(private val rng: Pcg32, rate: Int, seconds: Double, private val lo: Double, private val hi: Double) {
-    private val span = (rate * seconds).toInt().coerceAtLeast(1)
-    private var from = lo + (hi - lo) * rng.nextFloat()
-    private var to = lo + (hi - lo) * rng.nextFloat()
-    private var at = 0
-
-    fun next(): Double {
-        if (at >= span) { at = 0; from = to; to = lo + (hi - lo) * rng.nextFloat() }
-        val t = at++.toDouble() / span
-        return from + (to - from) * (1 - cos(PI * t)) / 2
-    }
-}
-
-/** Rain: a soft high hiss that breathes, with drops, each a few milliseconds of bright noise. */
-private fun rain(rate: Int, seed: Long): Source {
-    val rng = Pcg32.seeded(seed)
-    val hiss = pink(rng)
-    val hissHp = Biquad().highPass(rate, 400.0)
-    val hissLp = Biquad().lowPass(rate, 9000.0)
-    val dropHp = Biquad().highPass(rate, 1500.0)
-    val swell = Drift(rng, rate, 6.0, 0.6, 1.0)
-    val dropDecay = Math.exp(-1.0 / (0.004 * rate))
-    val dropChance = 60.0 / rate
-    var drop = 0.0
-    return Source {
-        if (rng.nextFloat() < dropChance) drop += 0.4 + 0.6 * rng.nextFloat()
-        drop *= dropDecay
-        val bed = hissLp.process(hissHp.process(hiss.next().toDouble())) * swell.next()
-        val drops = dropHp.process(rng.nextSigned().toDouble()) * drop
-        (bed + drops).toFloat()
-    }
-}
-
-/** Surf: deep noise that rises and falls in waves of 7 to 12 seconds, with foam on each crest. */
-private fun surf(rate: Int, seed: Long): Source {
-    val rng = Pcg32.seeded(seed)
-    val body = brown(rng, rate)
-    val bodyLp = Biquad().lowPass(rate, 1200.0)
-    val foamHp = Biquad().highPass(rate, 2500.0)
-    var waveLength = 0
-    var at = 0
-    return Source {
-        if (at >= waveLength) { at = 0; waveLength = (rate * (7.0 + 5.0 * rng.nextFloat())).toInt() }
-        val t = at++.toDouble() / waveLength
-        // Rises over the first 40%, falls over the rest, never quite to nothing.
-        val shape = if (t < 0.4) (1 - cos(PI * t / 0.4)) / 2 else (1 + cos(PI * (t - 0.4) / 0.6)) / 2
-        val envelope = 0.25 + 0.75 * shape
-        val foam = foamHp.process(rng.nextSigned().toDouble()) * shape * shape * 0.3
-        (bodyLp.process(body.next().toDouble()) * envelope + foam).toFloat()
-    }
-}
-
-/** Wind: noise through a band that wanders between 250 and 900 Hz, in gusts. */
-private fun wind(rate: Int, seed: Long): Source {
-    val rng = Pcg32.seeded(seed)
-    val band = Biquad()
-    val centre = Drift(rng, rate, 5.0, 250.0, 900.0)
-    val gust = Drift(rng, rate, 3.0, 0.3, 1.0)
-    var hz = 500.0
-    var count = 0
-    band.bandPass(rate, hz, 0.8)
-    return Source {
-        hz = centre.next()
-        if (count++ % 64 == 0) band.bandPass(rate, hz, 0.8)
-        (band.process(rng.nextSigned().toDouble()) * gust.next()).toFloat()
     }
 }

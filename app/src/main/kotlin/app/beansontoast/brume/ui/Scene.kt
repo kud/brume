@@ -89,7 +89,10 @@ import app.beansontoast.brume.Modules
 import app.beansontoast.brume.R
 import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.LevelRules
+import app.beansontoast.brume.core.sound.Mix
+import app.beansontoast.brume.core.sound.MixLayer
 import app.beansontoast.brume.core.sound.NoiseColour
+import app.beansontoast.brume.core.sound.Sound
 import app.beansontoast.brume.core.sound.SoundEngine.Mode
 import app.beansontoast.brume.core.sound.Volume
 import app.beansontoast.brume.playback.PlayerUi
@@ -123,9 +126,9 @@ enum class Scene(@StringRes val title: Int, val sounds: Boolean, @StringRes val 
  * Settle no longer look the same. Sleep is deep and stops by itself; Settle is lighter, with no
  * timer. Nothing plays without that tap, levels stay his own, and the start fades in as always.
  */
-fun Scene.suggestion(): SceneMix? = when (this) {
-    Scene.SLEEP -> SceneMix(NoiseColour.BROWN, Ambience.RAIN, 45)
-    Scene.SETTLE -> SceneMix(NoiseColour.PINK, Ambience.SURF, null)
+fun Scene.suggestion(): Mix? = when (this) {
+    Scene.SLEEP -> Mix(listOf(MixLayer(Sound.Noise(NoiseColour.BROWN)), MixLayer(Sound.Recorded(Ambience.RAIN))), 45)
+    Scene.SETTLE -> Mix(listOf(MixLayer(Sound.Noise(NoiseColour.PINK)), MixLayer(Sound.Recorded(Ambience.SEA))), null)
     else -> null
 }
 
@@ -145,19 +148,8 @@ internal fun Scene.art(): SceneLayers? = sceneArt[this]
 @DrawableRes internal fun NoiseColour.thumb(): Int? = null
 @DrawableRes internal fun Ambience.thumb(): Int? = null
 
-/** The mix a sound scene remembers: its noise, its nature sound, its timer. Levels stay per headphones. */
-data class SceneMix(val noise: NoiseColour?, val ambience: Ambience?, val timer: Int?) {
-    fun encode() = listOf(noise?.name ?: NONE, ambience?.name ?: NONE, timer?.toString() ?: NONE).joinToString("|")
-
-    companion object {
-        private const val NONE = "-"
-        fun of(ui: PlayerUi) = SceneMix(ui.noise, ui.ambience, ui.timerMinutes)
-        fun decode(text: String?): SceneMix? {
-            val p = text?.split('|')?.takeIf { it.size == 3 } ?: return null
-            return SceneMix(NoiseColour.entries.firstOrNull { it.name == p[0] }, Ambience.entries.firstOrNull { it.name == p[1] }, p[2].toIntOrNull())
-        }
-    }
-}
+/** The mix a sound scene remembers: its layers and its timer. Levels stay per headphones. */
+fun Mix.Companion.of(ui: PlayerUi) = Mix(ui.mix, ui.timerMinutes)
 
 /** What the Breathe scene needs: the practices left on, the one chosen, its length and the sound under it. */
 class BreatheScene(
@@ -190,7 +182,7 @@ fun SceneScreen(
     night: Boolean = false,
     peek: Float = 0f,
     /** Plays an empty scene's [suggestion]: the disc's one tap on a first visit. */
-    onSuggest: (SceneMix) -> Unit = {},
+    onSuggest: (Mix) -> Unit = {},
     /** The swipe hint shows until the scenes have been changed once, then never again. */
     swipeHint: Boolean = true,
     /** A fixed scene clock in milliseconds, for the drift renders only; the app runs its own. */
@@ -307,7 +299,7 @@ private fun SceneNames(scenes: List<Scene>, shown: Scene, onScene: (Scene) -> Un
 private fun ScenePage(
     scene: Scene, all: PlayerUi, allActions: ListenActions,
     onSounds: () -> Unit, onTonesSetup: () -> Unit, breathe: BreatheScene, night: Boolean,
-    onSuggest: (SceneMix) -> Unit,
+    onSuggest: (Mix) -> Unit,
     still: Boolean = true,
     clock: () -> Long = { 0L },
     offset: () -> Float = { 0f },
@@ -319,7 +311,7 @@ private fun ScenePage(
     // The layers the slide moves, each with its own setter: the tone pattern alone, or noise and nature.
     val layers: List<Pair<Float, (Float) -> Unit>> = when (scene) {
         Scene.TONES -> listOf(ui.toneLevel to actions.tones.level)
-        else -> listOfNotNull(ui.noise?.let { ui.noiseLevel to actions.noiseLevel }, ui.ambience?.let { ui.ambienceLevel to actions.ambienceLevel })
+        else -> ui.sounds.map { s -> ui.level(s) to { v: Float -> actions.level(s, v) } }
     }
     val levels = layers.map { it.first }
     val set: (List<Float>) -> Unit = { new -> layers.forEachIndexed { i, layer -> new.getOrNull(i)?.let(layer.second) } }
@@ -344,7 +336,7 @@ private fun ScenePage(
             ).joinToString(" · ").ifEmpty { stringResource(R.string.scene_breathe_quiet) }
         }
         else -> if (suggestion != null) {
-            title = mixName(context, PlayerUi(suggestion.noise, suggestion.ambience)) ?: ""
+            title = mixName(context, PlayerUi(mix = suggestion.layers)) ?: ""
             line = suggestion.timer?.let { stringResource(R.string.scene_suggest_timer, it) } ?: stringResource(R.string.scene_suggest_open)
         } else {
             title = mixName(context, ui) ?: stringResource(R.string.scene_no_sound)
@@ -458,11 +450,11 @@ internal fun nameScroll(widths: List<Int>, i: Int, margin: Float, viewport: Int,
 
 /** « Brun + Pluie »: both rows of the picker, background first. */
 internal fun mixName(context: android.content.Context, ui: PlayerUi): String? {
-    val a = ui.noise?.let { context.getString(it.label()) }
-    val b = ui.ambience?.let { context.getString(it.label()) }
-    return when {
-        a != null && b != null -> context.getString(R.string.scene_mix_and, a, b)
-        else -> a ?: b
+    val names = ui.sounds.map { context.getString(it.label()) }
+    return when (names.size) {
+        0 -> null
+        1 -> names[0]
+        else -> names.drop(1).fold(names[0]) { acc, n -> context.getString(R.string.scene_mix_and, acc, n) }
     }
 }
 

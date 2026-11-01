@@ -1,9 +1,7 @@
 package app.beansontoast.brume.core
 
-import app.beansontoast.brume.core.sound.Ambience
 import app.beansontoast.brume.core.sound.NoiseColour
 import app.beansontoast.brume.core.sound.TARGET_RMS
-import app.beansontoast.brume.core.sound.ambienceSource
 import app.beansontoast.brume.core.sound.noiseSource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -38,13 +36,13 @@ class SourcesTest {
     }
 
     @Test fun `every sound plays at about the same loudness`() {
-        val all = NoiseColour.entries.map { noiseSource(it, RATE, 5) } + Ambience.entries.map { ambienceSource(it, RATE, 5) }
+        val all = NoiseColour.entries.map { noiseSource(it, RATE, 5) }
         all.forEach { assertEquals(0.0, db(rms(it, seconds = 40) / TARGET_RMS), 2.0) }
     }
 
-    /** Rain's drops are spiky by nature; the engine's limiter takes what is left above its knee. */
+    /** Noise peaks are bounded; the engine's limiter takes what is left above its knee. */
     @Test fun `sources stay within a bounded crest`() {
-        (NoiseColour.entries.map { noiseSource(it, RATE, 9) } + Ambience.entries.map { ambienceSource(it, RATE, 9) }).forEach { s ->
+        NoiseColour.entries.map { noiseSource(it, RATE, 9) }.forEach { s ->
             var peak = 0f
             repeat(RATE * 20) { peak = maxOf(peak, abs(s.next())) }
             assertTrue("peak $peak", peak < 3f)
@@ -52,8 +50,8 @@ class SourcesTest {
     }
 
     @Test fun `the same seed gives the same sound`() {
-        Ambience.entries.forEach { a ->
-            val x = ambienceSource(a, RATE, 21); val y = ambienceSource(a, RATE, 21)
+        NoiseColour.entries.forEach { c ->
+            val x = noiseSource(c, RATE, 21); val y = noiseSource(c, RATE, 21)
             repeat(10_000) { assertEquals(x.next(), y.next()) }
         }
     }

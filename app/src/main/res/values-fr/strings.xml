@@ -392,7 +392,7 @@
     <string name="scene_add">Ajouter ou changer un son</string>
     <string name="scene_in_mix">%1$s, dans le mélange. Changer les sons</string>
     <string name="scene_sounds">Sons</string>
-    <string name="scene_sounds_hint">Un fond et une ambiance : un de chaque, ou aucun.</string>
+    <string name="scene_sounds_hint">Superposez autant de sons que vous voulez, chacun à son niveau.</string>
     <string name="scene_levels">Chaque son</string>
     <string name="scene_tones_setup">Hauteur et niveaux</string>
     <string name="scene_breathe_setup">Rythme et durée</string>
@@ -449,7 +449,7 @@
     <string name="picker_ambience">Ambiance</string>
     <string name="picker_none">Aucun</string>
     <string name="picker_none_ambience">Aucune</string>
-    <string name="picker_hint">Un fond et une ambiance, à mélanger.</string>
+    <string name="picker_hint">Mélangez les sons de votre choix, chacun à son niveau : un bruit pour fondre, un lieu où être.</string>
     <string name="breath_long">Souffle long</string>
     <string name="breath_sigh">Soupir</string>
     <string name="breath_box">Carré</string>
@@ -528,4 +528,25 @@
     <string name="advice_cbt_body">Toutes les recommandations les retiennent. Elles ne visent pas le son, mais le poids qu’il prend : sommeil, humeur, concentration.</string>
     <string name="advice_aids_title">Parlez des appareils auditifs si l’audition a baissé</string>
     <string name="advice_aids_body">Ils ramènent alors les sons du monde. Sans perte d’audition, ils n’ont pas montré de bénéfice.</string>
+    <string name="nature_rain_terrace">Pluie sur la terrasse</string>
+    <string name="nature_storm">Orage sous la tente</string>
+    <string name="nature_sea">Mer</string>
+    <string name="nature_stream">Ruisseau</string>
+    <string name="nature_birds">Oiseaux</string>
+    <string name="nature_night">Nuit d\'été</string>
+    <string name="nature_fire">Feu de cheminée</string>
+    <string name="nature_cafe">Café</string>
+    <string name="nature_train">Train de nuit</string>
+    <string name="mixer_recording">Enregistrement</string>
+    <string name="mixer_add">Ajouter un son</string>
+    <string name="mixer_noises">Bruits</string>
+    <string name="mixer_recordings">Enregistrements</string>
+    <string name="mixer_in_mix">Dans le mélange</string>
+    <string name="mixer_empty">Rien dans le mélange pour l\'instant. Ajoutez un son ci-dessous.</string>
+    <string name="mixer_tone">Timbre</string>
+    <string name="mixer_tone_soft">Doux %1$d</string>
+    <string name="mixer_tone_bright">Clair %1$d</string>
+    <string name="mixer_tone_even">Neutre</string>
+    <string name="mixer_tone_label">Timbre de %1$s</string>
+    <string name="about_sounds_credits">Sons enregistrés : prises de son CC0 de Joseph SARDIN (BigSoundBank.com), Kresiek The Furry et Thimras (OpenGameArt.org). Additional sounds: Joseph SARDIN - BigSoundBank.com.</string>
 </resources>

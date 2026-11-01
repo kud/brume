@@ -1,6 +1,5 @@
 package app.beansontoast.brume.core
 
-import app.beansontoast.brume.core.sound.NoiseColour
 import app.beansontoast.brume.core.sound.SoundEngine
 import app.beansontoast.brume.core.sound.SoundEngine.Command
 import app.beansontoast.brume.core.sound.TonePattern
@@ -121,7 +120,7 @@ class TonesTest {
     private val buffer = FloatArray(block * 2)
 
     private fun tonesEngine() = SoundEngine(RATE, 3).apply {
-        post(Command.Noise(NoiseColour.PINK)); post(Command.NoiseLevel(0.6f))
+        post(Command.Add(PINK, 0.6f))
         post(Command.Tones(ToneSettings(pitch = 4000))); post(Command.ToneLevel(0.6f))
         post(Command.Play(SoundEngine.Mode.TONES))
     }

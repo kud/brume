@@ -393,7 +393,7 @@
     <string name="scene_add">Add or change a sound</string>
     <string name="scene_in_mix">%1$s, in the mix. Change the sounds</string>
     <string name="scene_sounds">Sounds</string>
-    <string name="scene_sounds_hint">A background and an ambience: one of each, or none.</string>
+    <string name="scene_sounds_hint">Layer as many sounds as you like, each at its own level.</string>
     <string name="scene_levels">Each sound</string>
     <string name="scene_tones_setup">Pitch and levels</string>
     <string name="scene_breathe_setup">Pattern and length</string>
@@ -450,7 +450,7 @@
     <string name="picker_ambience">Ambience</string>
     <string name="picker_none">None</string>
     <string name="picker_none_ambience">None</string>
-    <string name="picker_hint">One background and one ambience, to blend.</string>
+    <string name="picker_hint">Mix any sounds together, each at its own level: a noise to blend, a place to be.</string>
     <string name="breath_long">Long out-breath</string>
     <string name="breath_sigh">Sigh</string>
     <string name="breath_box">Box</string>
@@ -529,4 +529,25 @@
     <string name="advice_cbt_body">Every guideline recommends it. It doesn’t aim at the sound but at the weight it puts on sleep, mood and focus.</string>
     <string name="advice_aids_title">Ask about hearing aids if your hearing has dropped</string>
     <string name="advice_aids_body">Then they bring the world’s sounds back. Without hearing loss, they haven’t shown a benefit.</string>
+    <string name="nature_rain_terrace">Rain on a terrace</string>
+    <string name="nature_storm">Storm in a tent</string>
+    <string name="nature_sea">Sea</string>
+    <string name="nature_stream">Stream</string>
+    <string name="nature_birds">Birds</string>
+    <string name="nature_night">Summer night</string>
+    <string name="nature_fire">Fireplace</string>
+    <string name="nature_cafe">Café</string>
+    <string name="nature_train">Night train</string>
+    <string name="mixer_recording">Recording</string>
+    <string name="mixer_add">Add a sound</string>
+    <string name="mixer_noises">Noises</string>
+    <string name="mixer_recordings">Recordings</string>
+    <string name="mixer_in_mix">In the mix</string>
+    <string name="mixer_empty">Nothing in the mix yet. Add a sound below.</string>
+    <string name="mixer_tone">Tone</string>
+    <string name="mixer_tone_soft">Soft %1$d</string>
+    <string name="mixer_tone_bright">Bright %1$d</string>
+    <string name="mixer_tone_even">Even</string>
+    <string name="mixer_tone_label">Tone of %1$s</string>
+    <string name="about_sounds_credits">Recorded sounds: CC0 field recordings by Joseph SARDIN (BigSoundBank.com), Kresiek The Furry and Thimras (OpenGameArt.org). Additional sounds: Joseph SARDIN - BigSoundBank.com.</string>
 </resources>

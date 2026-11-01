@@ -17,6 +17,8 @@ object LevelRules {
 
     const val FADE_IN_SECONDS = 3.0
     const val PAUSE_FADE_SECONDS = 0.25
+    /** A layer taken out of the mix fades away over this, so the others are left in peace. */
+    const val REMOVE_FADE_SECONDS = 1.0
     const val GAIN_RAMP_SECONDS = 0.02
     const val SLEEP_FADE_SECONDS = 300.0
 

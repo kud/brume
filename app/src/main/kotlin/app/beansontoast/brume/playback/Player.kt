@@ -7,6 +7,11 @@ import androidx.core.content.ContextCompat
 import app.beansontoast.brume.core.journal.EndedBy
 import app.beansontoast.brume.core.journal.ListeningSession
 import app.beansontoast.brume.core.sound.Ambience
+import app.beansontoast.brume.core.sound.Loop
+import app.beansontoast.brume.core.sound.Mix
+import app.beansontoast.brume.core.sound.MixLayer
+import app.beansontoast.brume.core.sound.Sound
+import app.beansontoast.brume.core.sound.Tone
 import app.beansontoast.brume.core.sound.Balance
 import app.beansontoast.brume.core.sound.LevelRules
 import app.beansontoast.brume.core.sound.NoiseColour
@@ -17,6 +22,7 @@ import app.beansontoast.brume.core.sound.TonePattern
 import app.beansontoast.brume.core.sound.ToneSettings
 import app.beansontoast.brume.data.Journal
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,10 +36,10 @@ import kotlin.math.ceil
 enum class Status { TOO_LOUD, ROUTE, FOCUS, TIMER }
 
 data class PlayerUi(
-    val noise: NoiseColour? = NoiseColour.PINK,
-    val ambience: Ambience? = null,
-    val noiseLevel: Float = LevelRules.DEFAULT_LEVEL,
-    val ambienceLevel: Float = LevelRules.DEFAULT_LEVEL,
+    /** The mix: any number of layers, each sound at most once, in the order they were added. */
+    val mix: List<MixLayer> = listOf(MixLayer(Sound.Noise(NoiseColour.PINK))),
+    /** Each layer's level, for the output in use. Per output device, on this phone only: never synced. */
+    val levels: Map<Sound, Float> = emptyMap(),
     val playing: Boolean = false,
     val timerMinutes: Int? = null,
     val timerRemainingMinutes: Int? = null,
@@ -46,7 +52,26 @@ data class PlayerUi(
     /** Where the sound plays now; null until the first read. */
     val output: Output? = null,
 ) {
-    val hasSound get() = mode == Mode.TONES || noise != null || ambience != null
+    /** The two-layer form the renders and older screens were written against. */
+    constructor(
+        noise: NoiseColour?, ambience: Ambience?,
+        noiseLevel: Float = LevelRules.DEFAULT_LEVEL, ambienceLevel: Float = LevelRules.DEFAULT_LEVEL,
+        playing: Boolean = false, timerMinutes: Int? = null, timerRemainingMinutes: Int? = null, status: Status? = null,
+        mode: Mode = Mode.SOUNDS, tones: ToneSettings = ToneSettings(), toneLevel: Float = TonePattern.DEFAULT_LEVEL,
+        balance: Float = Balance.CENTRE, output: Output? = null,
+    ) : this(
+        listOfNotNull(noise?.let { MixLayer(Sound.Noise(it)) }, ambience?.let { MixLayer(Sound.Recorded(it)) }),
+        listOfNotNull(noise?.let { Sound.Noise(it) to noiseLevel }, ambience?.let { Sound.Recorded(it) to ambienceLevel }).toMap(),
+        playing, timerMinutes, timerRemainingMinutes, status, mode, tones, toneLevel, balance, output,
+    )
+
+    val sounds: List<Sound> get() = mix.map { it.sound }
+    fun level(sound: Sound): Float = levels[sound] ?: LevelRules.DEFAULT_LEVEL
+    fun tone(sound: Sound): Float = mix.firstOrNull { it.sound == sound }?.tone ?: Tone.DEFAULT
+    /** The first noise and the first recording, for the art and the texture that draw one of each. */
+    val noise: NoiseColour? get() = sounds.firstNotNullOfOrNull { (it as? Sound.Noise)?.colour }
+    val ambience: Ambience? get() = sounds.firstNotNullOfOrNull { (it as? Sound.Recorded)?.ambience }
+    val hasSound get() = mode == Mode.TONES || mix.isNotEmpty()
 }
 
 /**
@@ -76,8 +101,7 @@ class Player(private val context: Context, private val journal: Journal, private
 
     init {
         val ui = _ui.value
-        engine.post(Command.Noise(ui.noise)); engine.post(Command.Nature(ui.ambience))
-        engine.post(Command.NoiseLevel(ui.noiseLevel)); engine.post(Command.NatureLevel(ui.ambienceLevel))
+        ui.mix.forEach { post(it, ui.level(it.sound)) }
         engine.post(Command.Tones(ui.tones)); engine.post(Command.ToneLevel(ui.toneLevel)); engine.post(Command.Play(ui.mode))
         engine.post(Command.Balance(ui.balance))
     }
@@ -108,21 +132,36 @@ class Player(private val context: Context, private val journal: Journal, private
         change {
             it.copy(
                 output = output,
-                noiseLevel = level("noise", it.noiseLevel), ambienceLevel = level("ambience", it.ambienceLevel),
+                levels = it.sounds.associateWith { s -> deviceLevel(key, s) ?: if (known) it.level(s) else minOf(it.level(s), LevelRules.DEFAULT_LEVEL) },
                 toneLevel = level("tone", it.toneLevel),
                 balance = if (known) Balance.snap(outputs.getFloat("$key|balance", it.balance)) else it.balance,
             )
         }
         val ui = _ui.value
-        engine.post(Command.NoiseLevel(ui.noiseLevel)); engine.post(Command.NatureLevel(ui.ambienceLevel))
+        ui.sounds.forEach { engine.post(Command.Level(it, ui.level(it))) }
         engine.post(Command.ToneLevel(ui.toneLevel)); engine.post(Command.Balance(ui.balance))
+    }
+
+    /**
+     * A sound's level stored for one output device. Before the mixer each device kept one "noise"
+     * and one "ambience" level; a sound with no level of its own takes its old slot's.
+     */
+    private fun deviceLevel(device: String, sound: Sound): Float? {
+        val own = "$device|${sound.key}"
+        val legacy = "$device|" + if (sound is Sound.Noise) "noise" else "ambience"
+        return when {
+            outputs.contains(own) -> outputs.getFloat(own, LevelRules.DEFAULT_LEVEL)
+            outputs.contains(legacy) -> outputs.getFloat(legacy, LevelRules.DEFAULT_LEVEL)
+            else -> null
+        }?.let(LevelRules::clampLevel)
     }
 
     private fun save(output: Output?) {
         val key = output?.key ?: return
         val ui = _ui.value
-        outputs.edit().putFloat("$key|noise", ui.noiseLevel).putFloat("$key|ambience", ui.ambienceLevel)
-            .putFloat("$key|tone", ui.toneLevel).putFloat("$key|balance", ui.balance).apply()
+        val edit = outputs.edit()
+        ui.levels.forEach { (sound, level) -> edit.putFloat("$key|${sound.key}", level) }
+        edit.putFloat("$key|tone", ui.toneLevel).putFloat("$key|balance", ui.balance).apply()
     }
 
     fun selectMode(mode: Mode) { change { it.copy(mode = mode) }; engine.post(Command.Play(mode)) }
@@ -155,13 +194,61 @@ class Player(private val context: Context, private val journal: Journal, private
         return true
     }
 
-    fun selectNoise(colour: NoiseColour?) { change { it.copy(noise = colour) }; engine.post(Command.Noise(colour)); pauseIfSilent() }
-    fun selectAmbience(ambience: Ambience?) { change { it.copy(ambience = ambience) }; engine.post(Command.Nature(ambience)); pauseIfSilent() }
+    /** Recordings decoded for the mix, shared by the engine's layers. Dropped when their layer goes. */
+    private val loops = java.util.concurrent.ConcurrentHashMap<Ambience, Loop>()
+
+    /** Hands a layer to the engine; a recording is decoded first, off the main thread, then fades in. */
+    private fun post(layer: MixLayer, level: Float) {
+        when (val sound = layer.sound) {
+            is Sound.Noise -> engine.post(Command.Add(sound, level, layer.tone))
+            is Sound.Recorded -> scope.launch(Dispatchers.Default) {
+                val loop = loops[sound.ambience] ?: runCatching { Loops.decode(context, sound.ambience) }.getOrNull()?.also { loops[sound.ambience] = it }
+                // Still wanted once decoded, at the level it has now: a slider moved meanwhile wins.
+                if (loop != null && _ui.value.sounds.contains(sound)) engine.post(Command.Add(sound, _ui.value.level(sound), loop = loop))
+            }
+        }
+    }
+
+    /** A new layer, at this output's level for it, or at most the soft default: adding never startles. */
+    fun add(sound: Sound) {
+        if (sound in _ui.value.sounds) return
+        val level = _ui.value.output?.key?.let { deviceLevel(it, sound) } ?: prefs.getFloat(LEVEL + sound.key, LevelRules.DEFAULT_LEVEL).coerceAtMost(LevelRules.DEFAULT_LEVEL)
+        change { it.copy(mix = it.mix + MixLayer(sound), levels = it.levels + (sound to level)) }
+        post(MixLayer(sound), level)
+    }
+
+    fun remove(sound: Sound) {
+        change { it.copy(mix = it.mix.filterNot { l -> l.sound == sound }, levels = it.levels - sound) }
+        engine.post(Command.Remove(sound))
+        (sound as? Sound.Recorded)?.let { loops.remove(it.ambience) }
+        pauseIfSilent()
+    }
+
+    fun setLevel(sound: Sound, level: Float) {
+        if (sound !in _ui.value.sounds) return
+        val l = LevelRules.clampLevel(level)
+        change { it.copy(levels = it.levels + (sound to l)) }
+        engine.post(Command.Level(sound, l))
+    }
+
+    fun setTone(sound: Sound, tone: Float) {
+        val t = Tone.snap(tone)
+        change { it.copy(mix = it.mix.map { l -> if (l.sound == sound) l.copy(tone = t) else l }) }
+        engine.post(Command.ToneOf(sound, t))
+    }
+
+    /** A scene's mix comes back: what is not in it fades out, what is new fades in, the rest plays on. */
+    fun setMix(layers: List<MixLayer>) {
+        val now = _ui.value.sounds
+        now.filterNot { s -> layers.any { it.sound == s } }.forEach(::remove)
+        layers.forEach { layer ->
+            if (layer.sound !in _ui.value.sounds) add(layer.sound)
+            if (layer.tone != _ui.value.tone(layer.sound)) setTone(layer.sound, layer.tone)
+        }
+    }
 
     /** Unchoosing the last layer while playing ends the session, so the app never "plays" silence. */
     private fun pauseIfSilent() { if (_ui.value.playing && !_ui.value.hasSound) pause(EndedBy.USER) }
-    fun setNoiseLevel(level: Float) { change { it.copy(noiseLevel = LevelRules.clampLevel(level)) }; engine.post(Command.NoiseLevel(level)) }
-    fun setAmbienceLevel(level: Float) { change { it.copy(ambienceLevel = LevelRules.clampLevel(level)) }; engine.post(Command.NatureLevel(level)) }
 
     fun setTimer(minutes: Int?) {
         change { it.copy(timerMinutes = minutes, timerRemainingMinutes = if (it.playing) minutes else null) }
@@ -193,12 +280,9 @@ class Player(private val context: Context, private val journal: Journal, private
         pendingEnd = EndedBy.TOO_LOUD
         engine.post(Command.TooLoud)
         change {
-            it.copy(
-                noiseLevel = LevelRules.afterTooLoud(it.noiseLevel), ambienceLevel = LevelRules.afterTooLoud(it.ambienceLevel),
-                toneLevel = LevelRules.afterTooLoud(it.toneLevel),
-            )
+            it.copy(levels = it.levels.mapValues { (_, l) -> LevelRules.afterTooLoud(l) }, toneLevel = LevelRules.afterTooLoud(it.toneLevel))
         }
-        engine.post(Command.NoiseLevel(_ui.value.noiseLevel)); engine.post(Command.NatureLevel(_ui.value.ambienceLevel))
+        _ui.value.levels.forEach { (s, l) -> engine.post(Command.Level(s, l)) }
         engine.post(Command.ToneLevel(_ui.value.toneLevel))
     }
 
@@ -215,12 +299,16 @@ class Player(private val context: Context, private val journal: Journal, private
         // The log has no tone column yet: a tone session goes in the sound slot as TONE_PATTERN, with
         // its level and never its pitch, so the schema (and every stored row) stays as it is.
         val tones = ui.mode == Mode.TONES
+        val noises = ui.sounds.filterIsInstance<Sound.Noise>()
+        val recorded = ui.sounds.filterIsInstance<Sound.Recorded>()
         val session = ListeningSession(
             startedAt = sessionStartedAt, seconds = seconds,
-            noise = if (tones) TONE_PATTERN else ui.noise?.name,
-            noiseLevel = if (tones) ui.toneLevel else ui.noise?.let { ui.noiseLevel },
-            ambience = if (tones) null else ui.ambience?.name,
-            ambienceLevel = if (tones) null else ui.ambience?.let { ui.ambienceLevel },
+            // The log keeps its two columns: every noise in the first, every recording in the second,
+            // joined by "+", each with the loudest level of its group.
+            noise = if (tones) TONE_PATTERN else noises.joinToString("+") { it.colour.name }.ifEmpty { null },
+            noiseLevel = if (tones) ui.toneLevel else noises.maxOfOrNull { ui.level(it) },
+            ambience = if (tones) null else recorded.joinToString("+") { it.ambience.name }.ifEmpty { null },
+            ambienceLevel = if (tones) null else recorded.maxOfOrNull { ui.level(it) },
             endedBy = ended,
         )
         scope.launch { journal.log(session) }
@@ -250,10 +338,10 @@ class Player(private val context: Context, private val journal: Journal, private
     private fun change(transform: (PlayerUi) -> PlayerUi) {
         _ui.update(transform)
         val ui = _ui.value
-        prefs.edit()
-            .putString(NOISE, ui.noise?.name ?: NONE).putString(AMBIENCE, ui.ambience?.name ?: NONE)
-            .putFloat(NOISE_LEVEL, ui.noiseLevel).putFloat(AMBIENCE_LEVEL, ui.ambienceLevel)
-            .putInt(TIMER, ui.timerMinutes ?: 0)
+        val edit = prefs.edit()
+        ui.levels.forEach { (s, l) -> edit.putFloat(LEVEL + s.key, l) }
+        edit.putString(MIX, Mix(ui.mix).encode())
+        edit.putInt(TIMER, ui.timerMinutes ?: 0)
             .putString(MODE, ui.mode.name).putFloat(TONE_LEVEL, ui.toneLevel).putInt(PITCH, ui.tones.pitch)
             .putString(TRIMS, ui.tones.trims.joinToString(","))
             .putFloat(BALANCE, ui.balance)
@@ -264,13 +352,17 @@ class Player(private val context: Context, private val journal: Journal, private
 
     private fun load(): PlayerUi {
         val defaults = PlayerUi()
-        fun noise(name: String?) = if (name == NONE) null else NoiseColour.entries.firstOrNull { it.name == name } ?: defaults.noise
-        fun ambience(name: String?) = if (name == NONE) null else Ambience.entries.firstOrNull { it.name == name }
+        // Before the mixer: one noise and one nature sound, each with one level. They become the first
+        // two layers (surf as the recorded sea), keeping their levels; then the old keys are left alone.
+        val mix = Mix.decode(prefs.getString(MIX, null))?.layers ?: run {
+            val noise = prefs.getString(NOISE, null).let { n -> if (n == NONE) null else NoiseColour.entries.firstOrNull { it.name == n } ?: NoiseColour.PINK }
+            val ambience = Ambience.stored(prefs.getString(AMBIENCE, NONE))
+            listOfNotNull(noise?.let { MixLayer(Sound.Noise(it)) }, ambience?.let { MixLayer(Sound.Recorded(it)) })
+        }
+        fun legacy(sound: Sound) = prefs.getFloat(if (sound is Sound.Noise) NOISE_LEVEL else AMBIENCE_LEVEL, LevelRules.DEFAULT_LEVEL)
         return PlayerUi(
-            noise = noise(prefs.getString(NOISE, null)),
-            ambience = ambience(prefs.getString(AMBIENCE, NONE)),
-            noiseLevel = prefs.getFloat(NOISE_LEVEL, defaults.noiseLevel),
-            ambienceLevel = prefs.getFloat(AMBIENCE_LEVEL, defaults.ambienceLevel),
+            mix = mix,
+            levels = mix.associate { it.sound to LevelRules.clampLevel(prefs.getFloat(LEVEL + it.sound.key, legacy(it.sound))) },
             timerMinutes = prefs.getInt(TIMER, 0).takeIf { it > 0 },
             mode = Mode.entries.firstOrNull { it.name == prefs.getString(MODE, null) } ?: defaults.mode,
             toneLevel = prefs.getFloat(TONE_LEVEL, defaults.toneLevel),
@@ -287,6 +379,7 @@ class Player(private val context: Context, private val journal: Journal, private
     private companion object {
         const val NONE = "none"
         const val NOISE = "noise"; const val AMBIENCE = "ambience"
+        const val MIX = "mix"; const val LEVEL = "level|"
         const val NOISE_LEVEL = "noise_level"; const val AMBIENCE_LEVEL = "ambience_level"
         const val TIMER = "timer"
         const val MODE = "mode"; const val TONE_LEVEL = "tone_level"; const val PITCH = "tone_pitch"; const val TRIMS = "tone_trims"; const val TONES_AT = "tones_at"
