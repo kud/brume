@@ -11,6 +11,8 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
+import app.beansontoast.design.tabular
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -245,8 +247,12 @@ private fun UnweightedMark(modifier: Modifier = Modifier) {
 
 @Composable
 private fun StepButton(glyph: String, label: String, onClick: () -> Unit) {
-    IconButton(onClick = onClick, modifier = Modifier.semantics { contentDescription = label }) {
-        Text(glyph, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    // A hairline ring round the sign, the same weight as the dial's rim (Iris, phase 4).
+    IconButton(onClick = onClick, modifier = Modifier.size(48.dp).semantics { contentDescription = label }) {
+        Box(Modifier.size(36.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant, androidx.compose.foundation.shape.CircleShape),
+            contentAlignment = Alignment.Center) {
+            Text(glyph, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+        }
     }
 }
 
@@ -266,7 +272,7 @@ private fun Dial(db: Int, onChange: (Int) -> Unit, strainWord: String, modifier:
     val ink = MaterialTheme.colorScheme.onSurface
     val quiet = MaterialTheme.colorScheme.onSurfaceVariant
     val track = MaterialTheme.colorScheme.outlineVariant
-    val knob = MaterialTheme.colorScheme.surfaceContainerHigh
+    val knob = MaterialTheme.colorScheme.surfaceContainerLowest
     val measurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelSmall.copy(color = quiet)
     val dialLabel = stringResource(R.string.db_dial)
@@ -332,15 +338,16 @@ private fun Dial(db: Int, onChange: (Int) -> Unit, strainWord: String, modifier:
                 val spot = if (v == Decibels.REL) Offset(p.x, p.y - 6.dp.toPx()) else Offset((p.x + q.x) / 2, q.y + 14.dp.toPx())
                 drawText(layout, topLeft = Offset(spot.x - layout.size.width / 2, spot.y - layout.size.height / 2))
             }
-            // The knob, its rim and the notch that points at the level.
-            drawCircle(knob, ring - 2.dp.toPx(), c)
+            // The knob in the new look (Iris, phase 4): a veil of mist inside a hairline, not a slab,
+            // the arc of the level drawn over it, and the notch that points at the level.
+            drawCircle(knob.copy(alpha = 0.55f), ring - 2.dp.toPx(), c)
             drawCircle(track, ring - 2.dp.toPx(), c, style = Stroke(1.dp.toPx()))
             drawArc(ink, START, SWEEP * db / Decibels.MAX, false, Offset(c.x - ring, c.y - ring), Size(2 * ring, 2 * ring), style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
             val a = angle(db)
-            drawLine(ink, on(ring - 22.dp.toPx(), a), on(ring - 8.dp.toPx(), a), 3.dp.toPx(), StrokeCap.Round)
+            drawLine(ink, on(ring - 18.dp.toPx(), a), on(ring - 8.dp.toPx(), a), 2.dp.toPx(), StrokeCap.Round)
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(db.toString(), style = MaterialTheme.typography.displaySmall.copy(fontSize = 44.sp), fontWeight = FontWeight.Light)
+            Text(db.toString(), style = MaterialTheme.typography.displaySmall.copy(fontSize = 40.sp).tabular(), fontWeight = FontWeight.Light)
             Text("dB", style = MaterialTheme.typography.labelLarge, color = quiet)
         }
     }

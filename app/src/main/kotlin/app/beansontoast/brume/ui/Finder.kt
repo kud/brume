@@ -17,7 +17,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -195,15 +194,14 @@ private fun Journey(
     }
     fun back() = if (index == 0) onLeave() else onPlace(p.copy(step = steps[index - 1], draft = d.copy(listening = null)))
 
+    // The frame's corner steps back (‹), or leaves the search from its first step (✕), like system
+    // Back; the step keeps no row of its own (Iris, phase 4).
+    InnerBack({ back() }, close = index == 0)
     Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box48(stringResource(R.string.finder_back)) { back() }
-            Text(stringResource(R.string.finder_step, index + 1, steps.size), style = MaterialTheme.typography.labelLarge.tabular(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-            TextButton(onLeave) { Text(stringResource(R.string.finder_close)) }
-        }
+        Text(stringResource(R.string.finder_step, index + 1, steps.size), style = MaterialTheme.typography.labelLarge.tabular(),
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(stringResource(p.step.title()), style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(top = 8.dp).semantics { heading() })
+            modifier = Modifier.padding(top = 4.dp).semantics { heading() })
         Column(Modifier.weight(1f).padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             StepBody(p.step, d, profiles, ::go)
         }
@@ -215,7 +213,8 @@ private fun Journey(
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).graphicsAlpha(app.beansontoast.design.calmAlpha(sounding)),
         ) { Text(stringResource(R.string.finder_too_loud)) }
         Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(onClick = { next(skipped(p.step, d)) }, modifier = Modifier.weight(1f).heightIn(min = 56.dp)) {
+            // Passer is a word, not a second slab beside Continuer (Iris, phase 4).
+            TextButton(onClick = { next(skipped(p.step, d)) }, modifier = Modifier.weight(1f).heightIn(min = 56.dp)) {
                 Text(stringResource(R.string.finder_skip))
             }
             Button(onClick = { next() }, modifier = Modifier.weight(1f).heightIn(min = 56.dp)) {
@@ -296,10 +295,9 @@ private fun StepBody(step: FinderStep, d: FinderDraft, profiles: List<TinnitusPr
                 Box48(stringResource(R.string.tones_pitch_up), plus = true) { go(d.copy(hz = PitchLadder.fine(d.hz, 1).coerceAtMost(range.last))) }
             }
             val label = stringResource(R.string.finder_fine_label)
-            Slider(
+            LineSlider(
                 value = PitchLadder.position(d.hz, range.first, range.last),
                 onValueChange = { go(d.copy(hz = PitchLadder.at(it, range.first, range.last))) },
-                colors = quietSlider(),
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).semantics { contentDescription = label; stateDescription = text },
             )
             Row {
@@ -432,7 +430,8 @@ private fun WordSlider(label: String, value: Float, word: String, onValue: (Floa
         Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         Text(word, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
-    Slider(value, onValue, steps = 19, colors = quietSlider(),
+    // The mixer's hairline line slider: the steps read as one quiet family (Iris, phase 4).
+    LineSlider(value, onValue, steps = 19,
         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).semantics { contentDescription = label; stateDescription = word })
 }
 
@@ -466,10 +465,10 @@ private fun Bullet(text: String) = Row {
     Text(text, style = MaterialTheme.typography.bodyLarge)
 }
 
-/** A quiet 48 dp target: a back chevron, or a minus / plus for the fine dial. */
+/** A quiet 48 dp target: a minus or plus for the fine dial. */
 @Composable
-private fun Box48(label: String, plus: Boolean? = null, onClick: () -> Unit) {
-    val glyph = when (plus) { null -> "‹"; true -> "+"; false -> "−" }
+private fun Box48(label: String, plus: Boolean, onClick: () -> Unit) {
+    val glyph = if (plus) "+" else "−"
     androidx.compose.foundation.layout.Box(
         Modifier.heightIn(min = 48.dp).width(48.dp).clickable(onClickLabel = label, onClick = onClick).semantics { contentDescription = label },
         contentAlignment = Alignment.Center,

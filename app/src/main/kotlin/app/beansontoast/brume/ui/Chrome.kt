@@ -71,14 +71,15 @@ fun FnFrame(
     content: @Composable () -> Unit,
 ) {
     val nav = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val inner = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<(() -> Unit)?>(null) }
+    val inner = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<InnerClaim?>(null) }
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Landscape(land)
         CompositionLocalProvider(LocalChromeBottom provides nav, LocalInnerBack provides inner) {
             Column(Modifier.fillMaxSize().statusBarsPadding()) {
-                // A view inside the screen that has claimed the frame's corner turns ✕ into ‹ back to it.
+                // A view inside the screen that has claimed the frame's corner turns ✕ into ‹ back to it
+                // (or keeps a ✕ that leaves that view, on its first step).
                 val claimed = inner.value
-                if (claimed != null) CloseBar(title, claimed, back = true)
+                if (claimed != null) CloseBar(title, claimed.onBack, back = !claimed.close)
                 else if (onClose != null) CloseBar(title, onClose)
                 else if (onBack != null) CloseBar(title, onBack, back = true)
                 Box(Modifier.fillMaxWidth().weight(1f)) { content() }
@@ -129,22 +130,26 @@ fun MiniPlayer(name: String, onPause: () -> Unit, onOpen: () -> Unit = {}) {
     }
 }
 
+/** A view's claim on the frame's corner: what the corner does, and whether it reads ✕ rather than ‹. */
+internal class InnerClaim(val onBack: () -> Unit, val close: Boolean)
+
 /** Where a view inside a screen puts its own back, so the frame's corner can carry it. */
-internal val LocalInnerBack = compositionLocalOf<androidx.compose.runtime.MutableState<(() -> Unit)?>?> { null }
+internal val LocalInnerBack = compositionLocalOf<androidx.compose.runtime.MutableState<InnerClaim?>?> { null }
 
 /**
- * A view one step inside a screen (a saved profile in Mon acouphène): while it shows, the frame's
- * ✕ becomes ‹ and, like system Back, returns to [onBack] rather than leaving for home (Iris, phase
- * 3), so the view needs no back row of its own.
+ * A view one step inside a screen (a saved profile, a step of Mon acouphène's search): while it
+ * shows, the frame's corner and system Back return to [onBack] rather than leaving for home (Iris,
+ * phase 3), so the view needs no back row of its own. The corner reads ‹, or ✕ when [close] (the
+ * first step of a journey, where going back means leaving it; Iris, phase 4).
  */
 @Composable
-internal fun InnerBack(onBack: () -> Unit) {
+internal fun InnerBack(onBack: () -> Unit, close: Boolean = false) {
     val slot = LocalInnerBack.current
     val current = androidx.compose.runtime.rememberUpdatedState(onBack)
     androidx.activity.compose.BackHandler { current.value() }
-    if (slot != null) androidx.compose.runtime.DisposableEffect(slot) {
-        val back: () -> Unit = { current.value() }
-        slot.value = back
-        onDispose { if (slot.value === back) slot.value = null }
+    if (slot != null) androidx.compose.runtime.DisposableEffect(slot, close) {
+        val claim = InnerClaim({ current.value() }, close)
+        slot.value = claim
+        onDispose { if (slot.value === claim) slot.value = null }
     }
 }

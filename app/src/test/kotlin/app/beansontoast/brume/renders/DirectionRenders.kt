@@ -96,6 +96,14 @@ class DirectionRenders(private val shot: String) {
                     app.beansontoast.brume.ui.FinderScreen(listOf(p), app.beansontoast.brume.ui.FinderActions(), onBack = {}, start = app.beansontoast.brume.ui.FinderPlace.Profile("demo"))
                 }
             }
+            // Phase 4: Décibels and the search's steps, the corner carrying ✕ (first step) or ‹.
+            "loudness" -> capture(night) { FnFrame(onClose = {}, title = "Comprendre", land = Land.SKY) { app.beansontoast.brume.ui.LearnScreen(still = true, startPage = 2) } }
+            "finder-step1", "finder-step3" -> capture(night) {
+                val step = if (shot.startsWith("finder-step1")) app.beansontoast.brume.ui.FinderStep.WELCOME else app.beansontoast.brume.ui.FinderStep.LEVEL
+                FnFrame(onClose = {}, title = "Mon acouphène", land = Land.SKY) {
+                    app.beansontoast.brume.ui.FinderScreen(emptyList(), app.beansontoast.brume.ui.FinderActions(), onBack = {}, start = app.beansontoast.brume.ui.FinderPlace.Journey(step))
+                }
+            }
             "intro-card" -> capture(night) { app.beansontoast.brume.ui.launch.TitleCard() }
             else -> error(shot)
         }
@@ -118,7 +126,7 @@ class DirectionRenders(private val shot: String) {
             "home-day", "home-night", "home-mini-day", "home-mini-night", "home-modules-off-day",
             "breathe-day", "breathe-night", "breath-in-day", "breath-hold-day", "breath-out-day", "breath-hold-night",
             "settle-day", "settle-playing-night", "journal-day",
-        ) + listOf("intro-card", "mixer", "mixer-add", "learn", "topic", "card", "about", "meditate", "meditate-options", "med-session", "tones", "settings", "settings-sheet", "finder", "finder-profile", "journal")
+        ) + listOf("intro-card", "mixer", "mixer-add", "learn", "topic", "card", "about", "meditate", "meditate-options", "med-session", "tones", "settings", "settings-sheet", "finder", "finder-profile", "journal", "loudness", "finder-step1", "finder-step3")
             .flatMap { listOf("$it-day", "$it-night") }.filter { it != "journal-day" }
     }
 }
