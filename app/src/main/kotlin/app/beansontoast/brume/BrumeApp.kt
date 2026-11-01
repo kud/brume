@@ -47,6 +47,9 @@ class Settings(context: Context) {
     val introSeen: Boolean get() = prefs.getBoolean(INTRO_SEEN, false)
 
     fun setIntroSeen() = prefs.edit().putBoolean(INTRO_SEEN, true).apply()
+    /** « Un fond et une ambiance, à mélanger. » shows on the first visit to the sounds only. */
+    val pickerHintSeen: Boolean get() = prefs.getBoolean("picker_hint_seen", false)
+    fun setPickerHintSeen() = prefs.edit().putBoolean("picker_hint_seen", true).apply()
 
     private val _modules = MutableStateFlow(Modules(
         tones = prefs.getBoolean(MODULE_TONES, true),

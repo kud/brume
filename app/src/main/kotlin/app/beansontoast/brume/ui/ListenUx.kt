@@ -1,5 +1,9 @@
 package app.beansontoast.brume.ui
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.runtime.LaunchedEffect
+import app.beansontoast.design.SelectChip
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -271,7 +275,7 @@ private fun ChoiceCard(label: String, selected: Boolean, onClick: () -> Unit, mo
  * (balance and output), so they live in this one place and nowhere on the scene.
  */
 @Composable
-fun SoundsScreen(all: PlayerUi, allActions: ListenActions, onBack: () -> Unit) {
+fun SoundsScreen(all: PlayerUi, allActions: ListenActions, onBack: () -> Unit, hint: Boolean = false, onHintSeen: () -> Unit = {}) {
     val (ui, actions) = forMode(all, allActions, Mode.SOUNDS)
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
@@ -279,45 +283,34 @@ fun SoundsScreen(all: PlayerUi, allActions: ListenActions, onBack: () -> Unit) {
             Icon(painterResource(R.drawable.ic_back), null, modifier = Modifier.size(20.dp))
             Text(stringResource(R.string.learn_back), modifier = Modifier.padding(start = 4.dp))
         }
-        ScreenTitle(R.string.scene_sounds, stringResource(R.string.scene_sounds_hint))
-        class Spec(val name: String, val on: Boolean, val noise: NoiseColour?, val ambience: Ambience?, val onClick: () -> Unit)
-        val tiles = NoiseColour.entries.map { c -> Spec(stringResource(c.label()), ui.noise == c, c, null) { actions.noise(if (ui.noise == c) null else c) } } +
-            Ambience.entries.map { a -> Spec(stringResource(a.label()), ui.ambience == a, null, a) { actions.ambience(if (ui.ambience == a) null else a) } }
-        Column(Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            tiles.chunked(2).forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    row.forEach { t -> Tile(t.name, t.on, t.onClick, Modifier.weight(1f)) { ink -> texture(t.noise, t.ambience, ink) } }
-                    if (row.size == 1) Spacer(Modifier.weight(1f))
-                }
-            }
-        }
-        if (ui.noise != null || ui.ambience != null) {
-            SectionTitle(stringResource(R.string.scene_levels))
-            Slot(stringResource(R.string.listen_noise), ui.noise?.let { stringResource(it.label()) }, ui.noiseLevel, actions.noiseLevel, { actions.noise(null) })
-            Slot(stringResource(R.string.listen_nature), ui.ambience?.let { stringResource(it.label()) }, ui.ambienceLevel, actions.ambienceLevel, { actions.ambience(null) })
-        }
+        // The first visit says what the two rows are for, once; after that the shorter rule.
+        ScreenTitle(R.string.scene_sounds, stringResource(if (hint) R.string.picker_hint else R.string.scene_sounds_hint))
+        // Two named rows, each one choice with None (Erwann, 2026-10-31). Before, all seven sat in one
+        // grid of checkboxes, and a second noise silently replaced the first: the engine holds one of each.
+        if (hint) LaunchedEffect(Unit) { onHintSeen() }
+        PickerRow(stringResource(R.string.picker_background), stringResource(R.string.picker_none),
+            BACKGROUNDS.map { it to stringResource(it.label()) }, ui.noise, actions.noise, ui.noiseLevel, actions.noiseLevel)
+        PickerRow(stringResource(R.string.picker_ambience), stringResource(R.string.picker_none_ambience),
+            Ambience.entries.map { it to stringResource(it.label()) }, ui.ambience, actions.ambience, ui.ambienceLevel, actions.ambienceLevel)
         EarsRows(ui.balance, ui.output, actions.balance, actions.output)
         Spacer(Modifier.height(32.dp))
     }
 }
 
-/** A sound tile: its texture (Sacha's thumbnail later) above, its name and, when in the mix, a check. */
+/** The backgrounds, deepest first, as the row reads them. */
+private val BACKGROUNDS = listOf(NoiseColour.BROWN, NoiseColour.PINK, NoiseColour.WHITE, NoiseColour.GREY)
+
+/**
+ * One named row of the picker: a single choice that includes None. Tapping a sound replaces the
+ * row's last one, so the check moves; the chosen one is told by the check glyph and weight. Its own
+ * level sits under it while something is chosen.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Tile(name: String, on: Boolean, onClick: () -> Unit, modifier: Modifier, draw: DrawScope.(Color) -> Unit) {
-    val scheme = MaterialTheme.colorScheme
-    val ink = if (on) scheme.onSurface else scheme.onSurfaceVariant
-    Column(
-        modifier.clip(MaterialTheme.shapes.large)
-            .background(scheme.surfaceContainer)
-            .then(if (on) Modifier.border(2.dp, scheme.onSurface, MaterialTheme.shapes.large) else Modifier)
-            .selectable(selected = on, role = Role.Checkbox, onClick = onClick),
-    ) {
-        Canvas(Modifier.fillMaxWidth().height(88.dp)) { draw(ink.copy(alpha = if (on) 0.9f else 0.55f)) }
-        Row(Modifier.fillMaxWidth().background(scheme.surfaceContainerHigh).heightIn(min = 48.dp).padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            if (on) Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = scheme.onSurface, modifier = Modifier.padding(end = 6.dp).size(16.dp))
-            Text(name, style = MaterialTheme.typography.titleSmall, color = if (on) scheme.onSurface else scheme.onSurfaceVariant, maxLines = 1,
-                overflow = TextOverflow.Ellipsis, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal)
-        }
+private fun <T : Any> PickerRow(title: String, none: String, options: List<Pair<T, String>>, chosen: T?, onPick: (T?) -> Unit, level: Float, onLevel: (Float) -> Unit) {
+    SectionTitle(title)
+    FlowRow(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        (listOf<Pair<T?, String>>(null to none) + options).forEach { (value, name) -> SelectChip(name, chosen == value, { onPick(value) }) }
     }
+    if (chosen != null) Slot(title, options.firstOrNull { it.first == chosen }?.second, level, onLevel, null)
 }
