@@ -14,7 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -78,6 +82,10 @@ val LocalReducedMotion = compositionLocalOf { false }
  * on pure black, containers keep their steps. [dim] is Brume's night tier: it lowers the
  * brightness of body text to onSurfaceVariant, never its contrast, and never with alpha.
  */
+@OptIn(ExperimentalMaterial3Api::class)
+private val SoftRipple = RippleConfiguration(rippleAlpha = RippleAlpha(draggedAlpha = 0.08f, focusedAlpha = 0.08f, hoveredAlpha = 0.04f, pressedAlpha = 0.07f))
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GammeTheme(
     colors: GammeColors = BaselineColors,
@@ -92,6 +100,8 @@ fun GammeTheme(
         CompositionLocalProvider(
             LocalContentColor provides scheme.onSurface,
             LocalReducedMotion provides rememberReducedMotion(),
+            // Ripples stay, faint: they say the tap landed without flashing (docs/motion.md).
+            LocalRippleConfiguration provides SoftRipple,
             content = content,
         )
     }

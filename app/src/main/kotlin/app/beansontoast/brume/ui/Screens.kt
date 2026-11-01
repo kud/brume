@@ -60,6 +60,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -94,6 +95,7 @@ import app.beansontoast.brume.sync.SyncState
 import app.beansontoast.design.EmptyState
 import app.beansontoast.design.SettingsGroup
 import app.beansontoast.design.SwitchRow
+import app.beansontoast.design.calmAlpha
 import app.beansontoast.design.tabular
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -377,10 +379,9 @@ fun JournalScreen(
                 Text(stringResource(if (todays == null) R.string.journal_save else R.string.journal_update), style = MaterialTheme.typography.labelLarge)
             }
         }
-        if (message != null) {
-            Text(message, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
-        }
+        // Its line is always there, so the confirmation fades in without pushing the invitation down (Iris, 2026-11-01).
+        Text(message ?: "", style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, minLines = 1,
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp).alpha(calmAlpha(message != null)))
 
         // An invitation from the latest day with a tag, today or yesterday: one card, never a finding.
         val invite = checkIns.filter { it.day == today.toString() || it.day == today.minusDays(1).toString() }

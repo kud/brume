@@ -1,5 +1,6 @@
 package app.beansontoast.brume.ui
 
+import app.beansontoast.design.Motion
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.getValue
@@ -92,7 +93,7 @@ fun Onboarding(onFinish: (setPitch: Boolean) -> Unit, startPage: Int = 0) {
             Steps(page, Modifier.weight(1f))
             if (!last) TextButton({ onFinish(false) }, Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.intro_skip)) }
         }
-        Crossfade(page, Modifier.weight(1f), animationSpec = if (still) snap() else tween(280), label = "intro") { p ->
+        Crossfade(page, Modifier.weight(1f), animationSpec = if (still) snap() else Motion.tween(Motion.CALM), label = "intro") { p ->
             val scroll = rememberScrollState()
             Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll)) {
                 when (p) {

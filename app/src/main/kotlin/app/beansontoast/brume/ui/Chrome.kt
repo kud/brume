@@ -1,6 +1,7 @@
 package app.beansontoast.brume.ui
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,10 +31,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -50,6 +53,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.beansontoast.brume.Modules
 import app.beansontoast.brume.R
+import app.beansontoast.design.LocalReducedMotion
+import app.beansontoast.design.Motion
+import app.beansontoast.design.WeightSwap
+import app.beansontoast.design.calmAlpha
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -97,10 +104,14 @@ fun BrumeScaffold(
     // Until the bar is measured, a fair guess: the bar, its margin and a gesture bar.
     val chromeBottom = if (dockPx > 0) with(density) { dockPx.toDp() } else if (mini != null) 160.dp else 104.dp
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        backdrop?.art()?.let {
-            SceneBackdrop(backdrop, it, night, still = true, clock = { 0L }, offset = { 0f }, breathe = null,
-                veil = READING_VEIL, modifier = Modifier.fillMaxSize())
-        }
+        // The veiled scene fades in and out behind reading pages instead of appearing at once.
+        var lastBackdrop by remember { mutableStateOf(backdrop) }
+        if (backdrop != null) lastBackdrop = backdrop
+        val backdropAlpha = calmAlpha(backdrop != null)
+        lastBackdrop?.let { b -> b.art()?.takeIf { backdropAlpha > 0f }?.let {
+            SceneBackdrop(b, it, night, still = true, clock = { 0L }, offset = { 0f }, breathe = null,
+                veil = READING_VEIL, modifier = Modifier.fillMaxSize().alpha(backdropAlpha))
+        } }
         CompositionLocalProvider(LocalChromeBottom provides chromeBottom) {
             Box(Modifier.fillMaxSize().then(if (bleed) Modifier else Modifier.statusBarsPadding())) { content() }
         }
@@ -123,9 +134,16 @@ private fun FloatingDock(here: Tab, onTab: (Tab) -> Unit, mini: (@Composable () 
                 .background(scheme.surfaceContainer)
                 .border(1.dp, scheme.outlineVariant.copy(alpha = 0.7f), shape),
         ) {
-            if (mini != null) {
-                mini()
-                Box(Modifier.padding(horizontal = 20.dp).fillMaxWidth().height(1.dp).background(scheme.outlineVariant.copy(alpha = 0.6f)))
+            // The mini player grows into the bar slowly and fades, never a jump (docs/motion.md); the
+            // last one shown stays drawn while it leaves.
+            val reduced = LocalReducedMotion.current
+            var last by remember { mutableStateOf(mini) }
+            if (mini != null) last = mini
+            AnimatedVisibility(mini != null, enter = Motion.enter(reduced), exit = Motion.exit(reduced), label = "mini") {
+                Column {
+                    last?.invoke()
+                    Box(Modifier.padding(horizontal = 20.dp).fillMaxWidth().height(1.dp).background(scheme.outlineVariant.copy(alpha = 0.6f)))
+                }
             }
             Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp).selectableGroup(), verticalAlignment = Alignment.CenterVertically) {
                 listOf(Tab.LISTEN to R.string.tab_listen, Tab.JOURNAL to R.string.tab_journal, Tab.LEARN to R.string.tab_learn).forEach { (t, label) ->
@@ -149,11 +167,10 @@ private fun MenuWord(@StringRes text: Int, selected: Boolean, modifier: Modifier
             .padding(horizontal = 4.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(text), style = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Serif),
-            color = if (selected) ink else ink.copy(alpha = 0.78f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            modifier = Modifier.padding(top = 4.dp))
-        MistWave(if (selected) ink.copy(alpha = 0.9f) else null, Modifier.padding(top = 3.dp).width(30.dp).height(7.dp))
+        // Both weights are laid out at once and cross-faded, so the word never changes width (docs/motion.md).
+        WeightSwap(stringResource(text), on = selected, onStyle = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Serif),
+            onColor = ink, offColor = ink.copy(alpha = 0.78f), modifier = Modifier.padding(top = 4.dp))
+        MistWave(ink.copy(alpha = 0.9f), Modifier.padding(top = 3.dp).width(30.dp).height(7.dp).alpha(calmAlpha(selected, Motion.QUICK)))
     }
 }
 

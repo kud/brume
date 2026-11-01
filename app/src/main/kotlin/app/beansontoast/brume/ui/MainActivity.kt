@@ -1,5 +1,8 @@
 package app.beansontoast.brume.ui
 
+import androidx.compose.foundation.layout.statusBarsPadding
+import app.beansontoast.design.Motion
+import androidx.compose.animation.Crossfade
 import app.beansontoast.brume.playback.Bells
 import app.beansontoast.brume.core.sound.Bell
 import app.beansontoast.brume.playback.openOutputSwitcher
@@ -231,7 +234,16 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
     BrumeTheme(dark = isSystemInDarkTheme(), night = night) {
         CompositionLocalProvider(LocalLaunchAnchors provides anchors, LocalCountry provides country) {
             Box(Modifier.fillMaxSize()) {
-                if (showIntro) {
+                // Introduction, a session and home give way to each other by a slow cross-fade, each
+                // drawn from its own key so the one leaving keeps its state (docs/motion.md).
+                val route = when {
+                    showIntro -> Route(Route.INTRO)
+                    breathStartedAt != null -> Route(Route.BREATH, breathStartedAt)
+                    meditationStartedAt != null -> Route(Route.MEDITATION, meditationStartedAt)
+                    else -> Route(Route.HOME)
+                }
+                Crossfade(route, Modifier.fillMaxSize(), animationSpec = Motion.tween(Motion.SLOW), label = "route") { r ->
+                if (r.kind == Route.INTRO) {
                     Onboarding(onFinish = { setPitch ->
                         graph.settings.setIntroSeen()
                         showIntro = false
@@ -239,27 +251,31 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                         // Setting the pitch from the intro turns Tones back on if it was off.
                         if (setPitch) { if (!modules.tones) graph.settings.setModules(modules.copy(tones = true)); tab = Tab.LISTEN; goScene(Scene.TONES); pages = "tones" }
                     })
-                } else if (breathStartedAt != null) {
+                } else if (r.kind == Route.BREATH) {
                     BackHandler { endBreath() }
-                    BreathSession(BreathPlan(breath.pattern, breath.minutes), breathStartedAt!!, night, breath.haptics, onEnd = ::endBreath)
-                } else if (meditationStartedAt != null) {
+                    BreathSession(BreathPlan(breath.pattern, breath.minutes), r.at!!, night, breath.haptics, onEnd = ::endBreath)
+                } else if (r.kind == Route.MEDITATION) {
                     BackHandler { endBreath() }
                     // The bell follows the session's level: the sound under it, or the listening level when none plays.
                     val sessionLevel = if (player.playing && player.mode == SoundEngine.Mode.SOUNDS)
                         listOfNotNull(player.noise?.let { player.noiseLevel }, player.ambience?.let { player.ambienceLevel }).maxOrNull() ?: player.noiseLevel
                     else player.noiseLevel
-                    MeditationSession(meditation, meditationStartedAt!!, night, onEnd = ::endBreath, onBell = { bells.ring(Bell.gain(sessionLevel, it.strength)) })
+                    MeditationSession(meditation, r.at!!, night, onEnd = ::endBreath, onBell = { bells.ring(Bell.gain(sessionLevel, it.strength)) })
                 } else BrumeScaffold(tab = tab, onTab = { tab = it; pages = "" }, modules = modules,
                     mini = if (tab != Tab.LISTEN && player.playing && player.mode == SoundEngine.Mode.SOUNDS) {
                         { MiniPlayer(chosenSound(context, player)) { graph.player.pause(EndedBy.USER) } }
                     } else null,
                     // Listen's scenes draw their own art, edge to edge; every other page reads over the
                     // scene last used, still and further back (Erwann, dev.19: « le fond d'écran partout »).
-                    bleed = stack.isEmpty() && tab in listOf(Tab.LISTEN, Tab.CALM, Tab.TONES),
+                    // Each page pads itself below the status bar inside the cross-fade, so the one leaving never shifts.
+                    bleed = true,
                     backdrop = scene.takeUnless { stack.isEmpty() && tab in listOf(Tab.LISTEN, Tab.CALM, Tab.TONES) },
                     night = night) {
-                    val page = stack.lastOrNull()
+                    // Pages and tabs cross-fade in place; Listen's scenes count as one page.
+                    val routeTab = when (tab) { Tab.CALM, Tab.TONES -> Tab.LISTEN; else -> tab }
+                    Crossfade(stack.lastOrNull() to routeTab, Modifier.fillMaxSize(), animationSpec = Motion.tween(Motion.CALM), label = "page") { (page, shownTab) ->
                     if (page != null) BackHandler { pop() }
+                    Box(Modifier.fillMaxSize().then(if (page == null && shownTab == Tab.LISTEN) Modifier else Modifier.statusBarsPadding())) {
                     when {
                         page == "settings" -> SettingsScreen(nightHours = nightHours, onNightHours = graph.settings::setNightHours, onBack = ::pop,
                             sync = syncState, syncMessage = syncMessage, syncActions = syncActions,
@@ -299,7 +315,7 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                             else LearnCardScreen(card, backLabel = stringResource(R.string.learn_back), onBack = ::pop,
                                 onNext = { pages = (stack.dropLast(1) + "card:$it").joinToString("/") })
                         }
-                        else -> when (tab) {
+                        else -> when (shownTab) {
                         Tab.LISTEN, Tab.CALM, Tab.TONES -> SceneScreen(
                             scenes = modules.scenes(), scene = scene, onScene = ::goScene,
                             ui = player, actions = actions, night = night,
@@ -341,6 +357,9 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                         Tab.LEARN -> LearnScreen(onTopic = { push("topic:$it") }, onSettings = { push("settings") }, onAbout = { push("about") }, onCard = { push("card:$it") })
                         }
                     }
+                    }
+                    }
+                }
                 }
                 LaunchIntroOverlay(intro, firstLaunch)
                 // A newer build found on opening offers itself once, never over the introduction or a session.
@@ -349,4 +368,9 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
             }
         }
     }
+}
+
+/** Where the app stands: the introduction, a session started at [at], or home. */
+private data class Route(val kind: Int, val at: Long? = null) {
+    companion object { const val INTRO = 0; const val BREATH = 1; const val MEDITATION = 2; const val HOME = 3 }
 }

@@ -1,5 +1,6 @@
 package app.beansontoast.brume.ui
 
+import app.beansontoast.design.Motion
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.util.LruCache
@@ -153,7 +154,7 @@ internal fun SceneBackdrop(
     val tint = if (dark) null else remember(scheme.onSurfaceVariant) { ColorFilter.tint(scheme.onSurfaceVariant, BlendMode.SrcIn) }
     val ready = sky != null && mist != null && middle != null
     // A scene decoded late fades in rather than popping.
-    val shown by animateFloatAsState(if (ready) 1f else 0f, if (still) snap() else tween(600), label = "art")
+    val shown by animateFloatAsState(if (ready) 1f else 0f, if (still) snap() else Motion.tween(Motion.SLOW), label = "art")
     val dim = (if (night) 0.35f else 0.7f) * veil
     val seed = scene.ordinal
     val motion = when (scene) {

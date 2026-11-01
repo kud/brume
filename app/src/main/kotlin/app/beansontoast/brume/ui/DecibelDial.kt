@@ -1,5 +1,6 @@
 package app.beansontoast.brume.ui
 
+import app.beansontoast.design.Motion
 import android.annotation.SuppressLint
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -153,7 +154,7 @@ private fun loudnessText(db: Int): String {
 fun DecibelExplorer(initial: Int = 60, still: Boolean? = null, onCard: (String) -> Unit = {}) {
     var db by rememberSaveable { mutableIntStateOf(Decibels.snap(initial.toFloat())) }
     val reduced = still ?: rememberReducedMotion()
-    val shown by animateFloatAsState(db.toFloat(), if (reduced) snap() else tween(320), label = "db")
+    val shown by animateFloatAsState(db.toFloat(), if (reduced) snap() else Motion.tween(Motion.QUICK), label = "db")
     val phase = if (reduced) 0.35f else {
         val pulse = rememberInfiniteTransition(label = "pulse")
         pulse.animateFloat(0f, 1f, infiniteRepeatable(tween(1800, easing = LinearEasing), RepeatMode.Restart), label = "phase").value

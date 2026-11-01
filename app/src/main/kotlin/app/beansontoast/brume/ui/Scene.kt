@@ -1,5 +1,12 @@
 package app.beansontoast.brume.ui
 
+import app.beansontoast.design.calmAlpha
+import app.beansontoast.design.WeightSwap
+import app.beansontoast.design.Motion
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import app.beansontoast.brume.core.breath.Pattern
@@ -200,7 +207,7 @@ fun SceneScreen(
     }
     LaunchedEffect(scene, scenes) {
         val i = scenes.indexOf(scene)
-        if (i >= 0 && i != pager.currentPage && peek == 0f) pager.animateScrollToPage(i)
+        if (i >= 0 && i != pager.currentPage && peek == 0f) pager.animateScrollToPage(i, animationSpec = Motion.tween(Motion.SLOW))
     }
     val shown = scenes.getOrElse(pager.currentPage) { scene }
     val still = sceneClock == null && rememberReducedMotion()
@@ -229,24 +236,34 @@ fun SceneScreen(
         var headPx by remember { mutableIntStateOf(0) }
         var footPx by remember { mutableIntStateOf(0) }
         val insets = with(density) { PaddingValues(top = headPx.toDp(), bottom = footPx.toDp()) }
-        HorizontalPager(pager, Modifier.fillMaxSize(), key = { scenes[it].name }) { page ->
+        HorizontalPager(pager, Modifier.fillMaxSize(), key = { scenes[it].name },
+            flingBehavior = PagerDefaults.flingBehavior(pager, snapAnimationSpec = Motion.tween(Motion.CALM))) { page ->
             val offset = { (pager.currentPage - page) + pager.currentPageOffsetFraction }
             ScenePage(scenes[page], ui, actions, onSounds, onTonesSetup, breathe, night, onSuggest, still, clock, offset, insets)
         }
         Column(Modifier.fillMaxWidth().onSizeChanged { headPx = it.height }.statusBarsPadding()) {
             SceneNames(scenes, shown) { onScene(it) }
             // What the scene is for, so Sleep and Settle read apart before anything is chosen.
-            Text(stringResource(shown.purpose), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 20.dp))
-            if (swipeHint) Text(stringResource(R.string.scene_swipe), style = MaterialTheme.typography.bodySmall,
-                color = scheme.onSurfaceVariant.copy(alpha = 0.75f), modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp))
+            // Two lines kept for every purpose and the hint's line kept once shown, so the header's height
+            // never changes with the scene and the pages under it never move (Iris, 2026-11-01).
+            Crossfade(shown.purpose, animationSpec = Motion.tween(Motion.CALM), label = "purpose") { purpose ->
+                Text(stringResource(purpose), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant, minLines = 2,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp))
+            }
+            val hintRoom = remember { swipeHint }
+            if (hintRoom) Text(stringResource(R.string.scene_swipe), style = MaterialTheme.typography.bodySmall,
+                color = scheme.onSurfaceVariant.copy(alpha = 0.75f),
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp).alpha(calmAlpha(swipeHint))
+                    .then(if (swipeHint) Modifier else Modifier.clearAndSetSemantics { }))
         }
         // Right above the floating bar: the length bottom left, Too loud bottom right, always one tap away.
         val (view, mine) = forMode(ui, actions, if (shown == Scene.TONES) Mode.TONES else Mode.SOUNDS)
         Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().onSizeChanged { footPx = it.height }
             .padding(bottom = LocalChromeBottom.current).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             // Every scene has its length bottom left: the timer, or Breathe's minutes, which open its setup.
-            if (shown != Scene.BREATHE) TimerWord(view, mine.timer) else LengthWord(breathe)
+            Crossfade(shown == Scene.BREATHE, animationSpec = Motion.tween(Motion.CALM), label = "length") { breathing ->
+                if (!breathing) TimerWord(view, mine.timer) else LengthWord(breathe)
+            }
             Spacer(Modifier.weight(1f))
             TooLoudWord(actions.tooLoud)
         }
@@ -268,16 +285,18 @@ private fun SceneNames(scenes: List<Scene>, shown: Scene, onScene: (Scene) -> Un
     LaunchedEffect(shown, scenes, viewport, widths.size == scenes.size) {
         if (viewport == 0 || widths.size < scenes.size) return@LaunchedEffect
         val target = nameScroll(scenes.map { widths.getValue(it) }, scenes.indexOf(shown), margin, viewport, scroll.value)
-        if (target != scroll.value) scroll.animateScrollTo(target)
+        if (target != scroll.value) scroll.animateScrollTo(target, Motion.tween(Motion.CALM))
     }
     Row(Modifier.fillMaxWidth().onSizeChanged { viewport = it.width }.horizontalScroll(scroll).padding(horizontal = 12.dp).selectableGroup(),
         verticalAlignment = Alignment.Bottom) {
         scenes.forEach { s ->
             val on = s == shown
-            Text(stringResource(s.title),
-                style = if (on) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineSmall,
-                color = if (on) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = if (on) FontWeight.Normal else FontWeight.Light, maxLines = 1,
+            // Each name holds the room of its larger look, both looks cross-faded on its foot, so
+            // changing scene never pushes the other names along (Iris, 2026-11-01).
+            WeightSwap(stringResource(s.title), on,
+                onStyle = MaterialTheme.typography.headlineMedium, offStyle = MaterialTheme.typography.headlineSmall,
+                onColor = MaterialTheme.colorScheme.onSurface, offColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                onWeight = FontWeight.Normal, offWeight = FontWeight.Light, align = Alignment.BottomStart,
                 modifier = Modifier.onSizeChanged { widths[s] = it.width }.heightIn(min = 48.dp).selectable(on, role = Role.Tab) { onScene(s) }.padding(horizontal = 8.dp, vertical = 6.dp))
         }
     }
@@ -344,10 +363,19 @@ private fun ScenePage(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.weight(0.5f))
-            Text(title, style = MaterialTheme.typography.displaySmall, textAlign = TextAlign.Center, maxLines = 2,
-                overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth().semantics { heading() })
-            Text(line, style = MaterialTheme.typography.bodyLarge.tabular(), color = muted, textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(top = 6.dp).semantics { liveRegion = LiveRegionMode.Polite })
+            // The title keeps room for two lines and sits on their foot, so a one-line name and a
+            // two-line mix put the disc in the same place; both words cross-fade (Iris, 2026-11-01).
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+                Text(" ", style = MaterialTheme.typography.displaySmall, minLines = 2, modifier = Modifier.clearAndSetSemantics { })
+                Crossfade(title, animationSpec = Motion.tween(Motion.CALM), label = "title") { t ->
+                    Text(t, style = MaterialTheme.typography.displaySmall, textAlign = TextAlign.Center, maxLines = 2,
+                        overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth().semantics { heading() })
+                }
+            }
+            Crossfade(line, Modifier.fillMaxWidth().padding(top = 6.dp), animationSpec = Motion.tween(Motion.CALM), label = "line") { l ->
+                Text(l, style = MaterialTheme.typography.bodyLarge.tabular(), color = muted, textAlign = TextAlign.Center, maxLines = 1,
+                    overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite })
+            }
             Row(Modifier.fillMaxWidth().padding(top = 28.dp), verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.weight(1f).height(1.dp))
                 Spacer(Modifier.width(56.dp))
@@ -358,9 +386,13 @@ private fun ScenePage(
                 VolumeTrack(levels, set, word, Modifier.width(56.dp))
                 Spacer(Modifier.weight(1f).height(1.dp))
             }
-            if (levels.isNotEmpty()) Text(stringResource(R.string.scene_volume_hint), style = MaterialTheme.typography.bodySmall, color = muted,
-                textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 20.dp))
+            // Always laid out, faded in once there is something to slide, so the disc never rises.
+            Text(stringResource(R.string.scene_volume_hint), style = MaterialTheme.typography.bodySmall, color = muted,
+                textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 20.dp).alpha(calmAlpha(levels.isNotEmpty()))
+                    .then(if (levels.isNotEmpty()) Modifier else Modifier.clearAndSetSemantics { }))
             Spacer(Modifier.weight(1f))
+            // The foot keeps one height whatever it holds (a suggestion link or the mix's pills).
+            Box(Modifier.fillMaxWidth().heightIn(min = 56.dp), contentAlignment = Alignment.Center) { Column(horizontalAlignment = Alignment.CenterHorizontally) {
             when (scene) {
                 Scene.TONES -> QuietMore(stringResource(R.string.scene_tones_setup), onTonesSetup)
                 Scene.BREATHE -> {
@@ -370,11 +402,16 @@ private fun ScenePage(
                         breathe.practices.forEach { p -> PracticeWord(stringResource(p.label()), on = p == breathe.practice) { breathe.onPractice(p) } }
                     }
                     // The rhythm is chosen here, on the scene, not behind the link (Erwann, 2026-10-31).
-                    if (breathe.practice == Practice.BREATHE) {
-                        FlowRow(Modifier.fillMaxWidth().padding(top = 6.dp).selectableGroup(),
+                    // Under Meditate the rhythms keep their room, faded out and out of reach, so the
+                    // practice words and the disc above never move (Iris, 2026-11-01).
+                    val rhythms = breathe.practice == Practice.BREATHE
+                    run {
+                        FlowRow(Modifier.fillMaxWidth().padding(top = 6.dp).alpha(calmAlpha(rhythms))
+                            .then(if (rhythms) Modifier.selectableGroup() else Modifier.clearAndSetSemantics { }),
                             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Pattern.entries.forEach { p ->
-                                Pill(stringResource(p.title()), on = p == breathe.pattern, thumb = null, role = Role.RadioButton, label = null) { breathe.onPattern(p) }
+                                Pill(stringResource(p.title()), on = p == breathe.pattern, thumb = null, role = Role.RadioButton, label = null,
+                                    enabled = rhythms) { breathe.onPattern(p) }
                             }
                         }
                     }
@@ -394,6 +431,7 @@ private fun ScenePage(
                     }
                 }
             }
+            } }
             Spacer(Modifier.height(16.dp))
         }
     }
@@ -550,24 +588,24 @@ private fun VolumeTrack(levels: List<Float>, set: (List<Float>) -> Unit, word: S
 @Composable
 private fun Pill(
     name: String, on: Boolean, thumb: (androidx.compose.ui.graphics.drawscope.DrawScope.(Color) -> Unit)?,
-    label: String?, role: Role = Role.Button, onClick: () -> Unit,
+    label: String?, role: Role = Role.Button, enabled: Boolean = true, onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     val ink = if (on) scheme.onSecondaryContainer else scheme.onSurface
     Row(
         Modifier.heightIn(min = 52.dp).clip(CircleShape)
             .background(if (on) scheme.secondaryContainer else scheme.surfaceContainer)
-            .then(if (role == Role.RadioButton) Modifier.selectable(on, role = role, onClick = onClick) else Modifier.clickable(role = role, onClick = onClick))
+            .then(if (role == Role.RadioButton) Modifier.selectable(on, enabled = enabled, role = role, onClick = onClick) else Modifier.clickable(enabled = enabled, role = role, onClick = onClick))
             .then(if (label != null) Modifier.semantics(mergeDescendants = true) { contentDescription = label } else Modifier)
             .padding(start = if (thumb != null) 6.dp else 16.dp, end = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (thumb != null) Canvas(Modifier.size(40.dp).clip(CircleShape).background(scheme.surfaceContainerHigh)) { thumb(ink.copy(alpha = 0.7f)) }
-        if (on) Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = ink,
-            modifier = Modifier.padding(start = if (thumb != null) 8.dp else 0.dp, end = 6.dp).size(16.dp))
-        Text(name, style = MaterialTheme.typography.labelLarge, color = ink, maxLines = 1,
-            fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
-            modifier = Modifier.padding(start = if (!on && thumb != null) 8.dp else 0.dp))
+        // The check keeps its room when off and the name is laid out in both weights, so choosing a
+        // rhythm never changes a pill's width and the row never reflows (Iris, 2026-11-01).
+        Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = ink,
+            modifier = Modifier.padding(start = if (thumb != null) 8.dp else 0.dp, end = 6.dp).size(16.dp).alpha(calmAlpha(on, Motion.QUICK)))
+        WeightSwap(name, on, onStyle = MaterialTheme.typography.labelLarge, onColor = ink)
     }
 }
 
@@ -628,10 +666,9 @@ private fun PracticeWord(text: String, on: Boolean, onClick: () -> Unit) {
         Modifier.heightIn(min = 48.dp).clip(CircleShape).selectable(on, role = Role.RadioButton, onClick = onClick).padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (on) Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = scheme.onSurface,
-            modifier = Modifier.padding(end = 6.dp).size(16.dp))
-        Text(text, style = MaterialTheme.typography.titleMedium, color = if (on) scheme.onSurface else scheme.onSurfaceVariant,
-            fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal)
+        Icon(painterResource(app.beansontoast.design.R.drawable.ic_check), null, tint = scheme.onSurface,
+            modifier = Modifier.padding(end = 6.dp).size(16.dp).alpha(calmAlpha(on, Motion.QUICK)))
+        WeightSwap(text, on, onStyle = MaterialTheme.typography.titleMedium, onColor = scheme.onSurface, offColor = scheme.onSurfaceVariant)
     }
 }
 
