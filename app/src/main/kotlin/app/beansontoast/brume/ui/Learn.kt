@@ -14,7 +14,25 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextOverflow
+import app.beansontoast.design.Motion
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -23,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -114,81 +133,123 @@ internal fun BackRow(label: String, onBack: () -> Unit) {
     }
 }
 
-/** The topics of the library, as rows: the head of the Learn tab. */
+/**
+ * The library as tiles (Iris, 2026-11-01, garden second pass): the seven topics and « Mon
+ * acouphène », two to a row, each a framed tile with its name in the serif and its size in words.
+ * The whole set fits one frame, so nothing scrolls.
+ */
 @Composable
-fun LearnTopics(onTopic: (Int) -> Unit) {
+fun LibraryTiles(onTopic: (Int) -> Unit, onFinder: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    Column {
-        (1..Learn.TOPICS).forEachIndexed { i, topic ->
-            if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            NavRow(topicName(context, topic), trailing = stringResource(R.string.learn_count, Learn.topic(topic).size)) { onTopic(topic) }
+    val tiles: List<Triple<String, String, () -> Unit>> = (1..Learn.TOPICS).map { topic ->
+        Triple(topicName(context, topic), stringResource(R.string.learn_count, Learn.topic(topic).size)) { onTopic(topic) }
+    } + Triple(stringResource(R.string.finder_title), stringResource(R.string.learn_finder_tile), onFinder)
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        tiles.chunked(2).forEach { row ->
+            Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { (name, size, open) -> Tile(name, size, open, Modifier.weight(1f).fillMaxSize()) }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+            }
         }
     }
 }
 
-/** One topic's cards, each a row with its evidence under the title. */
 @Composable
-fun LearnTopicScreen(topic: Int, onBack: () -> Unit, onCard: (String) -> Unit) {
-    val context = LocalContext.current
-    val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
-        BackRow(stringResource(R.string.tab_learn), onBack)
-        Text(topicName(context, topic), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
-        Spacer(Modifier.height(8.dp))
-        Learn.topic(topic).forEachIndexed { i, card ->
-            if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable(role = Role.Button) { onCard(card.id) }.padding(vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(cardTitle(card), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                    card.evidence?.let { EvidenceMark(it, Modifier.padding(top = 4.dp)) }
-                }
-                Text("  ›", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        Spacer(Modifier.height(24.dp))
+private fun Tile(name: String, size: String, onClick: () -> Unit, modifier: Modifier) {
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        modifier.clip(shape).border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), shape)
+            .clickable(role = Role.Button, onClick = onClick).padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(name, style = MaterialTheme.typography.titleMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Serif),
+            maxLines = 3, overflow = TextOverflow.Ellipsis)
+        Text(size, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
     }
 }
 
 /**
- * One card: topic, title, the text, what to try, the evidence and the sources. [onNext] walks the
- * reading order.
+ * One topic's cards as a deck: framed tiles that settle one at a time on the calm curve, the
+ * card's words in full, and « Read › » for what to try and the sources. ‹ 2 / 6 › says where you are.
+ */
+@Composable
+fun LearnTopicScreen(topic: Int, onBack: () -> Unit, onCard: (String) -> Unit) {
+    val context = LocalContext.current
+    val cards = Learn.topic(topic)
+    val pager = rememberPagerState { cards.size }
+    val scope = rememberCoroutineScope()
+    Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
+        BackRow(stringResource(R.string.tab_learn), onBack)
+        Text(topicName(context, topic), style = MaterialTheme.typography.headlineMedium, maxLines = 2,
+            modifier = Modifier.padding(top = 8.dp).semantics { heading() })
+        HorizontalPager(
+            state = pager,
+            contentPadding = PaddingValues(end = 28.dp),
+            pageSpacing = 12.dp,
+            flingBehavior = PagerDefaults.flingBehavior(pager, snapAnimationSpec = Motion.tween(Motion.CALM)),
+            modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 14.dp),
+        ) { page -> TopicCard(cards[page], onCard) }
+        PageStepper(pager.currentPage, cards.size, { scope.launch { pager.animateScrollToPage(it, animationSpec = Motion.tween(Motion.CALM)) } },
+            Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp))
+    }
+}
+
+@Composable
+private fun TopicCard(card: LearnCard, onCard: (String) -> Unit) {
+    val context = LocalContext.current
+    val shape = RoundedCornerShape(16.dp)
+    Column(
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainerLow, shape)
+            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), shape).padding(20.dp),
+    ) {
+        Text(cardTitle(card), style = MaterialTheme.typography.titleLarge, maxLines = 3, overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.semantics { heading() })
+        card.evidence?.let { EvidenceMark(it, Modifier.padding(top = 8.dp)) }
+        Text(learnText(context, card, "body").orEmpty(), style = MaterialTheme.typography.bodyLarge, overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 12.dp).weight(1f))
+        androidx.compose.material3.TextButton(onClick = { onCard(card.id) }, contentPadding = PaddingValues(horizontal = 0.dp)) {
+            Text(stringResource(R.string.advice_read) + "  ›")
+        }
+    }
+}
+
+/**
+ * One card in one frame: topic, title, evidence, the text, then what to try and where to turn as
+ * rows that open quiet sheets, the sources, and the next card. [onNext] walks the reading order.
  */
 @Composable
 fun LearnCardScreen(card: LearnCard, backLabel: String, onBack: () -> Unit, onNext: ((String) -> Unit)? = null) {
     val context = LocalContext.current
-    val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
-        BackRow(backLabel, onBack)
-        Text(
-            topicName(context, card.topic),
-            style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
-        )
-        Text(cardTitle(card), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 6.dp).semantics { heading() })
-        card.evidence?.let { EvidenceMark(it, Modifier.padding(top = 10.dp)) }
-        Text(learnText(context, card, "body").orEmpty(), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 14.dp))
-        // The cards that send you somewhere name the places of the country you live in.
-        val needs = Regions.forCard(card.id)
-        if (needs.isNotEmpty()) Card(Modifier.padding(top = 16.dp)) {
-            RegionLines(needs)
-            RegionFor(onChange = null, modifier = Modifier.padding(top = 10.dp))
-        }
-        learnText(context, card, "try")?.let { tip ->
-            Card(Modifier.padding(top = 16.dp)) {
-                Text(stringResource(R.string.learn_try), style = MaterialTheme.typography.titleSmall)
-                Text(tip, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-            }
-        }
-        Text(stringResource(R.string.learn_sources, card.sources), style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 16.dp))
-        if (onNext != null) {
-            val next = Learn.cards.getOrNull(Learn.cards.indexOf(card) + 1)
-            if (next != null) {
-                HorizontalDivider(Modifier.padding(top = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
+    var sheet by remember { mutableStateOf<String?>(null) }
+    val tip = learnText(context, card, "try")
+    val needs = Regions.forCard(card.id)
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
+            BackRow(backLabel, onBack)
+            Text(topicName(context, card.topic), style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+            Text(cardTitle(card), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 6.dp).semantics { heading() })
+            card.evidence?.let { EvidenceMark(it, Modifier.padding(top = 10.dp)) }
+            Text(learnText(context, card, "body").orEmpty(), style = MaterialTheme.typography.bodyLarge, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 14.dp).weight(1f, fill = false))
+            Spacer(Modifier.weight(0.001f))
+            Text(stringResource(R.string.learn_sources, card.sources), style = MaterialTheme.typography.bodySmall, maxLines = 2,
+                overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 8.dp))
+            if (tip != null) { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant); NavRow(stringResource(R.string.learn_try)) { sheet = "try" } }
+            if (needs.isNotEmpty()) { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant); NavRow(stringResource(R.string.learn_where)) { sheet = "where" } }
+            val next = if (onNext != null) Learn.cards.getOrNull(Learn.cards.indexOf(card) + 1) else null
+            if (next != null && onNext != null) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 NavRow(stringResource(R.string.learn_next, cardTitle(next))) { onNext(next.id) }
             }
         }
-        Spacer(Modifier.height(24.dp))
+        QuietSheet(sheet == "try", { sheet = null }, stringResource(R.string.learn_try)) {
+            Text(tip.orEmpty(), style = MaterialTheme.typography.bodyLarge)
+        }
+        QuietSheet(sheet == "where", { sheet = null }, stringResource(R.string.learn_where)) {
+            RegionLines(needs)
+            RegionFor(onChange = null, modifier = Modifier.padding(top = 10.dp))
+        }
     }
 }
 

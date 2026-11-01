@@ -151,7 +151,7 @@ private fun loudnessText(db: Int): String {
  * then the dial. [initial] and [still] let the renders pin a level and the motion.
  */
 @Composable
-fun DecibelExplorer(initial: Int = 60, still: Boolean? = null, onCard: (String) -> Unit = {}) {
+fun DecibelExplorer(initial: Int = 60, still: Boolean? = null, onCard: (String) -> Unit = {}, titled: Boolean = true) {
     var db by rememberSaveable { mutableIntStateOf(Decibels.snap(initial.toFloat())) }
     val reduced = still ?: rememberReducedMotion()
     val shown by animateFloatAsState(db.toFloat(), if (reduced) snap() else Motion.tween(Motion.QUICK), label = "db")
@@ -166,11 +166,13 @@ fun DecibelExplorer(initial: Int = 60, still: Boolean? = null, onCard: (String) 
     val sound = Decibels.nearest(db)
 
     Column(Modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.db_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
-        Text(stringResource(R.string.db_intro), style = MaterialTheme.typography.bodyMedium, color = quiet, modifier = Modifier.padding(top = 4.dp))
+        // On Learn's Décibels page the page's word is its title, so the dial gets the room.
+        if (titled) Text(stringResource(R.string.db_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
+        // On the page, the dial and its ± say how it works; the intro and the room it takes go.
+        if (titled) Text(stringResource(R.string.db_intro), style = MaterialTheme.typography.bodyMedium, color = quiet, modifier = Modifier.padding(top = 4.dp))
 
         // The ear, with the sound coming in on its left and, past 85, a ringing at its back.
-        Ear(shown, phase, ink, glow, Modifier.align(Alignment.CenterHorizontally).padding(top = 12.dp).size(width = 240.dp, height = 156.dp))
+        Ear(shown, phase, ink, glow, Modifier.align(Alignment.CenterHorizontally).padding(top = if (titled) 12.dp else 0.dp).size(width = if (titled) 240.dp else 160.dp, height = if (titled) 156.dp else 104.dp))
         Text(
             stringResource(strain.word()), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
@@ -204,7 +206,7 @@ fun DecibelExplorer(initial: Int = 60, still: Boolean? = null, onCard: (String) 
 
         Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             StepButton("−", stringResource(R.string.db_decrease)) { db = (db - Decibels.STEP).coerceAtLeast(Decibels.MIN) }
-            Dial(db, onChange = { db = it }, modifier = Modifier.padding(horizontal = 12.dp).size(184.dp), strainWord = stringResource(strain.word()))
+            Dial(db, onChange = { db = it }, modifier = Modifier.padding(horizontal = 12.dp).size(if (titled) 184.dp else 140.dp), strainWord = stringResource(strain.word()))
             StepButton("+", stringResource(R.string.db_increase)) { db = (db + Decibels.STEP).coerceAtMost(Decibels.MAX) }
         }
 

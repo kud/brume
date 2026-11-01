@@ -25,6 +25,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -64,6 +66,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -588,29 +591,41 @@ fun LearnScreen(
     onCard: (String) -> Unit = {},
     still: Boolean? = null,
     onFinder: () -> Unit = {},
+    startPage: Int = 0,
+    doctorOpen: Boolean = false,
 ) {
-    val scroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
-        ScreenTitle(R.string.tab_learn, stringResource(R.string.learn_intro))
-        Spacer(Modifier.height(12.dp))
-        DecibelExplorer(still = still, onCard = onCard)
-        HorizontalDivider(Modifier.padding(vertical = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
-        AdviceDeck(onCard = onCard)
-        HorizontalDivider(Modifier.padding(top = 24.dp, bottom = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
-        Text(stringResource(R.string.learn_library), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
-        LearnTopics(onTopic)
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        NavRow(stringResource(R.string.finder_title), stringResource(R.string.finder_entry_summary), onClick = onFinder)
-
-        DoctorGroup(onSettings)
-
-        Spacer(Modifier.height(8.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        NavRow(stringResource(R.string.settings_title), stringResource(R.string.settings_row_summary), onClick = onSettings)
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        NavRow(stringResource(R.string.about_brume), stringResource(R.string.about_row_summary), onClick = onAbout)
-        Spacer(Modifier.height(24.dp))
+    // One frame, no free scroll (Iris, 2026-11-01): three pages named by words, changed by a tap,
+    // so a swipe always belongs to the advice cards; the doctor, settings and About sit at the foot.
+    val pager = rememberPagerState(initialPage = startPage) { 3 }
+    var doctor by remember { mutableStateOf(doctorOpen) }
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
+            ScreenTitle(R.string.tab_learn, stringResource(R.string.learn_intro))
+            PagerWords(pager, listOf(stringResource(R.string.learn_page_advice), stringResource(R.string.learn_library), stringResource(R.string.learn_page_loudness)),
+                Modifier.padding(top = 4.dp))
+            HorizontalPager(pager, userScrollEnabled = false, verticalAlignment = Alignment.Top,
+                modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 12.dp).clipToBounds()) { page ->
+                when (page) {
+                    0 -> AdviceDeck(onCard = onCard, titled = false, deck = Modifier.fillMaxSize())
+                    1 -> LibraryTiles(onTopic, onFinder, Modifier.fillMaxSize())
+                    else -> DecibelExplorer(still = still, onCard = onCard, titled = false)
+                }
+            }
+            HorizontalDivider(Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                FootWord(stringResource(R.string.learn_doctor_short)) { doctor = true }
+                FootWord(stringResource(R.string.settings_title), onSettings)
+                FootWord(stringResource(R.string.about_short), onAbout)
+            }
+        }
+        QuietSheet(doctor, { doctor = false }, stringResource(R.string.doctor_title)) { DoctorLines(onSettings) }
     }
+}
+
+@Composable
+private fun FootWord(word: String, onClick: () -> Unit) {
+    Text(word + " ›", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.heightIn(min = 48.dp).clickable(role = Role.Button, onClick = onClick).padding(vertical = 14.dp, horizontal = 2.dp))
 }
 
 /**
@@ -619,7 +634,13 @@ fun LearnScreen(
  */
 @Composable
 fun DoctorGroup(onSettings: (() -> Unit)? = null) {
-    SettingsGroup(stringResource(R.string.doctor_title)) {
+    SettingsGroup(stringResource(R.string.doctor_title)) { DoctorLines(onSettings) }
+}
+
+/** The doctor group's words, also the Learn foot's sheet. */
+@Composable
+internal fun DoctorLines(onSettings: (() -> Unit)?) {
+    run {
         Text(stringResource(R.string.doctor_intro), style = MaterialTheme.typography.bodyMedium)
         listOf(R.string.doctor_1, R.string.doctor_2, R.string.doctor_3, R.string.doctor_4, R.string.doctor_5, R.string.doctor_6).forEach {
             Row(Modifier.padding(top = 4.dp)) {

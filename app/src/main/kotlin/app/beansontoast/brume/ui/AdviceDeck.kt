@@ -47,19 +47,21 @@ private fun adviceText(item: AdviceItem, part: String): String {
 }
 
 @Composable
-fun AdviceDeck(onCard: (String) -> Unit = {}, startPage: Int = 0) {
+fun AdviceDeck(onCard: (String) -> Unit = {}, startPage: Int = 0, titled: Boolean = true, deck: Modifier = Modifier.height(344.dp)) {
     val cards = Advice.cards
     val pager = rememberPagerState(initialPage = startPage) { cards.size }
     Column(Modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.advice_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
-        Text(stringResource(R.string.advice_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp))
+        if (titled) {
+            Text(stringResource(R.string.advice_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
+            Text(stringResource(R.string.advice_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp))
+        }
         HorizontalPager(
             state = pager,
             contentPadding = PaddingValues(end = 28.dp),
             pageSpacing = 12.dp,
             flingBehavior = PagerDefaults.flingBehavior(pager, snapAnimationSpec = Motion.tween(Motion.CALM)),
-            modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(344.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = if (titled) 12.dp else 0.dp).then(deck),
         ) { page -> AdviceCard(cards[page], page + 1, cards.size, onCard) }
     }
 }

@@ -78,6 +78,9 @@ class DirectRenders(private val shot: String) {
             "journal" -> tab(dark, night, Tab.JOURNAL) { JournalScreen(week, 4 * 3600 + 25 * 60, today, null, { _, _, _ -> }, {}) }
             "journal-saved" -> tab(dark, night, Tab.JOURNAL) { JournalScreen(noted, 4 * 3600 + 25 * 60, today, "Enregistré", { _, _, _ -> }, {}) }
             "learn" -> tab(dark, night, Tab.LEARN) { LearnScreen() }
+            "learn-library" -> tab(dark, night, Tab.LEARN) { LearnScreen(startPage = 1) }
+            "learn-loudness" -> tab(dark, night, Tab.LEARN) { LearnScreen(startPage = 2, still = true) }
+            "learn-doctor-sheet" -> tab(dark, night, Tab.LEARN) { LearnScreen(doctorOpen = true) }
             "learn-topic" -> tab(dark, night, Tab.LEARN) { LearnTopicScreen(3, {}, {}) }
             "card-coffee" -> tab(dark, night, Tab.LEARN) { LearnCardScreen(Learn.card("c3_1")!!, "Retour", {}, onNext = {}) }
             "settings" -> tab(dark, night, Tab.LEARN) { SettingsScreen(true, {}, {}, language = LanguageChoice("fr") {}) }
@@ -105,7 +108,7 @@ class DirectRenders(private val shot: String) {
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun shots() = listOf(
             "listen", "listen-playing", "calm", "tones", "tones-how", "journal", "journal-saved",
-            "learn", "learn-topic", "card-coffee", "settings", "about",
+            "learn", "learn-library", "learn-loudness", "learn-doctor-sheet", "learn-topic", "card-coffee", "settings", "about",
         ).flatMap { listOf("$it-night", "$it-day") }.map { arrayOf<Any>(it) }
     }
 }
