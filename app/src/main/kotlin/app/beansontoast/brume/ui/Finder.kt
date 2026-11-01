@@ -361,7 +361,7 @@ internal fun SafetyNote(stressed: Boolean) {
 private fun ProfileView(profile: TinnitusProfile, actions: FinderActions, onBack: () -> Unit, onRepeat: () -> Unit) {
     var confirm by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().then(gutter).underChrome(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        BackRow(stringResource(R.string.learn_back), onBack)
+        InnerBack(onBack)
         Text(profile.name.ifBlank { stringResource(R.string.finder_unnamed) }, style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.semantics { heading() })
         Card {

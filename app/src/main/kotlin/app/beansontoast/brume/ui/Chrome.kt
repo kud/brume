@@ -71,11 +71,15 @@ fun FnFrame(
     content: @Composable () -> Unit,
 ) {
     val nav = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val inner = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<(() -> Unit)?>(null) }
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Landscape(land)
-        CompositionLocalProvider(LocalChromeBottom provides nav) {
+        CompositionLocalProvider(LocalChromeBottom provides nav, LocalInnerBack provides inner) {
             Column(Modifier.fillMaxSize().statusBarsPadding()) {
-                if (onClose != null) CloseBar(title, onClose)
+                // A view inside the screen that has claimed the frame's corner turns ✕ into ‹ back to it.
+                val claimed = inner.value
+                if (claimed != null) CloseBar(title, claimed, back = true)
+                else if (onClose != null) CloseBar(title, onClose)
                 else if (onBack != null) CloseBar(title, onBack, back = true)
                 Box(Modifier.fillMaxWidth().weight(1f)) { content() }
             }
@@ -122,5 +126,25 @@ fun MiniPlayer(name: String, onPause: () -> Unit, onOpen: () -> Unit = {}) {
             Icon(painterResource(R.drawable.ic_pause), null, modifier = Modifier.size(20.dp))
             Text(pause, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
         }
+    }
+}
+
+/** Where a view inside a screen puts its own back, so the frame's corner can carry it. */
+internal val LocalInnerBack = compositionLocalOf<androidx.compose.runtime.MutableState<(() -> Unit)?>?> { null }
+
+/**
+ * A view one step inside a screen (a saved profile in Mon acouphène): while it shows, the frame's
+ * ✕ becomes ‹ and, like system Back, returns to [onBack] rather than leaving for home (Iris, phase
+ * 3), so the view needs no back row of its own.
+ */
+@Composable
+internal fun InnerBack(onBack: () -> Unit) {
+    val slot = LocalInnerBack.current
+    val current = androidx.compose.runtime.rememberUpdatedState(onBack)
+    androidx.activity.compose.BackHandler { current.value() }
+    if (slot != null) androidx.compose.runtime.DisposableEffect(slot) {
+        val back: () -> Unit = { current.value() }
+        slot.value = back
+        onDispose { if (slot.value === back) slot.value = null }
     }
 }
