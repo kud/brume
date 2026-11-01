@@ -64,10 +64,26 @@ class DirectionRenders(private val shot: String) {
             "settle" -> capture(night) { FnFrame(onClose = {}, title = "Se poser") { SoloScene(Scene.SETTLE, mix, ListenActions()) } }
             "settle-playing" -> capture(night) { FnFrame(onClose = {}, title = "Se poser") { SoloScene(Scene.SETTLE, mix.copy(playing = true), ListenActions()) } }
             "journal" -> capture(night) {
-                FnFrame(onClose = {}, land = Land.SKY) {
+                FnFrame(onClose = {}, title = "Journal", land = Land.SKY) {
                     JournalScreen(listOf(CheckIn("2026-01-19", 6, 5, "Repas bruyant à midi."), CheckIn("2026-01-18", 4, 2)), 3 * 3600, LocalDate.of(2026, 1, 20), null, { _, _, _ -> }, {})
                 }
             }
+            // Phase 2: the screens inside the frame, which owns the title.
+            "mixer" -> capture(night) { FnFrame(null, "Sons", onBack = {}) { app.beansontoast.brume.ui.SoundsScreen(mix.copy(playing = true), ListenActions(), onBack = {}) } }
+            "mixer-add" -> capture(night) { FnFrame(null, "Sons", onBack = {}) { app.beansontoast.brume.ui.SoundsScreen(mix, ListenActions(), onBack = {}, sheet = app.beansontoast.brume.ui.SoundsSheet.ADD) } }
+            "learn" -> capture(night) { FnFrame(onClose = {}, title = "Comprendre", land = Land.SKY) { app.beansontoast.brume.ui.LearnScreen(still = true) } }
+            "topic" -> capture(night) { FnFrame(null, "Le son", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.LearnTopicScreen(1, {}, {}) } }
+            "card" -> capture(night) { FnFrame(null, "Le son", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.LearnCardScreen(app.beansontoast.brume.core.learn.Learn.cards.first(), backLabel = "", onBack = {}) } }
+            "about" -> capture(night) { FnFrame(null, "À propos", onBack = {}, land = Land.SKY) { app.beansontoast.brume.ui.AboutScreen(version = "0.1.0") } }
+            "meditate" -> capture(night) {
+                FnFrame(onClose = {}, title = "Méditer", land = Land.SKY) {
+                    app.beansontoast.brume.ui.CalmScreen(Modules(breath = false), app.beansontoast.brume.ui.Practice.MEDITATE, {}, box, app.beansontoast.brume.ui.MeditationSetup(), "Bruit brun", {}, {}, {}, {})
+                }
+            }
+            "tones" -> capture(night) { FnFrame(onClose = {}, title = "Tons", land = Land.SKY) { app.beansontoast.brume.ui.TonesScreen(PlayerUi(mode = app.beansontoast.brume.core.sound.SoundEngine.Mode.TONES), ListenActions()) } }
+            "settings" -> capture(night) { FnFrame(onClose = {}, title = "Réglages", land = Land.SKY) { app.beansontoast.brume.ui.SettingsScreen(true, {}, {}, language = app.beansontoast.brume.ui.LanguageChoice("fr") {}) } }
+            "settings-sheet" -> capture(night) { FnFrame(onClose = {}, title = "Réglages", land = Land.SKY) { app.beansontoast.brume.ui.SettingsScreen(true, {}, {}, language = app.beansontoast.brume.ui.LanguageChoice("fr") {}, sheet = app.beansontoast.brume.ui.SettingsSheet.MODULES) } }
+            "finder" -> capture(night) { FnFrame(onClose = {}, title = "Mon acouphène", land = Land.SKY) { app.beansontoast.brume.ui.FinderScreen(emptyList(), app.beansontoast.brume.ui.FinderActions(), onBack = {}) } }
             else -> error(shot)
         }
     }
@@ -89,6 +105,7 @@ class DirectionRenders(private val shot: String) {
             "home-day", "home-night", "home-mini-day", "home-mini-night", "home-modules-off-day",
             "breathe-day", "breathe-night", "breath-in-day", "breath-hold-day", "breath-out-day", "breath-hold-night",
             "settle-day", "settle-playing-night", "journal-day",
-        )
+        ) + listOf("mixer", "mixer-add", "learn", "topic", "card", "about", "meditate", "tones", "settings", "settings-sheet", "finder", "journal")
+            .flatMap { listOf("$it-day", "$it-night") }.filter { it != "journal-day" }
     }
 }

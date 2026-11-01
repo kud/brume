@@ -70,15 +70,15 @@ internal fun QuietSheet(open: Boolean, onClose: () -> Unit, title: String, conte
     // The keyboard lifts the card with it, so a field in a sheet is never under it.
     Box(Modifier.fillMaxSize().graphicsLayer { alpha = shown }.imePadding()) {
         Box(
-            Modifier.fillMaxSize().background(scheme.scrim.copy(alpha = 0.32f))
+            Modifier.fillMaxSize().background(scheme.scrim.copy(alpha = 0.24f))
                 .clickable(remember { MutableInteractionSource() }, indication = null, enabled = open, onClick = onClose),
         )
         Column(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                 .padding(bottom = chromeBottom() + 8.dp).padding(horizontal = 12.dp)
-                .clip(MaterialTheme.shapes.large)
-                .background(scheme.surfaceContainerLow)
-                .border(1.dp, scheme.outlineVariant, MaterialTheme.shapes.large)
+                .clip(MaterialTheme.shapes.medium)
+                .background(scheme.surfaceContainerLowest.copy(alpha = 0.97f))
+                .border(1.dp, scheme.outlineVariant, MaterialTheme.shapes.medium)
                 // The card takes its own taps, so a tap between two chips never closes it.
                 .clickable(remember { MutableInteractionSource() }, indication = null, enabled = open) {}
                 .semantics { paneTitle = title }

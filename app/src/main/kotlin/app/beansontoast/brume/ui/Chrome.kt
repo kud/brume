@@ -59,13 +59,14 @@ fun Modifier.underChrome(): Modifier = padding(bottom = LocalChromeBottom.curren
 internal fun chromeBottom(): Dp = LocalChromeBottom.current
 
 /**
- * A function's own screen: its [land] behind, the ✕ and the [title] on one 56 dp row below the
- * status bar, then [content]. [onClose] null draws no row: a page inside a function keeps its own back.
+ * A function's own screen: its [land] behind, the ✕ (or ‹ [onBack] for a page inside it) and the
+ * [title] on one 56 dp row below the status bar, then [content]. Neither draws no row (a session).
  */
 @Composable
 fun FnFrame(
     onClose: (() -> Unit)?,
     title: String? = null,
+    onBack: (() -> Unit)? = null,
     land: Land = Land.QUIET,
     content: @Composable () -> Unit,
 ) {
@@ -75,21 +76,25 @@ fun FnFrame(
         CompositionLocalProvider(LocalChromeBottom provides nav) {
             Column(Modifier.fillMaxSize().statusBarsPadding()) {
                 if (onClose != null) CloseBar(title, onClose)
+                else if (onBack != null) CloseBar(title, onBack, back = true)
                 Box(Modifier.fillMaxWidth().weight(1f)) { content() }
             }
         }
     }
 }
 
-/** The ✕ home, top-left, a 48 dp target, with the screen's name centred on the same row. */
+/**
+ * The ✕ home (or ‹ back, for a page inside a function), top-left, a 48 dp target, with the screen's
+ * name centred on the same row. That name is the screen's only title (Iris, 2026-11-01, phase 2).
+ */
 @Composable
-fun CloseBar(title: String?, onClose: () -> Unit) {
-    val close = stringResource(R.string.home_close)
+fun CloseBar(title: String?, onClose: () -> Unit, back: Boolean = false) {
+    val close = stringResource(if (back) R.string.learn_back else R.string.home_close)
     Box(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 8.dp)) {
         Box(Modifier.align(Alignment.CenterStart).size(48.dp).clip(CircleShape)
             .clickable(role = Role.Button, onClickLabel = close, onClick = onClose).semantics { contentDescription = close },
             contentAlignment = Alignment.Center) {
-            Icon(painterResource(R.drawable.ic_close), null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
+            Icon(painterResource(if (back) R.drawable.ic_back else R.drawable.ic_close), null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
         }
         if (title != null) Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, maxLines = 1,
             overflow = TextOverflow.Ellipsis, modifier = Modifier.align(Alignment.Center).padding(horizontal = 56.dp).semantics { heading() })

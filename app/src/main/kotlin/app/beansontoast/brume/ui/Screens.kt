@@ -181,14 +181,13 @@ class ListenActions(
 internal val gutter = Modifier.padding(horizontal = 20.dp)
 
 /**
- * Every top-level screen is titled by its tab's label, in the serif headline, with an optional
- * quiet line under it (Iris, 2026-10-31, from Erwann: « brume partout ou jamais » — never).
+ * The frame owns the title (Iris, 2026-11-01, phase 2): the name centred under the ✕ is the
+ * screen's only heading. A screen may add one quiet centred line under it, never a second title.
  */
 @Composable
-internal fun ScreenTitle(@StringRes title: Int, subtitle: String? = null) {
-    Text(stringResource(title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 24.dp).semantics { heading() })
-    if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodyMedium.tabular(),
-        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+internal fun ScreenLead(text: String, modifier: Modifier = Modifier) {
+    Text(text, style = MaterialTheme.typography.bodyMedium.tabular(), textAlign = TextAlign.Center,
+        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = modifier.fillMaxWidth().padding(top = 2.dp, bottom = 4.dp))
 }
 
 @Composable
@@ -371,10 +370,11 @@ fun JournalScreen(
     // field never sits under the bar. Today is asked; another day is read.
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().then(gutter).padding(bottom = chromeBottom() + 8.dp)) {
-            Row(verticalAlignment = Alignment.Top) {
-                Column(Modifier.weight(1f)) { ScreenTitle(R.string.tab_journal, stringResource(R.string.journal_listened, duration(weekSeconds))) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.width(48.dp))
+                ScreenLead(stringResource(R.string.journal_listened, duration(weekSeconds)), Modifier.weight(1f))
                 val export = stringResource(R.string.journal_export)
-                IconButton(onExport, Modifier.padding(top = 20.dp).semantics { contentDescription = export }) {
+                IconButton(onExport, Modifier.semantics { contentDescription = export }) {
                     Icon(painterResource(R.drawable.ic_export), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                 }
             }
@@ -600,7 +600,7 @@ fun LearnScreen(
     var doctor by remember { mutableStateOf(doctorOpen) }
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
-            ScreenTitle(R.string.tab_learn, stringResource(R.string.learn_intro))
+            ScreenLead(stringResource(R.string.learn_intro))
             PagerWords(pager, listOf(stringResource(R.string.learn_page_advice), stringResource(R.string.learn_library), stringResource(R.string.learn_page_loudness)),
                 Modifier.padding(top = 4.dp))
             HorizontalPager(pager, userScrollEnabled = false, verticalAlignment = Alignment.Top,
@@ -665,9 +665,7 @@ fun AboutScreen(
 ) {
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
-        BackRow(stringResource(R.string.tab_learn), onBack)
-        Text(stringResource(R.string.about_brume), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
-        Text(stringResource(R.string.about_what), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
+        Text(stringResource(R.string.about_what), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
         Text(stringResource(R.string.about_disclaimer), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
 
@@ -729,9 +727,6 @@ fun SettingsScreen(
     val line = MaterialTheme.colorScheme.outlineVariant
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
-            // The ✕ top-left, as on every screen that opens from home.
-            CloseBar(null, onBack)
-            Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp).semantics { heading() })
             SwitchRow(stringResource(R.string.settings_night), stringResource(R.string.settings_night_summary), nightHours, onNightHours)
             HorizontalDivider(color = line)
             val on = listOf(modules.breath, modules.meditation, modules.tones).count { it } + 1

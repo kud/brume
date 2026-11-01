@@ -360,11 +360,21 @@ private fun BrumeRoot(graph: AppGraph, intro: LaunchIntro) {
                         return@Crossfade
                     }
                     BackHandler { if (page != null) pop() else home() }
-                    // Settings and Mon acouphène draw their own header; everything else gets the ✕ row.
-                    // A page inside a function keeps its own back, so the ✕ shows only at the function's root.
-                    val ownHeader = page != null || shownFn == Fn.SETTINGS || shownFn == Fn.EAR
-                    val title = when (shownFn) { Fn.JOURNAL, Fn.LEARN -> null; else -> stringResource(shownFn.title) }
-                    FnFrame(onClose = if (ownHeader) null else ::home, title = title,
+                    // The frame owns the title (Iris, phase 2): ✕ at a function's root, ‹ on a page inside it,
+                    // the name centred on the same row and never repeated by the screen.
+                    val title = when {
+                        page == null -> stringResource(shownFn.title)
+                        page.startsWith("topic:") -> topicName(context, page.removePrefix("topic:").toInt())
+                        page.startsWith("card:") -> Learn.card(page.removePrefix("card:"))?.let { topicName(context, it.topic) }
+                        page == "about" -> stringResource(R.string.about_brume)
+                        page == "tones-how" -> stringResource(R.string.tones_how)
+                        page == "sounds" -> stringResource(R.string.scene_sounds)
+                        page == "tones" -> stringResource(R.string.tab_tones)
+                        page == "settings" -> stringResource(R.string.settings_title)
+                        page == "finder" -> stringResource(R.string.finder_title)
+                        else -> stringResource(shownFn.title)
+                    }
+                    FnFrame(onClose = if (page == null) ::home else null, onBack = if (page != null) ::pop else null, title = title,
                         land = if (shownFn == Fn.BREATHE || shownFn == Fn.SLEEP || shownFn == Fn.SETTLE) Land.QUIET else Land.SKY) {
                     when {
                         page?.startsWith("topic:") == true -> LearnTopicScreen(page.removePrefix("topic:").toInt(), onBack = ::pop, onCard = { push("card:$it") })

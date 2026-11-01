@@ -179,15 +179,12 @@ fun LearnTopicScreen(topic: Int, onBack: () -> Unit, onCard: (String) -> Unit) {
     val pager = rememberPagerState { cards.size }
     val scope = rememberCoroutineScope()
     Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
-        BackRow(stringResource(R.string.tab_learn), onBack)
-        Text(topicName(context, topic), style = MaterialTheme.typography.headlineMedium, maxLines = 2,
-            modifier = Modifier.padding(top = 8.dp).semantics { heading() })
         HorizontalPager(
             state = pager,
             contentPadding = PaddingValues(end = 28.dp),
             pageSpacing = 12.dp,
             flingBehavior = PagerDefaults.flingBehavior(pager, snapAnimationSpec = Motion.tween(Motion.CALM)),
-            modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 14.dp),
+            modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 4.dp),
         ) { page -> TopicCard(cards[page], onCard) }
         PageStepper(pager.currentPage, cards.size, { scope.launch { pager.animateScrollToPage(it, animationSpec = Motion.tween(Motion.CALM)) } },
             Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp))
@@ -225,10 +222,7 @@ fun LearnCardScreen(card: LearnCard, backLabel: String, onBack: () -> Unit, onNe
     val needs = Regions.forCard(card.id)
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
-            BackRow(backLabel, onBack)
-            Text(topicName(context, card.topic), style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
-            Text(cardTitle(card), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 6.dp).semantics { heading() })
+            Text(cardTitle(card), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 4.dp).semantics { heading() })
             card.evidence?.let { EvidenceMark(it, Modifier.padding(top = 10.dp)) }
             Text(learnText(context, card, "body").orEmpty(), style = MaterialTheme.typography.bodyLarge, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 14.dp).weight(1f, fill = false))
@@ -261,11 +255,7 @@ fun LearnCardScreen(card: LearnCard, backLabel: String, onBack: () -> Unit, onNe
 fun TonesHowScreen(onBack: () -> Unit) {
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize().scrollCue(scroll).verticalScroll(scroll).then(gutter).underChrome()) {
-        BackRow(stringResource(R.string.tab_tones), onBack)
-        Text(stringResource(R.string.tab_tones), style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
-        Text(stringResource(R.string.tones_how), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 6.dp).semantics { heading() })
-        EvidenceMark(Evidence.LITTLE, Modifier.padding(top = 10.dp))
+        EvidenceMark(Evidence.LITTLE, Modifier.padding(top = 4.dp))
         Text(stringResource(R.string.tones_note), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 14.dp))
         Text(stringResource(R.string.ux_tones_session), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 10.dp))
         Text(stringResource(R.string.tones_evidence_note), style = MaterialTheme.typography.bodyMedium,

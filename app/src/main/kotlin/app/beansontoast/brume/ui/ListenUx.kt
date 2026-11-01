@@ -110,7 +110,6 @@ fun ListenComfort(all: PlayerUi, allActions: ListenActions) {
     Column(Modifier.fillMaxSize()) {
         val scroll = rememberScrollState()
         Column(Modifier.weight(1f).scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
-            ScreenTitle(R.string.tab_listen)
             NowPlaying(ui, actions, Modifier.padding(top = 12.dp))
             // The pickers come straight after the card, so at 360x780 the Nature heading meets the fold and
             // reads as "more" through the scroll cue; the one-at-a-time rule closes the page with the guide.
@@ -134,7 +133,7 @@ fun TonesScreen(all: PlayerUi, allActions: ListenActions, onHow: () -> Unit = {}
     Column(Modifier.fillMaxSize()) {
         val scroll = rememberScrollState()
         Column(Modifier.weight(1f).scrollCue(scroll).verticalScroll(scroll).then(gutter)) {
-            ScreenTitle(R.string.tab_tones, stringResource(R.string.ux_tones_heading) + " · " + stringResource(R.string.ux_tones_session))
+            ScreenLead(stringResource(R.string.ux_tones_heading) + " · " + stringResource(R.string.ux_tones_session))
             NowPlaying(ui, actions, Modifier.padding(top = 16.dp))
             QuietLink(stringResource(R.string.tones_how), onHow)
             QuietLink(stringResource(R.string.finder_entry), onFinder)
@@ -345,13 +344,9 @@ fun SoundsScreen(
     var open by rememberSaveable { mutableStateOf(sheet) }
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().then(gutter).padding(bottom = chromeBottom() + 8.dp)) {
-            TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) {
-                Icon(painterResource(R.drawable.ic_back), null, modifier = Modifier.size(20.dp))
-                Text(stringResource(R.string.learn_back), modifier = Modifier.padding(start = 4.dp))
-            }
             // The mixer (Erwann, 2026-11-01: « jouer plusieurs sons en même temps avec des volumes
             // différents pour chaque son »): the layers in the mix, each with its level.
-            ScreenTitle(R.string.scene_sounds, stringResource(if (hint) R.string.picker_hint else R.string.scene_sounds_hint))
+            ScreenLead(stringResource(if (hint) R.string.picker_hint else R.string.scene_sounds_hint))
             if (hint) LaunchedEffect(Unit) { onHintSeen() }
             MixPages(ui, actions, Modifier.weight(1f))
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {

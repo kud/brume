@@ -143,8 +143,7 @@ fun FinderScreen(
 @Composable
 private fun FinderHome(profiles: List<TinnitusProfile>, onBack: () -> Unit, onStart: () -> Unit, onProfile: (String) -> Unit) {
     Column(Modifier.fillMaxSize().then(gutter).underChrome()) {
-        CloseBar(null, onBack)
-        ScreenTitle(R.string.finder_title, stringResource(R.string.finder_home_intro))
+        ScreenLead(stringResource(R.string.finder_home_intro))
         Spacer(Modifier.height(12.dp))
         if (profiles.isEmpty()) Body(stringResource(R.string.finder_home_empty))
         profiles.take(MAX_LISTED).forEach { p ->
@@ -362,7 +361,7 @@ internal fun SafetyNote(stressed: Boolean) {
 private fun ProfileView(profile: TinnitusProfile, actions: FinderActions, onBack: () -> Unit, onRepeat: () -> Unit) {
     var confirm by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().then(gutter).underChrome(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        BackRow(stringResource(R.string.finder_title), onBack)
+        BackRow(stringResource(R.string.learn_back), onBack)
         Text(profile.name.ifBlank { stringResource(R.string.finder_unnamed) }, style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.semantics { heading() })
         Card {

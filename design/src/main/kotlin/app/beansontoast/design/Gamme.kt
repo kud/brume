@@ -5,6 +5,11 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import androidx.compose.foundation.background
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,13 +18,13 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.RippleConfiguration
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -131,20 +136,45 @@ fun rememberReducedMotion(): Boolean {
 }
 
 /**
- * A single-select chip. Selection is carried by a check glyph and weight, never by hue alone
- * (Erwann is colourblind; Gamme's colour rules).
+ * A chip. Selection is carried by a check glyph, weight and a firmer edge, never by hue alone
+ * (Erwann is colourblind; Gamme's colour rules). Light and precise (Iris, 2026-11-01, phase 2): a
+ * 36 dp hairline surface with small corners inside a 48 dp target, laid out at its chosen width
+ * from the first frame, so choosing never moves its neighbours (docs/motion.md).
  */
 @Composable
 fun SelectChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = { Text(label, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal) },
-        leadingIcon = if (selected) {
-            { Icon(androidx.compose.ui.res.painterResource(R.drawable.ic_check), contentDescription = null, modifier = Modifier.size(18.dp)) }
-        } else null,
-        modifier = modifier.heightIn(min = 48.dp),
-    )
+    val scheme = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(10.dp)
+    val source = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    androidx.compose.foundation.layout.Box(
+        modifier.heightIn(min = 48.dp)
+            .chipSelectable(selected, source, onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        androidx.compose.foundation.layout.Box(
+            Modifier.heightIn(min = 36.dp).clip(shape)
+                .background(if (selected) scheme.secondaryContainer.copy(alpha = 0.72f) else scheme.surfaceContainerLowest.copy(alpha = 0.55f))
+                .border(if (selected) 1.5.dp else 1.dp, if (selected) scheme.onSurface.copy(alpha = 0.72f) else scheme.outlineVariant, shape)
+                .indication(source, androidx.compose.material3.ripple())
+                .padding(horizontal = 12.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            ChipFace(label, true, Modifier.alpha(0f).clearAndSetSemantics {})
+            ChipFace(label, selected)
+        }
+    }
+}
+
+private fun Modifier.chipSelectable(selected: Boolean, source: androidx.compose.foundation.interaction.MutableInteractionSource, onClick: () -> Unit) =
+    selectable(selected = selected, interactionSource = source, indication = null, role = androidx.compose.ui.semantics.Role.Checkbox, onClick = onClick)
+
+@Composable
+private fun ChipFace(label: String, selected: Boolean, modifier: Modifier = Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        if (selected) Icon(androidx.compose.ui.res.painterResource(R.drawable.ic_check), contentDescription = null,
+            modifier = Modifier.padding(end = 6.dp).size(16.dp))
+        Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, maxLines = 1)
+    }
 }
 
 /** A heading in onSurface, then its rows on one surfaceContainer card (large corners). */
