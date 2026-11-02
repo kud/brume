@@ -20,8 +20,8 @@ import app.beansontoast.design.rememberReducedMotion
 import kotlinx.coroutines.flow.first
 
 /*
- * The launch: the system splash shows the lockup still (Horizon over "brume", res/drawable/
- * splash_lockup.xml); once the app has drawn its first frame, the title card (TitleCard.kt) covers
+ * The launch: the system splash shows the emblem still (Sacha's logo as a vector, res/drawable/
+ * ic_launcher_foreground.xml); once the app has drawn its first frame, the title card (TitleCard.kt) covers
  * it on its first frame, the system splash is removed underneath, and the card fades into the
  * screen already composed below. A tap only shortens the hold.
  */
@@ -79,7 +79,7 @@ class LaunchIntro(val kind: IntroKind) {
         icon = Rect(centre.x - half, centre.y - half, centre.x + half, centre.y + half)
     }
 
-    /** The overlay has drawn the lockup over the system splash: the swap is invisible. */
+    /** The overlay has drawn the title card over the system splash: the swap is invisible. */
     internal fun covered() {
         provider?.remove()
         provider = null

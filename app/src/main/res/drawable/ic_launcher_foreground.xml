@@ -1,11 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Horizon (Sacha's board, redrawn by Iris): one near-flat mist line, tapered at both ends, with two fainter, shorter ones beneath. Fills, not strokes, so the taper survives. Inside the 66 of 108 safe zone. -->
+<!-- Brume's emblem (Sacha's logo, 2026-11-01, redrawn as a vector by Iris): a round of sky, a pale
+     moon, two ridges and mist banked over their feet. The disc is 60 of 108, inside the 66 safe
+     zone. Also the splash icon and the title card's mark. Lightness carries the layers, not hue. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="@color/launcher_mist"
-        android:pathData="M22,52.1 C30,51.2 38,49.6 46,49.4 C56,49.2 64,50.4 72,49.6 C78,49.4 82,49.2 86,49 C82,49.5 78,50.4 72,51.2 C64,52.2 56,53.4 46,54 C38,54.4 30,53.4 22,52.1 Z" />
-    <path android:fillColor="@color/launcher_mist" android:fillAlpha="0.5"
-        android:pathData="M30,59.6 C38,58.6 46,58 54,58.2 C60,58.4 65,59 70,59.6 C64,60.2 60,60.6 54,60.8 C46,61 38,60.6 30,59.6 Z" />
-    <path android:fillColor="@color/launcher_mist" android:fillAlpha="0.28"
-        android:pathData="M40,66.4 C46,65.8 52,65.6 58,65.9 C61,66.1 63,66.3 65,66.6 C61,67 58,67.3 53,67.4 C48,67.4 44,67 40,66.4 Z" />
+    <group>
+        <clip-path android:pathData="M54,24 A30,30 0 1,1 54,84 A30,30 0 1,1 54,24 Z" />
+        <path android:pathData="M24,24 H84 V84 H24 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="36" android:startY="26" android:endX="66" android:endY="74">
+                    <item android:offset="0" android:color="#FF78A7E3" />
+                    <item android:offset="0.58" android:color="#FFC7BED8" />
+                    <item android:offset="1" android:color="#FFE8D2DA" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:fillColor="#FFFBEFE6" android:fillAlpha="0.95"
+            android:pathData="M63,36 A9,9 0 1,1 63,54 A9,9 0 1,1 63,36 Z" />
+        <path android:fillColor="#FFA9A3D0"
+            android:pathData="M24,60 C30,57 36,52 42,50 C46,49 49,51 53,53 C57,55 61,52 66,51 C72,50 78,54 84,56 V84 H24 Z" />
+        <path android:pathData="M24,66 C30,61 36,56 41,54 C45,52.5 49,55 54,58 C58,60 63,59 68,61 C74,63 79,64 84,63 V84 H24 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="24" android:startY="60" android:endX="84" android:endY="60">
+                    <item android:offset="0" android:color="#FF567FD0" />
+                    <item android:offset="1" android:color="#FFBFB1D4" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:fillColor="#FFFFFFFF" android:fillAlpha="0.88"
+            android:pathData="M24,70 C32,67 38,69 44,68 C50,66.5 56,68.5 62,67.5 C70,66 77,68 84,67 V84 H24 Z" />
+        <path android:fillColor="#FFF6EEF0"
+            android:pathData="M24,76 C34,73.5 44,75.5 54,74.5 C64,73.5 74,75.5 84,74 V84 H24 Z" />
+    </group>
 </vector>

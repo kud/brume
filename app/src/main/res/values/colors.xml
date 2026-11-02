@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Brume's night: the launcher ground and the light window, matching the in-app scheme (ui/Theme.kt). -->
+    <!-- The launcher icon's ground: the cream of Sacha's logo sheet. -->
+    <color name="launcher_paper">#FFFBF5EE</color>
     <color name="launcher_ground">#FF10141A</color>
     <color name="launcher_mist">#FFDCE3EB</color>
     <color name="launcher_horizon">#FF19222E</color>
