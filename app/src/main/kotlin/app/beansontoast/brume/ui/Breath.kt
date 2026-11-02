@@ -44,8 +44,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -392,30 +395,53 @@ fun BreathSession(
 }
 
 /**
- * The breathing orb (Iris, 2026-11-01): a soft organic round, luminous mist by day and dusk
- * lavender-blue at night, with a second, paler round behind it for depth. [fullness] 0..1 sets its
- * size; its edge drifts slowly with [seconds], and drifts less in a hold. Lightness and size carry
- * it, never hue. [content] sits at its centre and never moves.
+ * The breathing orb (Iris, 2026-11-01; glass after Sacha's boards, phase 9): a soft organic round
+ * of luminous glass. A halo of light around it, a translucent body the sky shows through, mist
+ * pooled in its lower half, a highlight arcing over its upper left and a pale rim; a paler round
+ * behind for depth. [fullness] 0..1 sets its size; its edge drifts slowly with [seconds], and
+ * drifts less in a hold. Lightness and size carry it, never hue. [content] sits at its centre and never moves.
  */
 @Composable
 fun BreathOrb(fullness: Float, holding: Boolean, seconds: Double, modifier: Modifier = Modifier, content: @Composable () -> Unit = {}) {
     val night = duskTheme()
-    val inner = if (night) Color(0xFF46507A) else Color(0xFFFBFCFF)
-    val edge = if (night) Color(0xFF2F3659) else Color(0xFFC5D2EA)
-    val back = if (night) Color(0xFF4B4574) else Color(0xFFDCD3EE)
-    val rim = MaterialTheme.colorScheme.primary
+    val inner = if (night) Color(0xFF6470A6) else Color(0xFFFDFEFF)
+    val edge = if (night) Color(0xFF39416B) else Color(0xFFBCD0EE)
+    val back = if (night) Color(0xFF4B4574) else Color(0xFFD6DCF2)
+    val glow = if (night) Color(0xFF8E9BD6) else Color(0xFFE9F0FF)
+    val light = Color.White.copy(alpha = if (night) 0.32f else 0.85f)
     Box(modifier, contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
-            val r = size.minDimension / 2 * 0.92f * (0.64f + 0.36f * fullness)
+            val r = size.minDimension / 2 * 0.86f * (0.64f + 0.36f * fullness)
             val t = seconds.toFloat()
             val wob = if (holding) 0.35f else 1f
-            drawPath(blob(center + Offset(r * 0.07f, r * 0.05f), r * 0.98f, t + 2.3f, wob), back.copy(alpha = 0.75f))
+            drawCircle(Brush.radialGradient(listOf(glow.copy(alpha = if (night) 0.35f else 0.9f), glow.copy(alpha = 0f)), center, r * 1.32f), r * 1.32f)
+            drawPath(blob(center + Offset(r * 0.08f, r * 0.06f), r * 1.0f, t + 2.3f, wob), back.copy(alpha = 0.55f))
             val main = blob(center, r, t, wob)
-            drawPath(main, Brush.radialGradient(listOf(inner, edge), center = center - Offset(r * 0.28f, r * 0.32f), radius = r * 1.4f))
-            drawPath(main, rim.copy(alpha = 0.3f), style = Stroke(1.2.dp.toPx()))
+            drawPath(main, Brush.radialGradient(listOf(inner.copy(alpha = 0.95f), edge.copy(alpha = 0.78f)), center = center - Offset(r * 0.25f, r * 0.3f), radius = r * 1.35f))
+            clipPath(main) {
+                // Mist settled in the glass: two soft banks low down.
+                drawOval(Brush.radialGradient(listOf(light.copy(alpha = light.alpha * 0.7f), light.copy(alpha = 0f)), center + Offset(-r * 0.25f, r * 0.62f), r * 0.7f),
+                    center + Offset(-r * 0.95f, r * 0.32f), Size(r * 1.4f, r * 0.62f))
+                drawOval(Brush.radialGradient(listOf(light.copy(alpha = light.alpha * 0.55f), light.copy(alpha = 0f)), center + Offset(r * 0.45f, r * 0.72f), r * 0.6f),
+                    center + Offset(-r * 0.15f, r * 0.48f), Size(r * 1.25f, r * 0.55f))
+                // The highlight: a thin bright arc just inside the upper left.
+                drawArc(light, 200f, 70f, false, center - Offset(r * 0.8f, r * 0.8f), Size(r * 1.6f, r * 1.6f),
+                    style = Stroke(r * 0.045f, cap = StrokeCap.Round))
+            }
+            drawPath(main, Color.White.copy(alpha = if (night) 0.22f else 0.75f), style = Stroke(1.5.dp.toPx()))
         }
         content()
     }
+}
+
+/** A block of frosted mist over the landscape: translucent ground, a pale hairline, 20 dp corners (phase 9). */
+@Composable
+internal fun Modifier.frosted(): Modifier {
+    val scheme = MaterialTheme.colorScheme
+    val night = duskTheme()
+    val shape = RoundedCornerShape(20.dp)
+    return clip(shape).background(scheme.surfaceContainerLowest.copy(alpha = if (night) 0.55f else 0.66f))
+        .border(1.dp, if (night) scheme.outlineVariant.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.7f), shape)
 }
 
 /** A closed round whose radius wanders a few percent, three slow harmonics, never a spike. */
@@ -469,12 +495,15 @@ fun BreatheScreen(
             val length = if (setup.byRounds) stringResource(R.string.breath_cycles, setup.length) else stringResource(R.string.scene_minutes, setup.length)
             Text(length, style = MaterialTheme.typography.titleLarge.tabular(), textAlign = TextAlign.Center)
         }
-        Text(stringResource(R.string.breathe_rhythm), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 12.dp, top = 8.dp, bottom = 4.dp).semantics { heading() })
-        Column(Modifier.fillMaxWidth().selectableGroup()) {
-            Technique.entries.forEach { tech ->
-                RhythmRow(stringResource(tech.title()), setup.copy(technique = tech).pattern.phasesText(), tech == setup.technique) {
-                    onChange(setup.copy(technique = tech))
+        // The rhythms as one titled block of frosted mist (phase 9, Sacha's « Breathing pattern » card).
+        Column(Modifier.fillMaxWidth().padding(top = 8.dp).frosted().padding(horizontal = 4.dp, vertical = 6.dp)) {
+            Text(stringResource(R.string.breathe_rhythm), style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(start = 12.dp, top = 4.dp, bottom = 2.dp).semantics { heading() })
+            Column(Modifier.fillMaxWidth().selectableGroup()) {
+                Technique.entries.forEach { tech ->
+                    RhythmRow(stringResource(tech.title()), setup.copy(technique = tech).pattern.phasesText(), tech == setup.technique) {
+                        onChange(setup.copy(technique = tech))
+                    }
                 }
             }
         }
