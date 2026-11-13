@@ -1,0 +1,38 @@
+---
+title: 📓 Journal, sync and privacy
+description: The daily check-in, exporting and syncing your data, and what Brume does and doesn't send anywhere.
+---
+
+## 📝 One check-in a day
+
+The journal asks two questions, each from 0 to 10: how much room the sound took today, and how loud it was, mostly. A note is optional, up to 500 characters, with four tags to notice things at your pace: **Coffee**, **Alcohol**, **Stress** and **Poor sleep**. Nothing is concluded from them. A later check-in on the same day replaces the earlier one.
+
+Listening is logged on its own, without asking, and the journal shows how long you listened each week. You can step back through past weeks.
+
+## 📤 Export
+
+**Export to a file** writes everything to one versioned JSON file, `brume-export-<date>.json`, wherever you choose.
+
+## 🔄 Back up and sync
+
+In **Settings › Back up and sync**, choose a folder, in Google Drive or on the phone. Brume keeps one file there, `brume-sync.json`, and merges with it after every change, and when the app opens or closes, while **Sync automatically** is on. **Sync now** runs it by hand.
+
+Another phone that chooses the same folder keeps the same journal:
+
+- a day both phones have keeps the later save;
+- listening sessions are combined, each one once;
+- tinnitus profiles keep the later description and every search;
+- night hours, tone pitch and balance, and the activity switches each follow their latest change.
+
+Sound levels never sync. If a sync fails, nothing on the phone changes.
+
+**Import a file** adds the check-ins, listening and tone settings from an export or a sync file. Nothing on the phone is removed; for a day in both, the later check-in stays.
+
+## 🔒 Privacy
+
+Nothing about you leaves the phone on its own. There is no account and no analytics. Your data leaves only in an export you save yourself, or in the folder you sync with, where the storage app does any uploading, never Brume.
+
+Brume comes as two builds:
+
+- **GitHub build** — goes online for one thing only: to look for and download its own updates from the project's GitHub releases. Android asks you to confirm before anything installs. Nothing about you, your journal or your settings is sent.
+- **F-Droid build** — has no internet permission at all.
