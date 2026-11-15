@@ -58,6 +58,9 @@ enum class Channel { STABLE, DEV }
  */
 class UpdateSource(val ownerRepo: String, val apkFor: (String) -> Boolean) {
     val feedUrl: String get() = "https://api.github.com/repos/$ownerRepo/releases?per_page=30"
+
+    /** The releases page, opened in the browser when a check fails (2026-11-15); never fetched by the app. */
+    val releasesPage: String get() = "https://github.com/$ownerRepo/releases"
 }
 
 data class ReleaseAsset(val name: String, val url: String, val digest: String?, val size: Long)
@@ -233,5 +236,37 @@ enum class UpdateCue {
         /** The once-per-build message: only a build newer than any found before announces itself. */
         fun announces(found: AppVersion, previouslyFound: AppVersion?): Boolean =
             previouslyFound == null || found > previouslyFound
+    }
+}
+
+/**
+ * A GitHub answer that was not a success, said for what it is (2026-11-15, from tutti's 5c0e03f).
+ * Every non-2xx used to read as "Couldn't reach GitHub", and the commonest one while online is the
+ * unauthenticated API's rate limit: 60 requests an hour per IP address, shared by every device
+ * behind it and by every app's updater on the same phone.
+ */
+sealed interface ApiRefusal {
+    /** GitHub asks us to wait; [untilMs] is when it says to come back (epoch ms), if it said. */
+    data class Wait(val untilMs: Long?) : ApiRefusal
+
+    /** Any other answer outside 2xx: GitHub is reachable, it just did not serve the list. */
+    data class Error(val code: Int) : ApiRefusal
+
+    companion object {
+        /**
+         * Reads GitHub's rate-limit signals (docs.github.com, "Rate limits for the REST API"):
+         * a 429, or a 403 carrying `retry-after` or `x-ratelimit-remaining: 0`, is a wait. The
+         * time comes from `retry-after` (seconds) first, then `x-ratelimit-reset` (epoch seconds),
+         * and only if it lies ahead of [nowMs]; otherwise the wait has no stated end.
+         */
+        fun of(code: Int, remaining: String?, resetEpochSeconds: String?, retryAfterSeconds: String?, nowMs: Long): ApiRefusal {
+            val exhausted = remaining?.trim() == "0"
+            val retryAfter = retryAfterSeconds?.trim()?.toLongOrNull()?.takeIf { it >= 0 }
+            val limited = code == 429 || (code == 403 && (exhausted || retryAfter != null))
+            if (!limited) return Error(code)
+            val until = retryAfter?.let { nowMs + it * 1000 }
+                ?: resetEpochSeconds?.trim()?.toLongOrNull()?.takeIf { exhausted }?.let { it * 1000 }
+            return Wait(until?.takeIf { it > nowMs })
+        }
     }
 }

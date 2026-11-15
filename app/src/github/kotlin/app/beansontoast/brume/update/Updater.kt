@@ -28,7 +28,15 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /** Why a step failed, each said in words by Settings › About and the update sheet (never colour alone). */
-enum class UpdateProblem { NETWORK, FEED, DOWNLOAD, DIGEST, PACKAGE, INSTALL }
+enum class UpdateProblem {
+    NETWORK, RATE_LIMITED, GITHUB_ERROR, FEED, DOWNLOAD, DIGEST, PACKAGE, INSTALL;
+
+    /**
+     * A check that failed for a reason the app can't fix (out of reach, refused, unreadable) offers
+     * the releases page in the browser (2026-11-15); a download or install keeps to "Try again".
+     */
+    val offersReleasesPage: Boolean get() = this == NETWORK || this == RATE_LIMITED || this == GITHUB_ERROR || this == FEED
+}
 
 sealed interface UpdateState {
     data object Idle : UpdateState
@@ -40,7 +48,8 @@ sealed interface UpdateState {
     /** Downloaded and verified; Android must first let Brume install packages. */
     data class NeedsPermission(val update: Update) : UpdateState
     data class Installing(val update: Update) : UpdateState
-    data class Failed(val problem: UpdateProblem, val update: Update?, val detail: String? = null) : UpdateState
+    /** [retryAtMs] is when GitHub said to come back ([UpdateProblem.RATE_LIMITED]), if it said. */
+    data class Failed(val problem: UpdateProblem, val update: Update?, val detail: String? = null, val retryAtMs: Long? = null) : UpdateState
 }
 
 /**
@@ -67,6 +76,9 @@ class Updater private constructor(private val context: Context) {
     val isAvailable: Boolean get() = true
 
     private val source = brumeSource(debug = BuildConfig.DEBUG)
+
+    /** The releases page, for the browser when a check fails (2026-11-15); the app never fetches it. */
+    val releasesPage: String get() = source.releasesPage
 
     /** Dev pre-releases: offered to a dev install, never to a final one (no switch yet; developer mode will carry it). */
     private val _channel = MutableStateFlow(readChannel())
@@ -142,8 +154,12 @@ class Updater private constructor(private val context: Context) {
             val now = System.currentTimeMillis()
             prefs.edit().putLong(KEY_LAST_CHECK, now).apply()
             _lastCheck.value = now
-            val body = outcome.getOrElse {
-                _state.value = UpdateState.Failed(UpdateProblem.NETWORK, null)
+            val body = outcome.getOrElse { error ->
+                _state.value = when (val refusal = (error as? RefusedException)?.refusal) {
+                    is ApiRefusal.Wait -> UpdateState.Failed(UpdateProblem.RATE_LIMITED, null, retryAtMs = refusal.untilMs)
+                    is ApiRefusal.Error -> UpdateState.Failed(UpdateProblem.GITHUB_ERROR, null, detail = refusal.code.toString())
+                    null -> UpdateState.Failed(UpdateProblem.NETWORK, null)
+                }
                 return@withLock null
             }
             val releases = ReleaseFeed.parse(body) ?: run {
@@ -310,8 +326,16 @@ class Updater private constructor(private val context: Context) {
                 return@repeat
             }
             if (code !in 200..299) {
+                // Only the status and the three rate-limit headers are read, and none is logged.
+                val refusal = ApiRefusal.of(
+                    code,
+                    remaining = connection.getHeaderField("x-ratelimit-remaining"),
+                    resetEpochSeconds = connection.getHeaderField("x-ratelimit-reset"),
+                    retryAfterSeconds = connection.getHeaderField("retry-after"),
+                    nowMs = System.currentTimeMillis(),
+                )
                 connection.disconnect()
-                throw IOException("HTTP $code")
+                throw RefusedException(refusal)
             }
             return connection
         }
@@ -365,4 +389,7 @@ class Updater private constructor(private val context: Context) {
         fun forContext(context: Context): Updater =
             instance ?: synchronized(this) { instance ?: Updater(context.applicationContext).also { instance = it } }
     }
+
+    /** GitHub answered outside 2xx. Still an [IOException], so a download reads it as before. */
+    private class RefusedException(val refusal: ApiRefusal) : IOException("GitHub refused: $refusal")
 }

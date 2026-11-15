@@ -53,6 +53,8 @@ import app.beansontoast.brume.update.UpdateState
 import app.beansontoast.brume.update.Updater
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import android.content.Intent
+import android.net.Uri
 
 /*
  * The github build's updater UI (docs/updates.md), after pastille's sheet (49975a8) in Brume's ink
@@ -143,6 +145,13 @@ internal fun UpdateSheet(open: Boolean, onDismiss: () -> Unit) {
                 installed = updater.current.toString(),
                 state = state,
                 onInstall = updater::startInstall,
+                onReleases = {
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(updater.releasesPage)))
+                    } catch (_: ActivityNotFoundException) {
+                        // No browser on this phone: nothing to open.
+                    }
+                },
                 onLater = { update ->
                     updater.setAside(update.version)
                     onDismiss()
@@ -174,6 +183,7 @@ internal fun UpdateSheetContent(
     onAllow: (Update) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    onReleases: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
@@ -222,6 +232,13 @@ internal fun UpdateSheetContent(
             maxLines = 2,
         )
         Spacer(Modifier.height(16.dp))
+        // A check GitHub didn't answer: the releases page in the browser, to look and download by
+        // hand (Erwann, 2026-11-15). The app itself fetches nothing more.
+        if (state is UpdateState.Failed && state.problem.offersReleasesPage) {
+            TextButton(onClick = onReleases, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.update_releases))
+            }
+        }
         Row(
             Modifier.fillMaxWidth().heightIn(min = 48.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -277,6 +294,8 @@ internal fun spokenText(context: Context, state: UpdateState): String =
 
 internal fun failureText(problem: UpdateProblem): Int = when (problem) {
     UpdateProblem.NETWORK -> R.string.update_fail_network
+    UpdateProblem.RATE_LIMITED -> R.string.update_fail_rate_limited
+    UpdateProblem.GITHUB_ERROR -> R.string.update_fail_github
     UpdateProblem.FEED -> R.string.update_fail_feed
     UpdateProblem.DOWNLOAD -> R.string.update_fail_download
     UpdateProblem.DIGEST -> R.string.update_fail_digest

@@ -12,6 +12,9 @@
     <string name="update_needs_permission">Downloaded: allow installs to finish</string>
     <string name="update_installing">Installing %1$s…</string>
     <string name="update_fail_network">Couldn\'t reach GitHub: try again</string>
+    <string name="update_fail_rate_limited">GitHub asks to wait: try again later</string>
+    <string name="update_fail_github">GitHub answered with an error: try again later</string>
+    <string name="update_releases">See releases on GitHub</string>
     <string name="update_fail_feed">GitHub\'s answer was garbled: try again</string>
     <string name="update_fail_download">Download stopped: try again</string>
     <string name="update_fail_digest">Checksum didn\'t match: try again</string>

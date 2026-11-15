@@ -11,6 +11,9 @@
     <string name="update_needs_permission">Téléchargée : autorisez l\'installation pour terminer</string>
     <string name="update_installing">Installation de %1$s…</string>
     <string name="update_fail_network">GitHub est injoignable : réessayez</string>
+    <string name="update_fail_rate_limited">GitHub demande d\'attendre : réessayez plus tard</string>
+    <string name="update_fail_github">GitHub a répondu par une erreur : réessayez plus tard</string>
+    <string name="update_releases">Voir les versions sur GitHub</string>
     <string name="update_fail_feed">La réponse de GitHub est illisible : réessayez</string>
     <string name="update_fail_download">Téléchargement interrompu : réessayez</string>
     <string name="update_fail_digest">La somme de contrôle ne correspond pas : réessayez</string>
