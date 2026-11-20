@@ -6,12 +6,15 @@ Sounds for comfort and sleep, and a short daily journal, for people living with 
 
 ## What v0.1 does
 
-- **Listen.** Generated sound, two layers at once: one noise (white, pink, brown, grey) and one ambience (rain, surf, wind), each with its own level. Every start fades in from silence over about three seconds; the app never raises the system volume; **Too loud** cuts to silence and makes the next start quieter. A sleep timer (20, 45 or 90 minutes) fades out over its last five minutes. Plays with the screen off from a media notification, and pauses when the headphones or speaker change, or another app takes the audio.
-- **Journal.** One check-in a day: loudness and bother, 0 to 10, and an optional note. Listening time is logged on its own. **Export** writes everything to one versioned JSON file, wherever you choose.
-- **Back up and sync.** Choose a folder, in Google Drive or on the phone: Brume keeps `brume-sync.json` there and merges with it after every change, so two phones that choose the same folder keep the same journal, tone settings and night hours. Import adds a file's check-ins without removing anything (About › Back up and sync).
-- **Night.** From 22:00 to 06:00 the app is dark and dim on true black, whatever the system theme (can be switched off in Learn, under Settings).
+- **Listen.** **Sleep** (with a timer) and **Settle** (by day) play a mix of sounds, as many layers as you like, each at its own level and tone. Noises are generated on the phone (white, pink, brown, grey); recordings are CC0 field recordings, credited in About (rain, rain on a terrace, storm in a tent, wind, sea, stream, birds, summer night, fireplace, café, night train). The sound is meant to blend with tinnitus, not cover it. Every start fades in from silence over about three seconds; the app never changes the system volume; **Too loud** cuts to silence and makes the next start quieter. The sleep timer (20, 45 or 90 minutes) fades out over its last five minutes. Plays with the screen off from a media notification, and pauses when the headphones or speaker change, or another app takes the audio.
+- **Breathe and meditate.** Five paced breathing rhythms and short guided meditations (body, sounds, breath) or a silent timer, followed by vibration, a soft bell or an offline voice, eyes open or closed.
+- **My tinnitus and tones.** An optional path to describe the sound you hear and find its pitch, kept as profiles on the phone, and a tone pattern in the style of ACRN around that pitch, offered plainly as a practice with little research behind it.
+- **Journal.** One check-in a day: how much room the sound took and how loud it was, 0 to 10, an optional note and tags. Listening time is logged on its own. **Export** writes everything to one versioned JSON file, wherever you choose.
+- **Back up and sync.** Choose a folder, in Google Drive or on the phone: Brume keeps `brume-sync.json` there and merges with it, so two phones that choose the same folder keep the same journal, profiles, tone settings and night hours. Sound levels never sync. Import adds a file's check-ins without removing anything (Settings › Back up and sync).
+- **Learn.** Short cards on what research says about tinnitus, each marked with how well it is supported and naming its sources, a decibel dial, gentle tips, and where to turn for help in France, the United Kingdom or elsewhere.
+- **Night.** From 22:00 to 06:00 the app is dark and dim on true black, whatever the system theme (can be switched off in Settings).
 
-Everything is synthesised: there are no sound files. Birds and other recorded sounds come later, from CC0 recordings with a licence manifest.
+The app speaks English and French. Details live in `docs/`.
 
 ## Privacy
 
